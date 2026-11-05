@@ -19,6 +19,7 @@ import com.g4vrk.react.inference.ModelId;
 import com.g4vrk.react.util.moshi.MoshiHolder;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -163,6 +164,67 @@ public final class InferenceServer {
             }
         }
         return Collections.unmodifiableSet(models);
+    }
+
+    /** The outcome of /react connect check; a model missing from models is one this key has no access to. */
+    public record ConnectionStatus(String server, Map<ModelId, Boolean> models, String problem) {
+        static ConnectionStatus failed(final String problem) {
+            return new ConnectionStatus("", Map.of(), problem);
+        }
+    }
+
+    /** Asks the site about this server's key right now and updates the enabled models. */
+    public @NotNull CompletableFuture<ConnectionStatus> checkConnection() {
+        final CompletableFuture<ConnectionStatus> future = new CompletableFuture<>();
+        if (apiKey == null || apiKey.isBlank() || !isKeyConfigured()) {
+            future.complete(ConnectionStatus.failed("no key, link the server with /react connect <code>"));
+            return future;
+        }
+        final HttpUrl url = apiUrl("/api/v1/auth/check");
+        if (url == null) {
+            future.complete(ConnectionStatus.failed("invalid inference.endpoint.base-url"));
+            return future;
+        }
+        final Request request = new Request.Builder().url(url).header("Authorization", "Bearer " + apiKey).get().build();
+        noRedirectClient().newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException exception) {
+                future.complete(ConnectionStatus.failed(String.valueOf(exception.getMessage())));
+            }
+            @Override public void onResponse(Call call, Response response) {
+                try (response; ResponseBody body = response.body()) {
+                    final Map<String, Object> json = body == null || body.source().request(MAX_RESPONSE_BYTES)
+                            ? null : MoshiHolder.RESPONSE_ADAPTER.fromJson(body.string());
+                    if (!response.isSuccessful() || json == null) {
+                        final Object detail = json == null ? null : json.get("detail");
+                        future.complete(ConnectionStatus.failed(detail != null ? String.valueOf(detail) : "HTTP " + response.code()));
+                        return;
+                    }
+                    enabledModels = readEnabledModels(json);
+                    future.complete(new ConnectionStatus(String.valueOf(json.get("server")), readModelStates(json), null));
+                } catch (Exception exception) {
+                    future.complete(ConnectionStatus.failed(String.valueOf(exception.getMessage())));
+                }
+            }
+        });
+        return future;
+    }
+
+    private static Map<ModelId, Boolean> readModelStates(final Map<String, Object> json) {
+        final Map<ModelId, Boolean> states = new EnumMap<>(ModelId.class);
+        if (json.get("models") instanceof List<?> items) {
+            for (final Object item : items) {
+                if (item instanceof Map<?, ?> entry) {
+                    final ModelId model = ModelId.fromIdentity(String.valueOf(entry.get("id")));
+                    if (model != null) states.put(model, Boolean.TRUE.equals(entry.get("enabled")));
+                }
+            }
+        }
+        return states;
+    }
+
+    private boolean isKeyConfigured() {
+        // The shipped config holds a non-ASCII placeholder until a server is linked.
+        return apiKey.matches("[A-Za-z0-9_.:-]+");
     }
 
     /** The outcome of /react connect; apiKey is null when the code was not accepted. */

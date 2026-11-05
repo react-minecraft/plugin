@@ -20,6 +20,7 @@ import com.g4vrk.react.check.processor.rotation.RotationFactory;
 import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
 import com.g4vrk.react.command.argument.impl.ConnectArgument;
+import com.g4vrk.react.command.argument.impl.ConnectCheckArgument;
 import com.g4vrk.react.inference.server.InferenceKeyStore;
 import com.g4vrk.react.listeners.packet.RotationListener;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
@@ -358,6 +359,7 @@ public class React {
         commandManager.command(verboseArgument.build());
         commandManager.command(reloadArgument.build());
         commandManager.command(new ConnectArgument(commandBuilderFactory, scheduler).build());
+        commandManager.command(new ConnectCheckArgument(commandBuilderFactory, scheduler).build());
         commandManager.command(new HistoryArgument(commandBuilderFactory, inferenceHistoryPrinter, playerRegistry).build());
 
         logger.info("React main command successfully prepared!");
@@ -592,7 +594,7 @@ public class React {
 
                 this.addonMap.put(addon.name(), addon);
 
-            } catch (final Exception ex) {
+            } catch (final Exception | LinkageError ex) {
 
                 //noinspection StringConcatenationArgumentToLogCall
                 logger.error("Failed to load addon " + source, ex);
@@ -608,8 +610,9 @@ public class React {
 
                 addon.setEnabled(true);
 
-            } catch (final Exception ex) {
+            } catch (final Exception | LinkageError ex) {
 
+                // An addon built against other plugin classes must not take the plugin down with it.
                 //noinspection StringConcatenationArgumentToLogCall
                 logger.error("Failed to enable addon " + addon.name(), ex);
 

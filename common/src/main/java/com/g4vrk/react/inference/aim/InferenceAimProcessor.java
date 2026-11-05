@@ -1,6 +1,8 @@
 package com.g4vrk.react.inference.aim;
 
+import com.g4vrk.react.inference.ModelId;
 import com.g4vrk.react.inference.http.model.HttpRequest;
+import com.g4vrk.react.player.model.rotation.Rotation;
 import com.g4vrk.react.inference.server.InferenceServer;
 import com.g4vrk.react.util.moshi.MoshiHolder;
 import com.g4vrk.react.vector.model.AimFrame;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -50,6 +53,37 @@ public final class InferenceAimProcessor {
         inferenceServer.publishIfCurrent(epoch, publication);
     }
 
+    public boolean isModelEnabled(final @NotNull ModelId model) {
+        return inferenceServer.isModelEnabled(model);
+    }
+
+    /** Flower models read rotations as JSON, in the format of plugin version 1.3.0. */
+    public void check(
+            final @NotNull String playerName,
+            final @NotNull Rotation @NotNull [] snapshot,
+            final @NotNull ModelId model,
+            final @NotNull Consumer<InferenceResult> resultHandler
+    ) {
+        if (!inferenceServer.isAcceptingRequests() || snapshot.length == 0) {
+            complete(resultHandler, InferenceResult.unavailable());
+            return;
+        }
+        try {
+            final Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("name", playerName);
+            payload.put("frames", snapshot);
+            if (inferenceServer.getAuthBodyToken() != null) {
+                payload.put("token", inferenceServer.getAuthBodyToken());
+            }
+            final HttpRequest request = new HttpRequest("POST", RequestBody.create(
+                    MoshiHolder.REQUEST_ADAPTER.toJson(payload), MediaType.get("application/json; charset=utf-8")));
+            enqueue(playerName, request, model, resultHandler);
+        } catch (RuntimeException failure) {
+            logger.warn("Could not enqueue {} request for {}", model.displayName(), playerName, failure);
+            complete(resultHandler, InferenceResult.unavailable());
+        }
+    }
+
     public void check(
             final @NotNull String playerName,
             final @NotNull AimFrame[] snapshot,
@@ -64,7 +98,7 @@ public final class InferenceAimProcessor {
             final HttpRequest request = new HttpRequest("POST",
                     RequestBody.create(batch, MediaType.get("application/x-flatbuffers")),
                     Map.of("Accept", "application/x-flatbuffers", "X-Batch", "1"));
-            enqueue(playerName, request, resultHandler);
+            enqueue(playerName, request, ModelId.VECTOR_PREVIEW, resultHandler);
         } catch (RuntimeException failure) {
             logger.warn("Could not enqueue VECTOR request for {}", playerName, failure);
             complete(resultHandler, InferenceResult.unavailable());
@@ -74,13 +108,14 @@ public final class InferenceAimProcessor {
     private void enqueue(
             final String playerName,
             final HttpRequest request,
+            final ModelId model,
             final Consumer<InferenceResult> originalResultHandler
     ) {
         final long requestEpoch = inferenceServer.requestEpoch();
         final Consumer<InferenceResult> resultHandler = result -> {
             if (requestEpoch == inferenceServer.requestEpoch()) originalResultHandler.accept(result);
         };
-        inferenceServer.callAsync(request, new Callback() {
+        inferenceServer.callAsync(request, model, new Callback() {
 
             @Override
             public void onFailure(
@@ -171,6 +206,12 @@ public final class InferenceAimProcessor {
                     }
 
                     Double threshold = readNumber(result, "decision_threshold");
+                    if (threshold == null && model.isFlower()) {
+                        // Flower answers carry no threshold: aim-ai.yml alert.threshold decides.
+                        complete(resultHandler, new InferenceResult(probability, Double.NaN, true,
+                                readModelPart(result, "model_family"), readModelPart(result, "model_name")));
+                        return;
+                    }
                     Object enabled = result.get("enforcement_enabled");
                     Object mode = result.get("deployment_mode");
                     if (threshold == null || !Double.isFinite(threshold) || threshold < 0 || threshold > 1

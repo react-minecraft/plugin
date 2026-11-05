@@ -16,7 +16,8 @@ inference:
 
 auth:
   enabled: true
-  # Токен вашего сервера с https://www.react-ac.space/
+  # Ключ сервера. Команда /react connect <код> сама запишет его сюда,
+  # код выдаётся на странице сервера: https://www.react-ac.space/
   value: ВСТАВЬТЕ_ВАШ_КЛЮЧ
   # Для нашей модели не изменяйте: none / bearer / header / query / body
   type: body

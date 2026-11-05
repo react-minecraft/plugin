@@ -15,11 +15,20 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import com.g4vrk.react.inference.ModelId;
+import com.g4vrk.react.util.moshi.MoshiHolder;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.squareup.moshi.Moshi;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -27,6 +36,8 @@ import okhttp3.ResponseBody;
 public final class InferenceServer {
 
     private static final String PATH = "/api/v2/inference/";
+    private static final long MODEL_REFRESH_MILLIS = 60_000L;
+    private static final long MAX_RESPONSE_BYTES = 64L * 1024L;
 
     private final OkHttpClient client;
     private final AuthApplier authApplier;
@@ -36,9 +47,10 @@ public final class InferenceServer {
 
     private final boolean enabled;
     private final String authBodyToken;
-    private final String modelMetadataToken;
-    private final AtomicLong nextModelMetadataRequest = new AtomicLong();
-    private volatile String selectedModelDisplay = "Unavailable";
+    private final Logger logger;
+    private final String apiKey;
+    private final AtomicLong nextModelRefresh = new AtomicLong();
+    private volatile Set<ModelId> enabledModels = Set.of();
 
     private final AtomicBoolean suspended = new AtomicBoolean();
     private final AtomicBoolean closed = new AtomicBoolean();
@@ -71,7 +83,8 @@ public final class InferenceServer {
     ) {
         this.client = settings.buildClient();
         this.enabled = settings.isEnabled();
-        this.modelMetadataToken = settings.getAuth().isEnabled() ? settings.getAuth().getValue() : null;
+        this.logger = logger;
+        this.apiKey = settings.getAuth().isEnabled() ? settings.getAuth().getValue() : null;
         this.authBodyToken = settings.getAuth().isEnabled() && settings.getAuth().getType() == AuthType.BODY
                 ? settings.getAuth().getValue() : null;
 
@@ -85,61 +98,129 @@ public final class InferenceServer {
         }
     }
 
-    /** Nonblocking display metadata, resolved from the same subscription as inference. */
-    public String getSelectedModelDisplay() {
-        if (!enabled) return "Disabled";
-        long now = System.currentTimeMillis();
-        long next = nextModelMetadataRequest.get();
-        if (now >= next && nextModelMetadataRequest.compareAndSet(next, now + 60_000L)) {
-            refreshSelectedModelDisplay();
-        }
-        return selectedModelDisplay;
+    /** The models enabled on the site for this server; refreshed in the background. */
+    public @NotNull Set<ModelId> enabledModels() {
+        if (enabled) refreshModelsIfDue();
+        return enabledModels;
     }
 
-    private void refreshSelectedModelDisplay() {
-        if (modelMetadataToken == null || modelMetadataToken.isBlank()) {
-            selectedModelDisplay = "Unavailable";
+    public boolean isModelEnabled(final @NotNull ModelId model) {
+        return enabledModels().contains(model);
+    }
+
+    public String getSelectedModelDisplay() {
+        if (!enabled) return "Disabled";
+        final Set<ModelId> models = enabledModels();
+        return models.isEmpty() ? "Unavailable"
+                : models.stream().map(ModelId::displayName).collect(Collectors.joining(", "));
+    }
+
+    private void refreshModelsIfDue() {
+        long now = System.currentTimeMillis();
+        long next = nextModelRefresh.get();
+        if (now < next || !nextModelRefresh.compareAndSet(next, now + MODEL_REFRESH_MILLIS)) return;
+        if (apiKey == null || apiKey.isBlank()) {
+            enabledModels = Set.of();
             return;
         }
-        HttpUrl origin = HttpUrl.parse(baseUrl);
-        if (origin == null) return;
-        HttpUrl url = origin.newBuilder().encodedPath("/api/v1/subscriptions/model")
-                .query(null).fragment(null).build();
-        Request request = new Request.Builder().url(url)
-                .header("X-Subscription-Token", modelMetadataToken).get().build();
+        HttpUrl url = apiUrl("/api/v1/auth/check");
+        if (url == null) return;
+        Request request = new Request.Builder().url(url).header("Authorization", "Bearer " + apiKey).get().build();
         try {
-            // Never forward the subscription secret to a redirect destination.
-            client.newBuilder().followRedirects(false).followSslRedirects(false).build()
-                    .newCall(request).enqueue(new Callback() {
+            noRedirectClient().newCall(request).enqueue(new Callback() {
                 @Override public void onFailure(Call call, IOException exception) {
-                    selectedModelDisplay = "Unavailable";
+                    // A network failure keeps the last known models instead of stopping every check.
+                    logger.debug("Could not refresh the enabled models", exception);
                 }
                 @Override public void onResponse(Call call, Response response) {
                     try (response; ResponseBody body = response.body()) {
-                        if (!response.isSuccessful() || body == null || body.source().request(8193)) {
-                            selectedModelDisplay = "Unavailable";
+                        if (response.code() == 401 || response.code() == 403) {
+                            enabledModels = Set.of();
+                            logger.warn("The server key was rejected: link it again with /react connect <code>");
                             return;
                         }
-                        Map<?, ?> metadata = new Moshi.Builder().build().adapter(Map.class).fromJson(body.string());
-                        String family = metadata == null ? "" : String.valueOf(metadata.get("model_family"));
-                        String name = metadata == null ? "" : String.valueOf(metadata.get("model_name"));
-                        String identity = family + "/" + name;
-                        selectedModelDisplay = switch (identity) {
-                            case "vector/preview" -> "Vector Preview";
-                            default -> "Unavailable";
-                        };
-                    } catch (Exception ignored) {
-                        selectedModelDisplay = "Unavailable";
+                        if (!response.isSuccessful() || body == null || body.source().request(MAX_RESPONSE_BYTES)) return;
+                        Map<String, Object> json = MoshiHolder.RESPONSE_ADAPTER.fromJson(body.string());
+                        if (json != null) enabledModels = readEnabledModels(json);
+                    } catch (Exception exception) {
+                        logger.debug("Could not read the enabled models", exception);
                     }
                 }
             });
-        } catch (RuntimeException ignored) {
-            selectedModelDisplay = "Unavailable";
+        } catch (RuntimeException exception) {
+            logger.debug("Could not refresh the enabled models", exception);
         }
     }
 
+    private static Set<ModelId> readEnabledModels(final Map<String, Object> json) {
+        final EnumSet<ModelId> models = EnumSet.noneOf(ModelId.class);
+        if (json.get("models") instanceof List<?> items) {
+            for (final Object item : items) {
+                if (item instanceof Map<?, ?> entry && Boolean.TRUE.equals(entry.get("enabled"))) {
+                    final ModelId model = ModelId.fromIdentity(String.valueOf(entry.get("id")));
+                    if (model != null) models.add(model);
+                }
+            }
+        }
+        return Collections.unmodifiableSet(models);
+    }
+
+    /** The outcome of /react connect; apiKey is null when the code was not accepted. */
+    public record ConnectResult(String apiKey, String server, String modelNames, String detail) {
+    }
+
+    /** Exchanges a code from the server's page on the site for this server's key. */
+    public @NotNull CompletableFuture<ConnectResult> connect(final @NotNull String code) {
+        final CompletableFuture<ConnectResult> future = new CompletableFuture<>();
+        final HttpUrl url = apiUrl("/api/v1/auth/connect");
+        if (url == null) {
+            future.completeExceptionally(new IllegalStateException("Invalid inference.endpoint.base-url"));
+            return future;
+        }
+        final String json = MoshiHolder.REQUEST_ADAPTER.toJson(Map.of("code", code));
+        final Request request = new Request.Builder().url(url)
+                .post(RequestBody.create(json, MediaType.get("application/json; charset=utf-8"))).build();
+        noRedirectClient().newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException exception) {
+                future.completeExceptionally(exception);
+            }
+            @Override public void onResponse(Call call, Response response) {
+                try (response; ResponseBody body = response.body()) {
+                    if (body == null || body.source().request(MAX_RESPONSE_BYTES)) {
+                        future.complete(new ConnectResult(null, "", "", "HTTP " + response.code()));
+                        return;
+                    }
+                    final Map<String, Object> result = MoshiHolder.RESPONSE_ADAPTER.fromJson(body.string());
+                    if (result == null) {
+                        future.complete(new ConnectResult(null, "", "", "HTTP " + response.code()));
+                    } else if (!response.isSuccessful() || !(result.get("api_key") instanceof String key)) {
+                        future.complete(new ConnectResult(null, "", "", String.valueOf(result.get("detail"))));
+                    } else {
+                        future.complete(new ConnectResult(key, String.valueOf(result.get("server")),
+                                readEnabledModels(result).stream().map(ModelId::displayName)
+                                        .collect(Collectors.joining(", ")), ""));
+                    }
+                } catch (Exception exception) {
+                    future.completeExceptionally(exception);
+                }
+            }
+        });
+        return future;
+    }
+
+    private HttpUrl apiUrl(final String path) {
+        final HttpUrl origin = HttpUrl.parse(baseUrl);
+        return origin == null ? null : origin.newBuilder().encodedPath(path).query(null).fragment(null).build();
+    }
+
+    /** Never forward the key to a redirect destination. */
+    private OkHttpClient noRedirectClient() {
+        return client.newBuilder().followRedirects(false).followSslRedirects(false).build();
+    }
+
     public @NotNull Call newCall(
-            final @NotNull HttpRequest httpRequest
+            final @NotNull HttpRequest httpRequest,
+            final @NotNull ModelId model
     ) {
         if (!isAcceptingRequests()) throw new IllegalStateException("Inference client is paused or closed");
         final String rawUrl = baseUrl + PATH;
@@ -152,11 +233,16 @@ public final class InferenceServer {
             );
         }
 
-        final HttpUrl url = authApplier.applyToUrl(parsedUrl);
+        final HttpUrl url = authApplier.applyToUrl(parsedUrl.newBuilder()
+                .addQueryParameter("model-family", model.family())
+                .addQueryParameter("model-name", model.modelName())
+                .build());
 
         final Request.Builder requestBuilder = new Request.Builder()
                 .url(url)
-                .method(httpRequest.getMethod(), httpRequest.getBody());
+                .method(httpRequest.getMethod(), httpRequest.getBody())
+                // Several models run side by side, so the request names its own model.
+                .header("X-React-Player-Scoped", "true");
 
         httpRequest.getHeaders().forEach(requestBuilder::header);
         authApplier.applyToHeaders(requestBuilder);
@@ -166,9 +252,10 @@ public final class InferenceServer {
 
     public synchronized void callAsync(
             final @NotNull HttpRequest request,
+            final @NotNull ModelId model,
             final @NotNull Callback callback
     ) {
-        this.newCall(request).enqueue(callback);
+        this.newCall(request, model).enqueue(callback);
     }
 
 

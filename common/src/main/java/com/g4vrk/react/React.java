@@ -16,7 +16,12 @@ import com.g4vrk.react.api.addon.loader.impl.JarAddonLoader;
 import com.g4vrk.react.api.addon.repository.impl.JarAddonRepository;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
 import com.g4vrk.react.api.channel.print.impl.VerbosePrinter;
+import com.g4vrk.react.check.processor.rotation.RotationFactory;
+import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
+import com.g4vrk.react.command.argument.impl.ConnectArgument;
+import com.g4vrk.react.inference.server.InferenceKeyStore;
+import com.g4vrk.react.listeners.packet.RotationListener;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
 import com.g4vrk.react.command.argument.impl.ReloadArgument;
 import com.g4vrk.react.command.argument.impl.VerboseArgument;
@@ -352,13 +357,15 @@ public class React {
         commandManager.command(alertsArgument.build());
         commandManager.command(verboseArgument.build());
         commandManager.command(reloadArgument.build());
+        commandManager.command(new ConnectArgument(commandBuilderFactory, scheduler).build());
         commandManager.command(new HistoryArgument(commandBuilderFactory, inferenceHistoryPrinter, playerRegistry).build());
 
         logger.info("React main command successfully prepared!");
 
         logger.info("Registering packet listeners...");
         this.registerPacketListeners(
-                new VectorListener(playerRegistry, vectorService)
+                new VectorListener(playerRegistry, vectorService),
+                new RotationListener(playerRegistry, new RotationProcessor(new RotationFactory()))
         );
 
         final PluginManager pluginManager = plugin.getServer().getPluginManager();
@@ -414,6 +421,12 @@ public class React {
         logger.info("Our telegram channel: https://telegram.me/react_ac");
         logger.info("Our official site: https://www.react-ac.space");
         logger.info(" ");
+    }
+
+    /** Stores the key from /react connect in this language's inference.yml. */
+    public void saveApiKey(final @NotNull String apiKey) throws java.io.IOException {
+        final File configsDir = new File(plugin.getDataFolder(), language.name().toLowerCase());
+        InferenceKeyStore.save(new File(configsDir, "inference.yml").toPath(), apiKey);
     }
 
     public @NotNull CompletableFuture<Void> reloadAsync() {
@@ -474,6 +487,7 @@ public class React {
 
             if (endpointChanged) {
                 player.vectorData.clearHistory();
+                player.rotationData.clear();
             }
             player.checkManager.reload();
 

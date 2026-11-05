@@ -17,10 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import com.g4vrk.react.player.model.rotation.RotationData;
 import com.g4vrk.react.vector.session.AimSession;
 import com.g4vrk.react.check.impl.aim.AimAI;
 
 public final class ReactPlayer {
+
+    private static final int MAX_ROTATION_WINDOW = 40;
 
     @Getter
     private final UUID uniqueId;
@@ -31,6 +34,7 @@ public final class ReactPlayer {
 
     public final CombatActivity combatActivity;
     public final AimSession vectorData;
+    public final RotationData rotationData = new RotationData(MAX_ROTATION_WINDOW);
 
     public final AlertPrinter alertPrinter;
     public final VerbosePrinter verbosePrinter;
@@ -72,6 +76,7 @@ public final class ReactPlayer {
 
     public void clearTransientState() {
         vectorData.reset();
+        rotationData.clear();
         combatActivity.reset();
         final AimAI aim =
                 checkManager.getCheck(

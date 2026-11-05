@@ -16,7 +16,8 @@ inference:
 
 auth:
   enabled: true
-  # Token of your server from https://www.react-ac.space/
+  # Server key. /react connect <code> writes it here;
+  # get the code on the server's page: https://www.react-ac.space/
   value: YOUR_TOKEN
   # Do not change when using our model: none / bearer / header / query / body
   type: body

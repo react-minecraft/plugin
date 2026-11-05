@@ -425,8 +425,8 @@ public class React {
 
     /** Stores the key from /react connect in this language's inference.yml. */
     public void saveApiKey(final @NotNull String apiKey) throws java.io.IOException {
-        final File configsDir = new File(plugin.getDataFolder(), language.name().toLowerCase());
-        InferenceKeyStore.save(new File(configsDir, "inference.yml").toPath(), apiKey);
+        // The config manager extracts the language's files straight into the data folder.
+        InferenceKeyStore.save(new File(plugin.getDataFolder(), "inference.yml").toPath(), apiKey);
     }
 
     public @NotNull CompletableFuture<Void> reloadAsync() {

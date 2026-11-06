@@ -57,6 +57,8 @@ public final class InferenceServer {
     private final boolean enabled;
     private final Logger logger;
     private final String apiKey;
+    /** Sent with every request so the site shows which plugin build each server runs. */
+    private final String pluginVersion;
     private final boolean bodyTokenAuth;
     private final AtomicLong nextModelRefresh = new AtomicLong();
     private volatile Set<ModelId> enabledModels = Set.of();
@@ -80,8 +82,10 @@ public final class InferenceServer {
 
     public InferenceServer(
             final @NotNull Logger logger,
-            final @NotNull InferenceSettings settings
+            final @NotNull InferenceSettings settings,
+            final @NotNull String pluginVersion
     ) {
+        this.pluginVersion = pluginVersion;
         this.client = settings.buildClient();
         this.noRedirectClient = settings.buildClient(HttpClient.Redirect.NEVER);
         this.callTimeout = settings.getCallTimeout();
@@ -240,10 +244,7 @@ public final class InferenceServer {
     }
 
     /** Starts a link login; onLink gets the link to show, the future completes when the owner answers. */
-    public @NotNull CompletableFuture<ConnectResult> connectWithLink(
-            final @NotNull String pluginVersion,
-            final @NotNull Consumer<DeviceLink> onLink
-    ) {
+    public @NotNull CompletableFuture<ConnectResult> connectWithLink(final @NotNull Consumer<DeviceLink> onLink) {
         final long attempt = deviceLogin.incrementAndGet();
         final URI start = apiUrl("/api/v1/auth/device");
         final URI token = apiUrl("/api/v1/auth/device/token");
@@ -251,7 +252,6 @@ public final class InferenceServer {
             return CompletableFuture.failedFuture(new IllegalStateException("Invalid inference.endpoint.base-url"));
         }
         return sendAccountRequest(java.net.http.HttpRequest.newBuilder(start)
-                .header("X-Plugin-Version", pluginVersion)
                 .POST(java.net.http.HttpRequest.BodyPublishers.noBody()))
                 .thenCompose(response -> {
                     final Map<String, Object> json;
@@ -324,7 +324,7 @@ public final class InferenceServer {
     private @NotNull CompletableFuture<HttpResponse<byte[]>> sendAccountRequest(
             final java.net.http.HttpRequest.@NotNull Builder builder
     ) {
-        return noRedirectClient.sendAsync(withTimeout(builder).build(), BODY_HANDLER);
+        return noRedirectClient.sendAsync(withTimeout(builder.header("X-Plugin-Version", pluginVersion)).build(), BODY_HANDLER);
     }
 
     private java.net.http.HttpRequest.Builder withTimeout(final java.net.http.HttpRequest.Builder builder) {
@@ -381,7 +381,8 @@ public final class InferenceServer {
                         .header("Content-Type", HttpRequest.FLATBUFFERS)
                         .header("Accept", HttpRequest.FLATBUFFERS)
                         // Several models run side by side, so the request names its own model.
-                        .header("X-React-Player-Scoped", "true");
+                        .header("X-React-Player-Scoped", "true")
+                        .header("X-Plugin-Version", pluginVersion);
 
         httpRequest.getHeaders().forEach(requestBuilder::header);
         authApplier.applyToHeaders(requestBuilder);

@@ -307,7 +307,7 @@ public class React {
         final InferenceSettings inferenceSettings = inferenceSettingsFactory.create(inferenceConfig.root());
 
         logger.info("Creating ML server...");
-        this.inferenceServer = new InferenceServer(logger, inferenceSettings);
+        this.inferenceServer = new InferenceServer(logger, inferenceSettings, plugin.getDescription().getVersion());
 
         this.scheduler = schedulaAPI.createScheduler();
 
@@ -482,7 +482,7 @@ public class React {
         final boolean endpointChanged = !this.inferenceServer.getEndpoint().equals(inferenceSettings.getEndpoint());
         this.inferenceServer.shutdown();
 
-        this.inferenceServer = new InferenceServer(logger, inferenceSettings);
+        this.inferenceServer = new InferenceServer(logger, inferenceSettings, plugin.getDescription().getVersion());
 
         this.inferenceAimProcessor = new InferenceAimProcessor(
                 logger, inferenceServer, scheduler

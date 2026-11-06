@@ -45,8 +45,7 @@ public final class ConnectArgument extends LocalArgument {
                         connection = server.connect(context.get("code"));
                     } else {
                         reply(sender, NamedTextColor.GRAY, text("Получаем ссылку...", "Getting a link..."));
-                        connection = server.connectWithLink(React.INSTANCE.getPlugin().getDescription().getVersion(),
-                                link -> showLink(sender, link));
+                        connection = server.connectWithLink(link -> showLink(sender, link));
                     }
                     connection.whenComplete((result, failure) -> {
                         if (failure != null) {

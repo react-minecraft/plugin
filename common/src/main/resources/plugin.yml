@@ -42,11 +42,14 @@ permissions:
     children:
       react.command.usage: true
       react.command.reload: true
+      react.command.reboot: true
       react.command.connect: true
       react.command.history: true
       react.alerts: true
       react.verbose: true
   react.command.reload:
+    default: op
+  react.command.reboot:
     default: op
   react.command.connect:
     default: op

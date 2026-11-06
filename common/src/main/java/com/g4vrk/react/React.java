@@ -19,6 +19,7 @@ import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
 import com.g4vrk.react.command.argument.impl.ConnectArgument;
 import com.g4vrk.react.command.argument.impl.ConnectCheckArgument;
+import com.g4vrk.react.command.argument.impl.RebootArgument;
 import com.g4vrk.react.inference.server.InferenceKeyStore;
 import com.g4vrk.react.listeners.packet.RotationListener;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
@@ -63,6 +64,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -199,7 +201,13 @@ public class React {
                         new String[]{"reactac", "reactai", "ac"}
                 );
 
-        if (commandManager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
+        // Paper hands Brigadier commands over in its COMMANDS lifecycle event, which only fires while the
+        // server starts. A React enabled later (/react reboot) registers through the Bukkit command map.
+        final boolean enabledAtStartup = Bukkit.getCurrentTick() == 0;
+        if (!enabledAtStartup) {
+            logger.info("Enabled on a running server: registering commands without native Brigadier");
+        }
+        if (enabledAtStartup && commandManager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
             try {
 
                 logger.info("Registering Native Brigadier support in commandManager...");
@@ -360,6 +368,7 @@ public class React {
         commandManager.command(reloadArgument.build());
         commandManager.command(new ConnectArgument(commandBuilderFactory, scheduler).build());
         commandManager.command(new ConnectCheckArgument(commandBuilderFactory, scheduler).build());
+        commandManager.command(new RebootArgument(commandBuilderFactory).build());
         commandManager.command(new HistoryArgument(commandBuilderFactory, inferenceHistoryPrinter, playerRegistry).build());
 
         logger.info("React main command successfully prepared!");

@@ -115,10 +115,10 @@ public final class LifecycleRuntimeImpl<T> implements LifecycleRuntime<T> {
     public boolean running() {
         final CompletableFuture<Void> future = startup.get();
 
+        // Components that failed to enable were removed; the runtime runs the rest.
         return !closed.get()
                 && future != null
                 && future.isDone()
-                && !future.isCompletedExceptionally()
                 && !future.isCancelled();
     }
 
@@ -126,6 +126,8 @@ public final class LifecycleRuntimeImpl<T> implements LifecycleRuntime<T> {
             final @NotNull ObjectArrayList<T> snapshot,
             final @NotNull CompletableFuture<Void> future
     ) {
+        IllegalStateException failed = null;
+
         try {
             for (final T component : snapshot) {
                 if (closed.get()) {
@@ -135,12 +137,18 @@ public final class LifecycleRuntimeImpl<T> implements LifecycleRuntime<T> {
                 try {
                     enableAction.execute(component);
                 } catch (final Throwable failure) {
+                    // A broken component is shut down alone; the ones already running stay up.
                     disableFailedComponent(component, failure);
+                    closeFailedComponent(component, failure);
 
-                    throw new IllegalStateException(
+                    if (failed == null) {
+                        failed = new IllegalStateException("Some components failed to enable; the others keep running");
+                    }
+                    failed.addSuppressed(new IllegalStateException(
                             "Failed to enable component " + component.getClass().getName(),
                             failure
-                    );
+                    ));
+                    continue;
                 }
 
                 if (closed.get()) {
@@ -159,7 +167,11 @@ public final class LifecycleRuntimeImpl<T> implements LifecycleRuntime<T> {
                 throw new CancellationException("Runtime is closing");
             }
 
-            future.complete(null);
+            if (failed != null) {
+                future.completeExceptionally(failed);
+            } else {
+                future.complete(null);
+            }
 
         } catch (final Throwable failure) {
             closed.set(true);
@@ -180,6 +192,23 @@ public final class LifecycleRuntimeImpl<T> implements LifecycleRuntime<T> {
     ) {
         try {
             disableAction.execute(component);
+        } catch (final Throwable cleanupFailure) {
+            if (cleanupFailure != failure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+        }
+    }
+
+    private void closeFailedComponent(
+            final @NotNull T component,
+            final @NotNull Throwable failure
+    ) {
+        synchronized (lock) {
+            components.remove(component);
+        }
+
+        try {
+            closeAction.execute(component);
         } catch (final Throwable cleanupFailure) {
             if (cleanupFailure != failure) {
                 failure.addSuppressed(cleanupFailure);

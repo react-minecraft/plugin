@@ -178,7 +178,7 @@ public abstract class AbstractRuntimeManager<T> implements AutoCloseable {
         return runtime.start().whenComplete((ignored, failure) -> {
             if (failure != null) {
                 logger.error(
-                        "Failed to start {} runtime",
+                        "Failed to start some {} components",
                         componentType,
                         failure
                 );

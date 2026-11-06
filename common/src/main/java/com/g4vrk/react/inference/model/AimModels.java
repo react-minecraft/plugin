@@ -6,6 +6,7 @@ import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +29,11 @@ public final class AimModels {
 
     public @NotNull List<AimModel> all() {
         return models;
+    }
+
+    /** The model of the given type, for addons that work with one model's own data. */
+    public <T extends AimModel> @NotNull Optional<T> find(final @NotNull Class<T> type) {
+        return models.stream().filter(type::isInstance).map(type::cast).findFirst();
     }
 
     public @NotNull PacketListenerCommon @NotNull [] packetListeners() {

@@ -3,7 +3,6 @@ package com.g4vrk.react.inference.server.settings;
 import com.g4vrk.react.inference.auth.AuthSettings;
 import com.g4vrk.react.inference.http.model.HttpClientSettings;
 import lombok.Getter;
-import okhttp3.ConnectionPool;
 import org.jetbrains.annotations.NotNull;
 import java.time.Duration;
 
@@ -17,16 +16,12 @@ public final class InferenceSettings extends HttpClientSettings {
 
     public InferenceSettings(
             @NotNull Duration connectTimeout,
-            @NotNull Duration readTimeout,
-            @NotNull Duration writeTimeout,
             @NotNull Duration callTimeout,
-            boolean retryOnFailure,
-            @NotNull ConnectionPool connectionPool,
             boolean enabled,
             @NotNull InferenceEndpointSettings endpoint,
             @NotNull AuthSettings auth
     ) {
-        super(connectTimeout, readTimeout, writeTimeout, callTimeout, retryOnFailure, connectionPool);
+        super(connectTimeout, callTimeout);
         this.enabled = enabled;
         this.endpoint = endpoint;
         this.auth = auth;

@@ -17,16 +17,14 @@ import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import java.net.http.HttpResponse;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Vector Preview: aim frames collected from packets during combat, sent as FlatBuffers. */
 public final class VectorModel implements AimModel {
 
-    private static final MediaType FLATBUFFERS = MediaType.get("application/x-flatbuffers");
+    private static final String FLATBUFFERS = "application/x-flatbuffers";
 
     private final PlayerRegistry players;
     private final AimStreamService stream;
@@ -66,7 +64,7 @@ public final class VectorModel implements AimModel {
         }
         final String playerName = player.getName();
         check.send(this, token -> new HttpRequest("POST",
-                RequestBody.create(FrameCodec.encodeBatch(snapshot, playerName, token), FLATBUFFERS),
+                FrameCodec.encodeBatch(snapshot, playerName, token), FLATBUFFERS,
                 Map.of("Accept", "application/x-flatbuffers", "X-Batch", "1")));
     }
 
@@ -76,13 +74,14 @@ public final class VectorModel implements AimModel {
     }
 
     @Override
-    public @Nullable InferenceResult readBinary(final byte @NotNull [] body, final @NotNull Response response) {
+    public @Nullable InferenceResult readBinary(final byte @NotNull [] body, final @NotNull HttpResponse<?> response) {
         if (body.length < 4 || body[0] != 'G' || body[1] != 'A' || body[2] != 'I' || body[3] != 'B') {
             return null;
         }
         final FrameCodec.Prediction prediction = FrameCodec.decodePrediction(body);
         return new InferenceResult(prediction.probability(), prediction.threshold(), prediction.enforcementEnabled(),
-                response.header("X-React-Model-Family"), response.header("X-React-Model-Name"));
+                response.headers().firstValue("X-React-Model-Family").orElse(null),
+                response.headers().firstValue("X-React-Model-Name").orElse(null));
     }
 
     @Override

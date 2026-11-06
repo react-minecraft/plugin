@@ -7,7 +7,7 @@ import com.g4vrk.react.player.model.rotation.RotationData;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import java.util.List;
 import java.util.UUID;
-import okhttp3.Response;
+import java.net.http.HttpResponse;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public interface AimModel {
     }
 
     /** Reads a binary answer; null when the body is not in this model's format. */
-    default @Nullable InferenceResult readBinary(final byte @NotNull [] body, final @NotNull Response response) {
+    default @Nullable InferenceResult readBinary(final byte @NotNull [] body, final @NotNull HttpResponse<?> response) {
         return null;
     }
 

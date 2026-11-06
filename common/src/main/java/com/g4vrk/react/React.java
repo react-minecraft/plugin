@@ -1,21 +1,19 @@
 package com.g4vrk.react;
 
+import com.g4vrk.config.Config;
+import com.g4vrk.config.loader.YamlConfigLoader;
 import com.g4vrk.functionalActions.defaults.DefaultActions;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
-import com.g4vrk.config.Config;
-import com.g4vrk.config.loader.YamlConfigLoader;
-import com.g4vrk.react.api.channel.ReactChannels;
-import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
 import com.g4vrk.react.api.ReactAPI;
-import com.g4vrk.react.api.addon.JavaAddon;
-import com.g4vrk.react.api.addon.descriptor.impl.SimpleAddonDescriptor;
-import com.g4vrk.react.api.addon.loader.impl.JarAddonLoader;
-import com.g4vrk.react.api.addon.repository.impl.JarAddonRepository;
+import com.g4vrk.react.api.addon.internal.manager.AddonManager;
+import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
+import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
 import com.g4vrk.react.api.channel.print.impl.VerbosePrinter;
+import com.g4vrk.react.api.rcp.internal.manager.RCPManager;
 import com.g4vrk.react.check.processor.rotation.RotationFactory;
 import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
@@ -32,15 +30,15 @@ import com.g4vrk.react.config.check.impl.SimpleCheckConfigRegistry;
 import com.g4vrk.react.config.lang.Language;
 import com.g4vrk.react.config.manager.YamlConfigManager;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
-import com.g4vrk.react.listeners.bukkit.CombatListener;
-import com.g4vrk.react.listeners.bukkit.ConnectionListener;
 import com.g4vrk.react.inference.aim.InferenceAimProcessor;
 import com.g4vrk.react.inference.server.InferenceServer;
-import com.g4vrk.react.inference.server.settings.InferenceSettingsFactory;
 import com.g4vrk.react.inference.server.settings.InferenceSettings;
+import com.g4vrk.react.inference.server.settings.InferenceSettingsFactory;
+import com.g4vrk.react.listeners.bukkit.CombatListener;
+import com.g4vrk.react.listeners.bukkit.ConnectionListener;
 import com.g4vrk.react.placeholder.ReactPlaceholderExpansion;
-import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.punish.PunishmentManager;
 import com.g4vrk.react.resource.ResourceHolder;
@@ -77,8 +75,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
-import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -114,7 +110,9 @@ public class React {
     private ActionRegistry<Audience> actionRegistry;
     private ActionParser<Audience> actionParser;
 
-    private Map<String, JavaAddon> addonMap;
+    private AddonManager addonManager;
+
+    private RCPManager rcpManager;
 
     private ResourceHolder resourceHolder;
 
@@ -282,8 +280,11 @@ public class React {
 
         this.actionParser = new SimpleActionParser<>(actionRegistry);
 
-        logger.info("Loading all addons...");
+        logger.info("Loading addons...");
         this.loadAddons();
+
+        logger.info("Loading RCP providers...");
+        this.loadRCP();
 
         logger.info("Creating Data management modules...");
         this.databaseSettings = new DatabaseSettingsFactory().create(configMap, pluginDir);
@@ -410,7 +411,10 @@ public class React {
 
         }
 
-        logger.info("Enabling all addons...");
+        logger.info("Starting RCP providers...");
+        this.enableRCP();
+
+        logger.info("Starting addons...");
         this.enableAddons();
 
         logger.info(" ");
@@ -503,7 +507,14 @@ public class React {
             logger.info("Stopping all addons...");
             this.disableAddons();
         } catch (final Exception ex) {
-            this.logger.error("Could not disable addons", ex);
+            logger.error("Could not disable addons", ex);
+        }
+
+        try {
+            logger.info("Stopping all RCP providers...");
+            this.disableRCP();
+        } catch (final Exception ex) {
+            logger.error("Could not disable RCP providers", ex);
         }
 
         try {
@@ -570,84 +581,66 @@ public class React {
 
     private void loadAddons() {
 
-        this.addonMap = new Object2ObjectOpenHashMap<>();
-
-        final File addonsDir = new File(this.plugin.getDataFolder(), "addons");
-
-        //noinspection ResultOfMethodCallIgnored
-        addonsDir.mkdirs();
-
-        final Collection<Path> addonPaths = new JarAddonRepository(addonsDir).discover();
-
-        final JarAddonLoader addonLoader = new JarAddonLoader(
-                addonsDir,
-                new SimpleAddonDescriptor(new YamlConfigLoader()),
-                metadata -> LoggerFactory.getLogger(NAME + "#" + metadata.name()),
-                "react-addon.yml"
+        this.addonManager = new AddonManager(
+                plugin.getDataFolder(),
+                logger
         );
 
-        for (final Path source : addonPaths) {
-            try {
+        addonManager.load();
 
-                final JavaAddon addon = addonLoader.load(source);
+    }
 
-                this.addonMap.put(addon.name(), addon);
+    private void loadRCP() {
 
-            } catch (final Exception | LinkageError ex) {
+        this.rcpManager = new RCPManager(
+                plugin.getDataFolder(),
+                logger
+        );
 
-                //noinspection StringConcatenationArgumentToLogCall
-                logger.error("Failed to load addon " + source, ex);
+        rcpManager.load();
 
-            }
-        }
     }
 
     private void enableAddons() {
 
-        for (final JavaAddon addon : this.addonMap.values()) {
-            try {
+        if (addonManager != null) {
+            addonManager.start();
+        }
 
-                addon.setEnabled(true);
+    }
 
-            } catch (final Exception | LinkageError ex) {
+    private void enableRCP() {
 
-                // An addon built against other plugin classes must not take the plugin down with it.
-                //noinspection StringConcatenationArgumentToLogCall
-                logger.error("Failed to enable addon " + addon.name(), ex);
-
-            }
-
+        if (rcpManager != null) {
+            rcpManager.start();
         }
 
     }
 
     private void disableAddons() {
 
-        if (this.addonMap == null || this.addonMap.isEmpty()) {
+        if (addonManager == null) {
             return;
         }
 
-        for (final JavaAddon addon : this.addonMap.values()) {
-            try {
+        try {
+            addonManager.close();
+        } finally {
+            addonManager = null;
+        }
+    }
 
-                addon.setEnabled(false);
+    private void disableRCP() {
 
-            } catch (final Exception ex) {
-
-                //noinspection StringConcatenationArgumentToLogCall
-                logger.error("Failed to disable addon " + addon.name(), ex);
-
-            } finally {
-                try {
-                    addon.closeClassLoader();
-                } catch (final Exception ex) {
-                    //noinspection StringConcatenationArgumentToLogCall
-                    logger.error("Failed to close addon classloader " + addon.name(), ex);
-                }
-            }
-
+        if (rcpManager == null) {
+            return;
         }
 
+        try {
+            rcpManager.close();
+        } finally {
+            rcpManager = null;
+        }
     }
 
     private void registerPacketListeners(

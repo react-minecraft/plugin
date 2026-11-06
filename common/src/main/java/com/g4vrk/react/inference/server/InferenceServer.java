@@ -3,48 +3,53 @@ package com.g4vrk.react.inference.server;
 import com.g4vrk.react.inference.auth.AuthApplier;
 import com.g4vrk.react.inference.auth.AuthSettings;
 import com.g4vrk.react.inference.auth.type.AuthType;
+import com.g4vrk.react.inference.http.LimitedBodyHandler;
 import com.g4vrk.react.inference.http.model.HttpRequest;
+import com.g4vrk.react.inference.json.InferenceJsonCodec;
+import com.g4vrk.react.inference.model.ModelId;
 import com.g4vrk.react.inference.server.settings.InferenceEndpointSettings;
 import com.g4vrk.react.inference.server.settings.InferenceSettings;
-import lombok.Getter;
-import okhttp3.Cache;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import com.g4vrk.react.inference.model.ModelId;
-import com.g4vrk.react.util.moshi.MoshiHolder;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 @Getter
 public final class InferenceServer {
 
     private static final String PATH = "/api/v2/inference/";
     private static final long MODEL_REFRESH_MILLIS = 60_000L;
-    private static final long MAX_RESPONSE_BYTES = 64L * 1024L;
+    private static final int MAX_RESPONSE_BYTES = 64 * 1024;
+    private static final Method HTTP_CLIENT_SHUTDOWN_NOW = findShutdownMethod();
 
-    private final OkHttpClient client;
+    private final HttpClient client;
+    // Never forward the key to a redirect destination.
+    private final HttpClient noRedirectClient;
     private final AuthApplier authApplier;
 
     private final String baseUrl;
     private final InferenceEndpointSettings endpoint;
+    private final Duration callTimeout;
 
     private final boolean enabled;
     private final String authBodyToken;
@@ -53,29 +58,19 @@ public final class InferenceServer {
     private final AtomicLong nextModelRefresh = new AtomicLong();
     private volatile Set<ModelId> enabledModels = Set.of();
 
-    private final AtomicBoolean suspended = new AtomicBoolean();
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicLong requestEpoch = new AtomicLong();
+    private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
 
     public long requestEpoch() { return requestEpoch.get(); }
 
-    /** Serialize the FINAL publication with pause, including callbacks on entity schedulers. */
+    /** Serialize the FINAL publication with shutdown, including callbacks on entity schedulers. */
     public synchronized void publishIfCurrent(long epoch, Runnable publication) {
         if (isAcceptingRequests() && requestEpoch.get() == epoch) publication.run();
     }
 
     public boolean isAcceptingRequests() {
-        return enabled && !suspended.get() && !closed.get();
-    }
-
-    public synchronized void pauseRequests() {
-        suspended.set(true);
-        requestEpoch.incrementAndGet();
-        client.dispatcher().cancelAll();
-    }
-
-    public synchronized void resumeRequests() {
-        if (!closed.get()) suspended.set(false);
+        return enabled && !closed.get();
     }
 
     public InferenceServer(
@@ -83,6 +78,8 @@ public final class InferenceServer {
             final @NotNull InferenceSettings settings
     ) {
         this.client = settings.buildClient();
+        this.noRedirectClient = settings.buildClient(HttpClient.Redirect.NEVER);
+        this.callTimeout = settings.getCallTimeout();
         this.enabled = settings.isEnabled();
         this.logger = logger;
         this.apiKey = settings.getAuth().isEnabled() ? settings.getAuth().getValue() : null;
@@ -124,28 +121,26 @@ public final class InferenceServer {
             enabledModels = Set.of();
             return;
         }
-        HttpUrl url = apiUrl("/api/v1/auth/check");
+        final URI url = apiUrl("/api/v1/auth/check");
         if (url == null) return;
-        Request request = new Request.Builder().url(url).header("Authorization", "Bearer " + apiKey).get().build();
         try {
-            noRedirectClient().newCall(request).enqueue(new Callback() {
-                @Override public void onFailure(Call call, IOException exception) {
+            sendAccountRequest(java.net.http.HttpRequest.newBuilder(url)
+                    .header("Authorization", "Bearer " + apiKey).GET()).whenComplete((response, failure) -> {
+                if (failure != null) {
                     // A network failure keeps the last known models instead of stopping every check.
-                    logger.debug("Could not refresh the enabled models", exception);
+                    logger.debug("Could not refresh the enabled models", failure);
+                    return;
                 }
-                @Override public void onResponse(Call call, Response response) {
-                    try (response; ResponseBody body = response.body()) {
-                        if (response.code() == 401 || response.code() == 403) {
-                            enabledModels = Set.of();
-                            logger.warn("The server key was rejected: link it again with /react connect <code>");
-                            return;
-                        }
-                        if (!response.isSuccessful() || body == null || body.source().request(MAX_RESPONSE_BYTES)) return;
-                        Map<String, Object> json = MoshiHolder.RESPONSE_ADAPTER.fromJson(body.string());
-                        if (json != null) enabledModels = readEnabledModels(json);
-                    } catch (Exception exception) {
-                        logger.debug("Could not read the enabled models", exception);
-                    }
+                if (response.statusCode() == 401 || response.statusCode() == 403) {
+                    enabledModels = Set.of();
+                    logger.warn("The server key was rejected: link it again with /react connect <code>");
+                    return;
+                }
+                if (!isSuccessful(response)) return;
+                try {
+                    enabledModels = readEnabledModels(readJson(response));
+                } catch (RuntimeException exception) {
+                    logger.debug("Could not read the enabled models", exception);
                 }
             });
         } catch (RuntimeException exception) {
@@ -155,14 +150,9 @@ public final class InferenceServer {
 
     private static Set<ModelId> readEnabledModels(final Map<String, Object> json) {
         final EnumSet<ModelId> models = EnumSet.noneOf(ModelId.class);
-        if (json.get("models") instanceof List<?> items) {
-            for (final Object item : items) {
-                if (item instanceof Map<?, ?> entry && Boolean.TRUE.equals(entry.get("enabled"))) {
-                    final ModelId model = ModelId.fromIdentity(String.valueOf(entry.get("id")));
-                    if (model != null) models.add(model);
-                }
-            }
-        }
+        readModelStates(json).forEach((model, enabled) -> {
+            if (enabled) models.add(model);
+        });
         return Collections.unmodifiableSet(models);
     }
 
@@ -175,38 +165,32 @@ public final class InferenceServer {
 
     /** Asks the site about this server's key right now and updates the enabled models. */
     public @NotNull CompletableFuture<ConnectionStatus> checkConnection() {
-        final CompletableFuture<ConnectionStatus> future = new CompletableFuture<>();
         if (apiKey == null || apiKey.isBlank() || !isKeyConfigured()) {
-            future.complete(ConnectionStatus.failed("no key, link the server with /react connect <code>"));
-            return future;
+            return CompletableFuture.completedFuture(
+                    ConnectionStatus.failed("no key, link the server with /react connect <code>"));
         }
-        final HttpUrl url = apiUrl("/api/v1/auth/check");
+        final URI url = apiUrl("/api/v1/auth/check");
         if (url == null) {
-            future.complete(ConnectionStatus.failed("invalid inference.endpoint.base-url"));
-            return future;
+            return CompletableFuture.completedFuture(ConnectionStatus.failed("invalid inference.endpoint.base-url"));
         }
-        final Request request = new Request.Builder().url(url).header("Authorization", "Bearer " + apiKey).get().build();
-        noRedirectClient().newCall(request).enqueue(new Callback() {
-            @Override public void onFailure(Call call, IOException exception) {
-                future.complete(ConnectionStatus.failed(String.valueOf(exception.getMessage())));
+        return sendAccountRequest(java.net.http.HttpRequest.newBuilder(url)
+                .header("Authorization", "Bearer " + apiKey).GET()).handle((response, failure) -> {
+            if (failure != null) {
+                return ConnectionStatus.failed(String.valueOf(failure.getMessage()));
             }
-            @Override public void onResponse(Call call, Response response) {
-                try (response; ResponseBody body = response.body()) {
-                    final Map<String, Object> json = body == null || body.source().request(MAX_RESPONSE_BYTES)
-                            ? null : MoshiHolder.RESPONSE_ADAPTER.fromJson(body.string());
-                    if (!response.isSuccessful() || json == null) {
-                        final Object detail = json == null ? null : json.get("detail");
-                        future.complete(ConnectionStatus.failed(detail != null ? String.valueOf(detail) : "HTTP " + response.code()));
-                        return;
-                    }
-                    enabledModels = readEnabledModels(json);
-                    future.complete(new ConnectionStatus(String.valueOf(json.get("server")), readModelStates(json), null));
-                } catch (Exception exception) {
-                    future.complete(ConnectionStatus.failed(String.valueOf(exception.getMessage())));
+            try {
+                final Map<String, Object> json = readJson(response);
+                if (!isSuccessful(response)) {
+                    final Object detail = json.get("detail");
+                    return ConnectionStatus.failed(detail != null ? String.valueOf(detail) : "HTTP " + response.statusCode());
                 }
+                enabledModels = readEnabledModels(json);
+                return new ConnectionStatus(String.valueOf(json.get("server")), readModelStates(json), null);
+            } catch (RuntimeException exception) {
+                return ConnectionStatus.failed(isSuccessful(response)
+                        ? String.valueOf(exception.getMessage()) : "HTTP " + response.statusCode());
             }
         });
-        return future;
     }
 
     private static Map<ModelId, Boolean> readModelStates(final Map<String, Object> json) {
@@ -233,116 +217,114 @@ public final class InferenceServer {
 
     /** Exchanges a code from the server's page on the site for this server's key. */
     public @NotNull CompletableFuture<ConnectResult> connect(final @NotNull String code) {
-        final CompletableFuture<ConnectResult> future = new CompletableFuture<>();
-        final HttpUrl url = apiUrl("/api/v1/auth/connect");
+        final URI url = apiUrl("/api/v1/auth/connect");
         if (url == null) {
-            future.completeExceptionally(new IllegalStateException("Invalid inference.endpoint.base-url"));
-            return future;
+            return CompletableFuture.failedFuture(new IllegalStateException("Invalid inference.endpoint.base-url"));
         }
-        final String json = MoshiHolder.REQUEST_ADAPTER.toJson(Map.of("code", code));
-        final Request request = new Request.Builder().url(url)
-                .post(RequestBody.create(json, MediaType.get("application/json; charset=utf-8"))).build();
-        noRedirectClient().newCall(request).enqueue(new Callback() {
-            @Override public void onFailure(Call call, IOException exception) {
-                future.completeExceptionally(exception);
-            }
-            @Override public void onResponse(Call call, Response response) {
-                try (response; ResponseBody body = response.body()) {
-                    if (body == null || body.source().request(MAX_RESPONSE_BYTES)) {
-                        future.complete(new ConnectResult(null, "", "", "HTTP " + response.code()));
-                        return;
+        final String json = InferenceJsonCodec.writeObject(Map.of("code", code));
+        return sendAccountRequest(java.net.http.HttpRequest.newBuilder(url)
+                .header("Content-Type", "application/json; charset=utf-8")
+                .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)))
+                .thenApply(response -> {
+                    final Map<String, Object> result;
+                    try {
+                        result = readJson(response);
+                    } catch (RuntimeException exception) {
+                        return new ConnectResult(null, "", "", "HTTP " + response.statusCode());
                     }
-                    final Map<String, Object> result = MoshiHolder.RESPONSE_ADAPTER.fromJson(body.string());
-                    if (result == null) {
-                        future.complete(new ConnectResult(null, "", "", "HTTP " + response.code()));
-                    } else if (!response.isSuccessful() || !(result.get("api_key") instanceof String key)) {
-                        future.complete(new ConnectResult(null, "", "", String.valueOf(result.get("detail"))));
-                    } else {
-                        future.complete(new ConnectResult(key, String.valueOf(result.get("server")),
-                                readEnabledModels(result).stream().map(ModelId::displayName)
-                                        .collect(Collectors.joining(", ")), ""));
+                    if (!isSuccessful(response) || !(result.get("api_key") instanceof String key)) {
+                        return new ConnectResult(null, "", "", String.valueOf(result.get("detail")));
                     }
-                } catch (Exception exception) {
-                    future.completeExceptionally(exception);
-                }
-            }
-        });
-        return future;
+                    return new ConnectResult(key, String.valueOf(result.get("server")),
+                            readEnabledModels(result).stream().map(ModelId::displayName)
+                                    .collect(Collectors.joining(", ")), "");
+                });
     }
 
-    private HttpUrl apiUrl(final String path) {
-        final HttpUrl origin = HttpUrl.parse(baseUrl);
-        return origin == null ? null : origin.newBuilder().encodedPath(path).query(null).fragment(null).build();
+    private @NotNull CompletableFuture<HttpResponse<byte[]>> sendAccountRequest(
+            final java.net.http.HttpRequest.@NotNull Builder builder
+    ) {
+        if (!callTimeout.isZero() && !callTimeout.isNegative()) builder.timeout(callTimeout);
+        return noRedirectClient.sendAsync(builder.build(), new LimitedBodyHandler(MAX_RESPONSE_BYTES));
     }
 
-    /** Never forward the key to a redirect destination. */
-    private OkHttpClient noRedirectClient() {
-        return client.newBuilder().followRedirects(false).followSslRedirects(false).build();
+    private static Map<String, Object> readJson(final HttpResponse<byte[]> response) {
+        return InferenceJsonCodec.readObject(new String(response.body(), StandardCharsets.UTF_8));
     }
 
-    public @NotNull Call newCall(
+    private static boolean isSuccessful(final HttpResponse<?> response) {
+        return response.statusCode() >= 200 && response.statusCode() < 300;
+    }
+
+    private @Nullable URI apiUrl(final String path) {
+        try {
+            final URI origin = URI.create(baseUrl);
+            return isHttpUrl(origin) ? new URI(origin.getScheme(), origin.getRawAuthority(), path, null, null) : null;
+        } catch (final IllegalArgumentException | URISyntaxException ignored) {
+            return null;
+        }
+    }
+
+    /** Sends one model request; its body is capped and the call is cancelled when the server shuts down. */
+    public synchronized @NotNull CompletableFuture<HttpResponse<byte[]>> callAsync(
             final @NotNull HttpRequest httpRequest,
             final @NotNull ModelId model
     ) {
-        if (!isAcceptingRequests()) throw new IllegalStateException("Inference client is paused or closed");
-        final String rawUrl = baseUrl + PATH;
-        final HttpUrl parsedUrl = HttpUrl.parse(rawUrl);
-
-        if (parsedUrl == null) {
+        if (!isAcceptingRequests()) throw new IllegalStateException("Inference client is closed");
+        final String rawUrl = baseUrl + PATH
+                + "?model-family=" + URLEncoder.encode(model.family(), StandardCharsets.UTF_8)
+                + "&model-name=" + URLEncoder.encode(model.modelName(), StandardCharsets.UTF_8);
+        final URI url;
+        try {
+            url = URI.create(rawUrl);
+        } catch (final IllegalArgumentException ex) {
             throw new IllegalStateException(
-                    "Invalid ML inference endpoint URL: '" + rawUrl + "'. " +
-                            "Check inference.endpoint.base-url"
-            );
+                    "Invalid ML inference endpoint URL: '" + rawUrl + "'. Check inference.endpoint.base-url", ex);
+        }
+        if (!isHttpUrl(url)) {
+            throw new IllegalStateException(
+                    "Invalid ML inference endpoint URL: '" + rawUrl + "'. Check inference.endpoint.base-url");
         }
 
-        final HttpUrl url = authApplier.applyToUrl(parsedUrl.newBuilder()
-                .addQueryParameter("model-family", model.family())
-                .addQueryParameter("model-name", model.modelName())
-                .build());
-
-        final Request.Builder requestBuilder = new Request.Builder()
-                .url(url)
-                .method(httpRequest.getMethod(), httpRequest.getBody())
-                // Several models run side by side, so the request names its own model.
-                .header("X-React-Player-Scoped", "true");
+        final java.net.http.HttpRequest.Builder requestBuilder =
+                java.net.http.HttpRequest.newBuilder(authApplier.applyToUrl(url))
+                        .method(httpRequest.getMethod(),
+                                java.net.http.HttpRequest.BodyPublishers.ofByteArray(httpRequest.getBody()))
+                        .header("Content-Type", httpRequest.getContentType())
+                        // Several models run side by side, so the request names its own model.
+                        .header("X-React-Player-Scoped", "true");
+        if (!callTimeout.isZero() && !callTimeout.isNegative()) requestBuilder.timeout(callTimeout);
 
         httpRequest.getHeaders().forEach(requestBuilder::header);
         authApplier.applyToHeaders(requestBuilder);
 
-        return this.client.newCall(requestBuilder.build());
+        final CompletableFuture<HttpResponse<byte[]>> call =
+                client.sendAsync(requestBuilder.build(), new LimitedBodyHandler(MAX_RESPONSE_BYTES));
+        inFlight.add(call);
+        call.whenComplete((response, failure) -> inFlight.remove(call));
+        return call;
     }
-
-    public synchronized void callAsync(
-            final @NotNull HttpRequest request,
-            final @NotNull ModelId model,
-            final @NotNull Callback callback
-    ) {
-        this.newCall(request, model).enqueue(callback);
-    }
-
 
     public synchronized void shutdown() {
         closed.set(true);
-        suspended.set(true);
         requestEpoch.incrementAndGet();
-        this.client.dispatcher().cancelAll();
-        try {
-            this.client.dispatcher().executorService().shutdown();
-        } catch (final Throwable ignored) {
-        }
-
-        try {
-            this.client.connectionPool().evictAll();
-        } catch (final Throwable ignored) {
-        }
-
-        try {
-            final Cache cache = this.client.cache();
-
-            if (cache != null) {
-                cache.close();
+        inFlight.forEach(call -> call.cancel(true));
+        inFlight.clear();
+        if (HTTP_CLIENT_SHUTDOWN_NOW == null) return;
+        for (final HttpClient httpClient : List.of(client, noRedirectClient)) {
+            try {
+                HTTP_CLIENT_SHUTDOWN_NOW.invoke(httpClient);
+            } catch (final IllegalAccessException | InvocationTargetException ex) {
+                logger.debug("Could not shut down the inference HTTP client", ex);
             }
-        } catch (final Throwable ignored) {
+        }
+    }
+
+    private static Method findShutdownMethod() {
+        try {
+            return HttpClient.class.getMethod("shutdownNow");
+        } catch (final NoSuchMethodException ignored) {
+            return null;
         }
     }
 
@@ -350,9 +332,9 @@ public final class InferenceServer {
             final @NotNull Logger logger,
             final @NotNull AuthSettings auth
     ) {
-        if (HttpUrl.parse(baseUrl + PATH) == null) {
+        if (apiUrl(PATH) == null) {
             logger.warn(
-                    "ML inference endpoint '{}{}' is not a valid URL, requests will fail",
+                    "ML inference endpoint '{}{}' is not a valid HTTP URL, requests will fail",
                     baseUrl, PATH
             );
         }
@@ -378,6 +360,13 @@ public final class InferenceServer {
         if (value == null || value.isBlank()) {
             logger.warn("ML inference config '{}' is blank, requests may be rejected", key);
         }
+    }
+
+    private static boolean isHttpUrl(final @NotNull URI uri) {
+        final String scheme = uri.getScheme();
+
+        return uri.getHost() != null
+                && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme));
     }
 
     private static @NotNull String normalizeUrl(

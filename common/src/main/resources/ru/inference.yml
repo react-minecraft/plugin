@@ -24,7 +24,4 @@ auth:
 
 client:
   connect-timeout: 10s
-  read-timeout: 10s
-  write-timeout: 10s
   call-timeout: 10s
-  retry-on-failure: true

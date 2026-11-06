@@ -7,21 +7,20 @@ import com.g4vrk.react.inference.model.ModelId;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.player.model.rotation.Rotation;
 import com.g4vrk.react.player.model.rotation.RotationData;
-import com.g4vrk.react.util.moshi.MoshiHolder;
+import com.g4vrk.react.inference.json.InferenceJsonCodec;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
+import java.nio.charset.StandardCharsets;
 import org.jetbrains.annotations.NotNull;
 
 /** Flower models read the last rotations as JSON, in the format of plugin version 1.3.0. */
 public final class FlowerModel implements AimModel {
 
-    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+    private static final String JSON = "application/json; charset=utf-8";
 
     private final ModelId id;
     // Rotations since the last request, per player; each model keeps its own request step.
@@ -60,7 +59,7 @@ public final class FlowerModel implements AimModel {
             if (token != null) {
                 payload.put("token", token);
             }
-            return new HttpRequest("POST", RequestBody.create(MoshiHolder.REQUEST_ADAPTER.toJson(payload), JSON));
+            return new HttpRequest("POST", InferenceJsonCodec.writeObject(payload).getBytes(StandardCharsets.UTF_8), JSON);
         });
     }
 

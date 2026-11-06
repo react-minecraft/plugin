@@ -27,7 +27,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +63,8 @@ public final class InferenceServer {
 
     private final AtomicBoolean closed = new AtomicBoolean();
     private final AtomicLong requestEpoch = new AtomicLong();
+    // A new /react connect without a code replaces the one still waiting.
+    private final AtomicLong deviceLogin = new AtomicLong();
     private final Set<CompletableFuture<?>> inFlight = ConcurrentHashMap.newKeySet();
 
     public long requestEpoch() { return requestEpoch.get(); }
@@ -228,19 +232,85 @@ public final class InferenceServer {
         return sendAccountRequest(java.net.http.HttpRequest.newBuilder(url)
                 .header("Content-Type", "application/json; charset=utf-8")
                 .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)))
-                .thenApply(response -> {
-                    final Map<String, Object> result;
+                .thenApply(InferenceServer::connectResult);
+    }
+
+    /** The link /react connect without a code prints: the owner opens it and approves the server. */
+    public record DeviceLink(String url, String code, long expiresInSeconds) {
+    }
+
+    /** Starts a link login; onLink gets the link to show, the future completes when the owner answers. */
+    public @NotNull CompletableFuture<ConnectResult> connectWithLink(
+            final @NotNull String pluginVersion,
+            final @NotNull Consumer<DeviceLink> onLink
+    ) {
+        final long attempt = deviceLogin.incrementAndGet();
+        final URI start = apiUrl("/api/v1/auth/device");
+        final URI token = apiUrl("/api/v1/auth/device/token");
+        if (start == null || token == null) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Invalid inference.endpoint.base-url"));
+        }
+        return sendAccountRequest(java.net.http.HttpRequest.newBuilder(start)
+                .header("X-Plugin-Version", pluginVersion)
+                .POST(java.net.http.HttpRequest.BodyPublishers.noBody()))
+                .thenCompose(response -> {
+                    final Map<String, Object> json;
                     try {
-                        result = readJson(response);
+                        json = readJson(response);
                     } catch (RuntimeException exception) {
-                        return new ConnectResult(null, "", "", "HTTP " + response.statusCode());
+                        return CompletableFuture.completedFuture(refused("HTTP " + response.statusCode()));
                     }
-                    if (!isSuccessful(response) || !(result.get("api_key") instanceof String key)) {
-                        return new ConnectResult(null, "", "", String.valueOf(result.get("detail")));
+                    if (!isSuccessful(response) || !(json.get("device_code") instanceof String deviceCode)
+                            || !(json.get("expires_in") instanceof Number expiresIn)) {
+                        return CompletableFuture.completedFuture(refused(String.valueOf(json.get("detail"))));
                     }
-                    return new ConnectResult(key, String.valueOf(result.get("server")),
-                            displayNames(readEnabledModels(result)), "");
+                    final long interval = json.get("interval") instanceof Number number
+                            ? Math.max(1L, number.longValue()) : 3L;
+                    onLink.accept(new DeviceLink(String.valueOf(json.get("verification_uri_complete")),
+                            String.valueOf(json.get("user_code")), expiresIn.longValue()));
+                    return pollDeviceLogin(attempt, token, deviceCode, interval,
+                            System.currentTimeMillis() + expiresIn.longValue() * 1000L);
                 });
+    }
+
+    private CompletableFuture<ConnectResult> pollDeviceLogin(
+            final long attempt,
+            final URI url,
+            final String deviceCode,
+            final long intervalSeconds,
+            final long deadlineMillis
+    ) {
+        if (attempt != deviceLogin.get() || closed.get()) {
+            return CompletableFuture.completedFuture(refused("replaced by a newer /react connect"));
+        }
+        if (System.currentTimeMillis() > deadlineMillis) {
+            return CompletableFuture.completedFuture(refused("the link expired, run /react connect again"));
+        }
+        final String body = InferenceJsonCodec.writeObject(Map.of("device_code", deviceCode));
+        return CompletableFuture.runAsync(() -> { }, CompletableFuture.delayedExecutor(intervalSeconds, TimeUnit.SECONDS))
+                .thenCompose(ignored -> sendAccountRequest(java.net.http.HttpRequest.newBuilder(url)
+                        .header("Content-Type", "application/json; charset=utf-8")
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))))
+                .thenCompose(response -> response.statusCode() == 202
+                        ? pollDeviceLogin(attempt, url, deviceCode, intervalSeconds, deadlineMillis)
+                        : CompletableFuture.completedFuture(connectResult(response)));
+    }
+
+    private static ConnectResult connectResult(final HttpResponse<byte[]> response) {
+        final Map<String, Object> result;
+        try {
+            result = readJson(response);
+        } catch (RuntimeException exception) {
+            return refused("HTTP " + response.statusCode());
+        }
+        if (!isSuccessful(response) || !(result.get("api_key") instanceof String key)) {
+            return refused(String.valueOf(result.get("detail")));
+        }
+        return new ConnectResult(key, String.valueOf(result.get("server")), displayNames(readEnabledModels(result)), "");
+    }
+
+    private static ConnectResult refused(final String detail) {
+        return new ConnectResult(null, "", "", detail);
     }
 
     private static String displayNames(final Set<ModelId> models) {

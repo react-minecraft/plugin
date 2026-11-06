@@ -16,21 +16,24 @@ import com.g4vrk.react.api.addon.loader.impl.JarAddonLoader;
 import com.g4vrk.react.api.addon.repository.impl.JarAddonRepository;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
 import com.g4vrk.react.api.channel.print.impl.VerbosePrinter;
+import com.g4vrk.react.check.processor.rotation.RotationFactory;
+import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
+import com.g4vrk.react.command.argument.impl.ConnectArgument;
+import com.g4vrk.react.command.argument.impl.ConnectCheckArgument;
+import com.g4vrk.react.inference.server.InferenceKeyStore;
+import com.g4vrk.react.listeners.packet.RotationListener;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
 import com.g4vrk.react.command.argument.impl.ReloadArgument;
 import com.g4vrk.react.command.argument.impl.VerboseArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.check.CheckConfigRegistry;
 import com.g4vrk.react.config.check.impl.SimpleCheckConfigRegistry;
-import com.g4vrk.react.check.processor.rotation.RotationFactory;
-import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.config.lang.Language;
 import com.g4vrk.react.config.manager.YamlConfigManager;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
 import com.g4vrk.react.listeners.bukkit.CombatListener;
 import com.g4vrk.react.listeners.bukkit.ConnectionListener;
-import com.g4vrk.react.listeners.packet.RotationListener;
 import com.g4vrk.react.inference.aim.InferenceAimProcessor;
 import com.g4vrk.react.inference.server.InferenceServer;
 import com.g4vrk.react.inference.server.settings.InferenceSettingsFactory;
@@ -73,7 +76,6 @@ import org.incendo.cloud.paper.LegacyPaperCommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -82,6 +84,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import com.g4vrk.react.inference.model.AimModels;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -149,6 +152,7 @@ public class React {
     private ReactPlaceholderExpansion placeholderExpansion;
 
     private CombatListener combatListener;
+    private AimModels aimModels;
 
     private final Set<PacketListenerCommon> registeredListeners = new ObjectOpenHashSet<>();
 
@@ -298,6 +302,8 @@ public class React {
 
         this.scheduler = schedulaAPI.createScheduler();
 
+        this.aimModels = AimModels.create(playerRegistry, scheduler);
+
         logger.info("Creating Channel system...");
 
         final Set<Consumer<Player>> joinHandlers = new ObjectOpenHashSet<>();
@@ -351,11 +357,14 @@ public class React {
         commandManager.command(alertsArgument.build());
         commandManager.command(verboseArgument.build());
         commandManager.command(reloadArgument.build());
+        commandManager.command(new ConnectArgument(commandBuilderFactory, scheduler).build());
+        commandManager.command(new ConnectCheckArgument(commandBuilderFactory, scheduler).build());
         commandManager.command(new HistoryArgument(commandBuilderFactory, inferenceHistoryPrinter, playerRegistry).build());
 
         logger.info("React main command successfully prepared!");
 
         logger.info("Registering packet listeners...");
+        this.registerPacketListeners(aimModels.packetListeners());
         this.registerPacketListeners(
                 new RotationListener(playerRegistry, new RotationProcessor(new RotationFactory()))
         );
@@ -392,7 +401,9 @@ public class React {
                     plugin.getName(),
                     "g4vrk",
                     plugin.getDescription().getVersion(),
-                    playerRegistry
+                    playerRegistry,
+                    offlinePlayer -> inferenceServer == null ? "Unavailable" :
+                            inferenceServer.getSelectedModelDisplay()
             );
 
             this.placeholderExpansion.register();
@@ -411,6 +422,12 @@ public class React {
         logger.info("Our telegram channel: https://telegram.me/react_ac");
         logger.info("Our official site: https://www.react-ac.space");
         logger.info(" ");
+    }
+
+    /** Stores the key from /react connect in this language's inference.yml. */
+    public void saveApiKey(final @NotNull String apiKey) throws java.io.IOException {
+        // The config manager extracts the language's files straight into the data folder.
+        InferenceKeyStore.save(new File(plugin.getDataFolder(), "inference.yml").toPath(), apiKey);
     }
 
     public @NotNull CompletableFuture<Void> reloadAsync() {
@@ -449,6 +466,7 @@ public class React {
 
         final InferenceSettings inferenceSettings = inferenceSettingsFactory.create(inferenceConfig.root());
 
+        final boolean endpointChanged = !this.inferenceServer.getEndpoint().equals(inferenceSettings.getEndpoint());
         this.inferenceServer.shutdown();
 
         this.inferenceServer = new InferenceServer(logger, inferenceSettings);
@@ -468,7 +486,10 @@ public class React {
 
         for (final ReactPlayer player : this.playerRegistry.all()) {
 
-            player.rotationData.resizeHistory(playerFactory.getRotationsBufferSize());
+            if (endpointChanged) {
+                aimModels.clearHistory(player.getUniqueId());
+                player.rotationData.clear();
+            }
             player.checkManager.reload();
 
         }
@@ -572,7 +593,7 @@ public class React {
 
                 this.addonMap.put(addon.name(), addon);
 
-            } catch (final Exception ex) {
+            } catch (final Exception | LinkageError ex) {
 
                 //noinspection StringConcatenationArgumentToLogCall
                 logger.error("Failed to load addon " + source, ex);
@@ -588,8 +609,9 @@ public class React {
 
                 addon.setEnabled(true);
 
-            } catch (final Exception ex) {
+            } catch (final Exception | LinkageError ex) {
 
+                // An addon built against other plugin classes must not take the plugin down with it.
                 //noinspection StringConcatenationArgumentToLogCall
                 logger.error("Failed to enable addon " + addon.name(), ex);
 

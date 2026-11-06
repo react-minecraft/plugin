@@ -24,14 +24,14 @@ alerts:
 
   # Actions performed when alerts are enabled
   on-enable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions performed when alerts are disabled
   on-disable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
+    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
+    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 # Verbose-related actions
@@ -39,14 +39,14 @@ verbose:
 
   # Actions performed when verbose are enabled
   on-enable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
+    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
+    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions performed when verbose are disabled
   on-disable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
+    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
+    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 
@@ -55,13 +55,13 @@ reload:
 
   # Actions performed when a reload starts
   on-start:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка плагина..."
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка..."
+    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Начата перезагрузка плагина..."
+    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Начата перезагрузка..."
     - "[sound] block.note_block.pling;1.0;1.0"
 
   # Actions performed when a reload finishes
   on-finish:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин перезагружен!"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
+    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Плагин перезагружен!"
+    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
     - "[sound] entity.player.levelup;1.0;1.0"
 

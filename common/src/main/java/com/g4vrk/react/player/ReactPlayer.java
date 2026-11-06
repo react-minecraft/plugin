@@ -7,20 +7,22 @@ import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.manager.CheckManager;
 import com.g4vrk.react.history.InferenceHistory;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
-import com.g4vrk.react.player.model.rotation.RotationData;
 import com.g4vrk.react.statistic.InferenceStatistic;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StoredInference;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import com.g4vrk.react.player.model.rotation.RotationData;
+import com.g4vrk.react.check.impl.aim.AimAI;
 
 public final class ReactPlayer {
+
+    private static final int MAX_ROTATION_WINDOW = 40;
 
     @Getter
     private final UUID uniqueId;
@@ -30,7 +32,7 @@ public final class ReactPlayer {
     public final Player bukkitPlayer;
 
     public final CombatActivity combatActivity;
-    public final RotationData rotationData;
+    public final RotationData rotationData = new RotationData(MAX_ROTATION_WINDOW);
 
     public final AlertPrinter alertPrinter;
     public final VerbosePrinter verbosePrinter;
@@ -45,8 +47,7 @@ public final class ReactPlayer {
     public ReactPlayer(
             @NotNull UUID uniqueId,
             @NotNull String name,
-            @NotNull Player bukkitPlayer,
-            int rotationHistorySize
+            @NotNull Player bukkitPlayer
     ) {
         this.uniqueId = uniqueId;
         this.name = name;
@@ -68,7 +69,20 @@ public final class ReactPlayer {
         this.inferenceStatistic = new InferenceStatistic(this.inferenceHistory);
 
         this.combatActivity = new CombatActivity();
-        this.rotationData = new RotationData(rotationHistorySize);
+    }
+
+    public void clearTransientState() {
+        if (React.INSTANCE.getAimModels() != null) {
+            React.INSTANCE.getAimModels().resetPlayer(uniqueId);
+        }
+        rotationData.clear();
+        combatActivity.reset();
+        final AimAI aim =
+                checkManager.getCheck(
+                        AimAI.class);
+        if (aim != null) {
+            aim.resetSamples();
+        }
     }
 
     public boolean isDataReady() {

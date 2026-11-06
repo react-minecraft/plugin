@@ -1,5 +1,6 @@
 package com.g4vrk.react.check.processor.rotation;
 
+import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.player.model.rotation.Rotation;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.player.model.rotation.RotationData;
@@ -27,7 +28,11 @@ public final class RotationProcessor {
             rotationData.push(current);
         }
 
-        player.checkManager.onRotationChange(rotationData);
+        final AimAI check = player.checkManager.getCheck(AimAI.class);
+
+        if (check != null) {
+            check.onRotation(rotationData);
+        }
 
     }
 

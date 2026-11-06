@@ -15,12 +15,13 @@ tasks.named<ProcessResources>("processResources") {
 
 dependencies {
 
+    api(project(":api"))
+
     compileOnly(libs.paper.api)
 
     compileOnly(libs.placeholderapi)
     compileOnly(libs.packetevents)
 
-    implementation(libs.flatbuffers)
 
     implementation(libs.hikari) {
         exclude(group = "org.slf4j", module = "slf4j-api")
@@ -47,6 +48,5 @@ dependencies {
     implementation(libs.textserializer.legacy)
     implementation(libs.actions)
     implementation(libs.schedula.common)
-    implementation(libs.functionalconfiguration)
 
 }

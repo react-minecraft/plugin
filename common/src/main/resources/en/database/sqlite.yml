@@ -24,3 +24,6 @@ pragmas:
 
   # Negative values configure the cache in KiB. -20000 is approximately 20 MiB.
   cache-size: -20000
+
+# Не меняйте / Do not change
+config-version: 1

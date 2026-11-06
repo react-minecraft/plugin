@@ -22,3 +22,6 @@ timeouts:
   connect: 10s
   socket: 10s
   server-selection: 10s
+
+# Не меняйте / Do not change
+config-version: 1

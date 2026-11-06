@@ -1,10 +1,8 @@
 package com.g4vrk.react.listeners.bukkit;
 
-import com.g4vrk.config.Config;
+import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.parse.time.TimeParser;
-import com.g4vrk.react.parse.time.TimeValue;
 import com.g4vrk.react.player.CombatActivity;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.player.registry.PlayerRegistry;
@@ -13,12 +11,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import com.g4vrk.react.player.CombatTargets;
+import com.g4vrk.react.api.rcp.player.CombatTargets;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.TimeUnit;
-
-public class CombatListener implements Listener, ReloadObserver {
+public class CombatListener implements Listener, ReloadObserver<MainConfig> {
 
     private final PlayerRegistry playerRegistry;
 
@@ -37,21 +33,12 @@ public class CombatListener implements Listener, ReloadObserver {
     }
 
     public void reload() {
-
-        final Config config = React.INSTANCE.getMainConfig();
-
-        this.onReload(config);
-
+        this.onReload(React.INSTANCE.getConfigs().main());
     }
 
     @Override
-    public void onReload(@NotNull Config config) {
-
-        combatTicks = TimeParser.parseOrDefault(
-                config.node("player", "combat", "time").getString("2s"),
-                new TimeValue(2, TimeUnit.SECONDS)
-        ).toMillis() / 50L;
-
+    public void onReload(@NotNull MainConfig config) {
+        combatTicks = Math.max(1L, config.player().combat().time().toMillis() / 50L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -64,7 +51,9 @@ public class CombatListener implements Listener, ReloadObserver {
         activate(localDamager);
     }
 
-    /** Also used for packet attacks on invulnerable training mannequins. */
+    /**
+     * Also used for packet attacks on invulnerable training mannequins.
+     */
     public void activate(ReactPlayer localDamager) {
 
         final CombatActivity damagerCombatActivity = localDamager != null ? localDamager.combatActivity : null;

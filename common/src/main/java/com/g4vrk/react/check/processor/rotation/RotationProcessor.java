@@ -1,7 +1,7 @@
 package com.g4vrk.react.check.processor.rotation;
 
 import com.g4vrk.react.check.impl.aim.AimAI;
-import com.g4vrk.react.player.model.rotation.Rotation;
+import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.player.model.rotation.RotationData;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +20,10 @@ public final class RotationProcessor {
 
         final RotationData rotationData = player.rotationData;
 
-        synchronized (rotationData) {
-            final Rotation previous = rotationData.current();
+        final Rotation current;
 
-            final Rotation current = this.rotationFactory.create(yaw, pitch, previous);
+        synchronized (rotationData) {
+            current = this.rotationFactory.create(yaw, pitch, rotationData.current());
 
             rotationData.push(current);
         }
@@ -31,7 +31,7 @@ public final class RotationProcessor {
         final AimAI check = player.checkManager.getCheck(AimAI.class);
 
         if (check != null) {
-            check.onRotation(rotationData);
+            check.onRotation(current);
         }
 
     }

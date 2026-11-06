@@ -1,15 +1,11 @@
 rootProject.name = "react"
 
 include(
+    "api",
     "common",
     "paper",
     "folia"
 )
-
-// kits and auth are local modules kept out of this repository; a fresh clone builds without them.
-listOf("kits", "auth")
-    .filter { file("$it/build.gradle.kts").isFile }
-    .forEach { include(it) }
 
 dependencyResolutionManagement {
 

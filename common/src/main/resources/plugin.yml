@@ -43,7 +43,8 @@ permissions:
       react.command.usage: true
       react.command.reload: true
       react.command.reboot: true
-      react.command.connect: true
+      react.command.link: true
+      react.command.rcps: true
       react.command.history: true
       react.alerts: true
       react.verbose: true
@@ -51,7 +52,9 @@ permissions:
     default: op
   react.command.reboot:
     default: op
-  react.command.connect:
+  react.command.link:
+    default: op
+  react.command.rcps:
     default: op
   react.command.history:
     default: op

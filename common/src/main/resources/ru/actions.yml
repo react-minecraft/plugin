@@ -5,8 +5,6 @@
 # Исходный код плагина: https://github.com/g4vrk/React
 # (ИИ модель не входит в проект)
 #
-# Купить доступ к нашей модели -> https://www.react-ac.space/
-#
 
 # Действия, вот весь список:
 
@@ -24,14 +22,14 @@ alerts:
 
   # Действия при включении оповещений
   on-enable:
-    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
-    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Действия при выключении оповещений
   on-disable:
-    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
-    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 # Действия связанные с оповещениями при любом анализе
@@ -39,14 +37,14 @@ verbose:
 
   # Действия при включении оповещений
   on-enable:
-    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
-    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Действия при выключении оповещений
   on-disable:
-    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
-    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 # Действия связанные с перезагрузкой плагина
@@ -54,13 +52,40 @@ reload:
 
   # Действия при начале перезагрузки
   on-start:
-    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Начата перезагрузка плагина..."
-    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Начата перезагрузка..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка плагина..."
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка..."
     - "[sound] block.note_block.pling;1.0;1.0"
 
   # Действия при окончании перезагрузки
   on-finish:
-    - "[msg] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Плагин перезагружен!"
-    - "[bar] <b><gradient:#ffffff:#9c9c9c>⚡ React</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин перезагружен!"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
     - "[sound] entity.player.levelup;1.0;1.0"
 
+# Помощь и ответы на ошибки команд
+help:
+
+  # /react без аргументов
+  root:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Команды:"
+    - "[msg] <color:#eb2544>/react alerts</color> <gray>- оповещения"
+    - "[msg] <color:#eb2544>/react verbose</color> <gray>- мониторинг аналитики"
+    - "[msg] <color:#eb2544>/react history <игрок></color> <gray>- история проверок"
+    - "[msg] <color:#eb2544>/react reload</color> <gray>- перезагрузить конфиги"
+    - "[msg] <color:#eb2544>/react reboot</color> <gray>- перезапустить плагин"
+    - "[msg] <color:#eb2544>/react rcps</color> <gray>- установленные RCP"
+
+  # Нет прав на команду
+  no-permission:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Недостаточно прав."
+
+  # Неизвестная команда или неверные аргументы
+  unknown-command:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Неизвестная команда.</color> <gray>Список: /react"
+
+  # Команда только для игроков
+  player-only:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Команда доступна только игрокам."
+
+# Не меняйте / Do not change
+config-version: 1

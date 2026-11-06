@@ -1,6 +1,5 @@
 package com.g4vrk.react.punish;
 
-import com.g4vrk.config.Config;
 import com.g4vrk.functionalActions.ExecutableAction;
 import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
@@ -28,7 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
-public final class PunishmentManager implements ReloadObserver {
+public final class PunishmentManager implements ReloadObserver<ConfigurationNode> {
 
     private static final char PERIOD_SEPARATOR = ';';
 
@@ -98,15 +97,13 @@ public final class PunishmentManager implements ReloadObserver {
 
     public void reload() {
 
-        final Config config = React.INSTANCE.getPunishmentsConfig();
-
-        this.onReload(config);
+        this.onReload(React.INSTANCE.getConfigs().punishments());
 
     }
 
     @Override
     public void onReload(
-            final @NotNull Config config
+            final @NotNull ConfigurationNode config
     ) {
         rulesByCheck.clear();
 

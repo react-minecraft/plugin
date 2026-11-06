@@ -1,0 +1,25 @@
+
+#
+# React RCP - модели и подключение к React
+#
+# RCP скачивается с GitHub: https://github.com/react-minecraft/rcp
+# Каждая сборка проверяется по SHA-256 и подписи ed25519.
+#
+# Купить доступ к нашей модели -> https://www.react-ac.space/
+#
+
+settings:
+
+  # Загружать ли React RCP
+  enabled: true
+
+  # true - проверять новую версию при старте и при /react reboot
+  # false - скачать, только если RCP ещё нет
+  auto-update: true
+
+  # release - только релизы
+  # all - любая сборка CI (nightly)
+  channel: release
+
+# Не меняйте / Do not change
+config-version: 1

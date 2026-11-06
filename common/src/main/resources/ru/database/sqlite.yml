@@ -24,3 +24,6 @@ pragmas:
 
   # Отрицательное значение задаёт кэш в KiB. -20000 — примерно 20 MiB.
   cache-size: -20000
+
+# Не меняйте / Do not change
+config-version: 1

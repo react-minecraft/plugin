@@ -1,7 +1,5 @@
 package com.g4vrk.react;
 
-import com.g4vrk.config.Config;
-import com.g4vrk.config.loader.YamlConfigLoader;
 import com.g4vrk.functionalActions.defaults.DefaultActions;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
@@ -13,28 +11,28 @@ import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
 import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
 import com.g4vrk.react.api.channel.print.impl.VerbosePrinter;
+import com.g4vrk.react.api.rcp.RCPLifecycle;
 import com.g4vrk.react.api.rcp.internal.manager.RCPManager;
 import com.g4vrk.react.check.processor.rotation.RotationFactory;
 import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
-import com.g4vrk.react.command.argument.impl.ConnectArgument;
-import com.g4vrk.react.command.argument.impl.ConnectCheckArgument;
 import com.g4vrk.react.command.argument.impl.RebootArgument;
-import com.g4vrk.react.inference.server.InferenceKeyStore;
 import com.g4vrk.react.listeners.packet.RotationListener;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
 import com.g4vrk.react.command.argument.impl.ReloadArgument;
 import com.g4vrk.react.command.argument.impl.VerboseArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
-import com.g4vrk.react.config.check.CheckConfigRegistry;
-import com.g4vrk.react.config.check.impl.SimpleCheckConfigRegistry;
+import com.g4vrk.react.command.HelpActions;
+import com.g4vrk.react.rcp.update.RCPUpdater;
+import com.g4vrk.schedula.task.TickSchedule;
+import org.incendo.cloud.exception.InvalidCommandSenderException;
+import org.incendo.cloud.exception.InvalidSyntaxException;
+import org.incendo.cloud.exception.NoPermissionException;
+import org.incendo.cloud.exception.NoSuchCommandException;
+import org.spongepowered.configurate.ConfigurateException;
+import com.g4vrk.react.config.ReactConfigs;
 import com.g4vrk.react.config.lang.Language;
-import com.g4vrk.react.config.manager.YamlConfigManager;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
-import com.g4vrk.react.inference.aim.InferenceAimProcessor;
-import com.g4vrk.react.inference.server.InferenceServer;
-import com.g4vrk.react.inference.server.settings.InferenceSettings;
-import com.g4vrk.react.inference.server.settings.InferenceSettingsFactory;
 import com.g4vrk.react.listeners.bukkit.CombatListener;
 import com.g4vrk.react.listeners.bukkit.ConnectionListener;
 import com.g4vrk.react.placeholder.ReactPlaceholderExpansion;
@@ -82,7 +80,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import com.g4vrk.react.inference.model.AimModels;
+import com.g4vrk.react.rcp.RCPHost;
+import com.g4vrk.react.command.argument.impl.RCPCommandArgument;
+import com.g4vrk.react.command.argument.impl.RCPListArgument;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -115,34 +115,22 @@ public class React {
     private AddonManager addonManager;
 
     private RCPManager rcpManager;
+    private RCPUpdater rcpUpdater;
+    private RCPHost rcpHost;
 
     private ResourceHolder resourceHolder;
 
     private PlayerFactory playerFactory;
     private PlayerRegistry playerRegistry;
 
-    private YamlConfigManager yamlConfigManager;
+    private ReactConfigs configs;
 
-    private Map<String, Config> configMap;
-
-    private Config actionsConfig;
-    private Config mainConfig;
-    private Config punishmentsConfig;
-    private Config historyConfig;
-    private Config inferenceConfig;
+    private HelpActions helpActions;
 
     private DatabaseSettings databaseSettings;
     private StorageManager storageManager;
 
-    private CheckConfigRegistry checkConfigRegistry;
-
     private SchedulaAPI schedulaAPI;
-
-    private InferenceServer inferenceServer;
-
-    private InferenceSettingsFactory inferenceSettingsFactory;
-
-    private InferenceAimProcessor inferenceAimProcessor;
 
     private AlertPrinter alertPrinter;
     private VerbosePrinter verbosePrinter;
@@ -152,7 +140,6 @@ public class React {
     private ReactPlaceholderExpansion placeholderExpansion;
 
     private CombatListener combatListener;
-    private AimModels aimModels;
 
     private final Set<PacketListenerCommon> registeredListeners = new ObjectOpenHashSet<>();
 
@@ -239,48 +226,15 @@ public class React {
 
         logger.info("Language successfully resolved: {}", languageNameLower.toUpperCase());
 
-        final File configsDir = new File(pluginDir, languageNameLower);
+        this.configs = new ReactConfigs(pluginDir.toPath(), languageNameLower, logger);
 
-        final YamlConfigLoader configLoader = new YamlConfigLoader(false);
-
-        this.yamlConfigManager = new YamlConfigManager(configLoader);
-
-        this.yamlConfigManager.expectedConfigs(
-                "checks/aim-ai.yml",
-                "actions.yml",
-                "main-config.yml",
-                "punishments.yml",
-                "history.yml",
-                "inference.yml",
-                "database.yml",
-                "database/h2.yml",
-                "database/mysql.yml",
-                "database/mongodb.yml",
-                "database/sqlite.yml"
-        );
-
-        this.configMap = new Object2ObjectOpenHashMap<>();
         logger.info("Loading configurations...");
         try {
-            logger.info("Preparing files...");
-            this.yamlConfigManager.prepareExpected(resourceHolder, languageNameLower, configsDir);
-
-            this.configMap.putAll(yamlConfigManager.loadAndSave(configsDir));
-            logger.info("Configurations successfully loaded.");
-
-        } catch (final Exception ex) {
+            this.configs.load();
+        } catch (final ConfigurateException ex) {
             throw new RuntimeException("An internal error occurred when trying to load configurations", ex);
         }
-
-        this.checkConfigRegistry = new SimpleCheckConfigRegistry(configMap);
-
-        this.actionsConfig = Objects.requireNonNull(configMap.get("actions.yml"));
-        this.mainConfig = Objects.requireNonNull(configMap.get("main-config.yml"));
-        this.punishmentsConfig = Objects.requireNonNull(configMap.get("punishments.yml"));
-        this.historyConfig = Objects.requireNonNull(configMap.get("history.yml"));
-        this.inferenceConfig = Objects.requireNonNull(configMap.get("inference.yml"));
-
-        logger.info("Successfully loaded {} configurations: {}", this.configMap.size(), String.join(", ", this.configMap.keySet()));
+        logger.info("Configurations successfully loaded.");
 
         this.actionRegistry = new SimpleActionRegistry<>(true);
 
@@ -291,11 +245,8 @@ public class React {
         logger.info("Loading addons...");
         this.loadAddons();
 
-        logger.info("Loading RCP providers...");
-        this.loadRCP();
-
         logger.info("Creating Data management modules...");
-        this.databaseSettings = new DatabaseSettingsFactory().create(configMap, pluginDir);
+        this.databaseSettings = new DatabaseSettingsFactory().create(configs.database(), configs.databaseType(), pluginDir);
         this.storageManager = new StorageManager(logger, databaseSettings);
         this.storageManager.start();
 
@@ -303,15 +254,12 @@ public class React {
 
         this.playerRegistry = new PlayerRegistry();
 
-        this.inferenceSettingsFactory = new InferenceSettingsFactory();
-        final InferenceSettings inferenceSettings = inferenceSettingsFactory.create(inferenceConfig.root());
-
-        logger.info("Creating ML server...");
-        this.inferenceServer = new InferenceServer(logger, inferenceSettings, plugin.getDescription().getVersion());
-
         this.scheduler = schedulaAPI.createScheduler();
 
-        this.aimModels = AimModels.create(playerRegistry, scheduler);
+        this.rcpHost = new RCPHost(plugin, scheduler, playerRegistry, logger);
+
+        logger.info("Loading RCP providers...");
+        this.loadRCP();
 
         logger.info("Creating Channel system...");
 
@@ -337,10 +285,6 @@ public class React {
                 alertPrinter
         );
 
-        this.inferenceAimProcessor = new InferenceAimProcessor(
-                logger, inferenceServer, scheduler
-        );
-
         logger.info("Creating inference history modules...");
 
         this.inferenceHistoryPrinter = new InferenceHistoryPrinter(serializers.universalSerializer()::serialize);
@@ -363,18 +307,20 @@ public class React {
                 actionParser
         );
 
+        this.helpActions = new HelpActions(actionParser, configs.actions());
+        this.registerHelp();
+
         commandManager.command(alertsArgument.build());
         commandManager.command(verboseArgument.build());
         commandManager.command(reloadArgument.build());
-        commandManager.command(new ConnectArgument(commandBuilderFactory, scheduler).build());
-        commandManager.command(new ConnectCheckArgument(commandBuilderFactory, scheduler).build());
         commandManager.command(new RebootArgument(commandBuilderFactory).build());
         commandManager.command(new HistoryArgument(commandBuilderFactory, inferenceHistoryPrinter, playerRegistry).build());
+        commandManager.command(new RCPListArgument(commandBuilderFactory, rcpHost, rcpUpdater).build());
+        commandManager.command(new RCPCommandArgument(commandBuilderFactory, rcpHost, helpActions).build());
 
         logger.info("React main command successfully prepared!");
 
         logger.info("Registering packet listeners...");
-        this.registerPacketListeners(aimModels.packetListeners());
         this.registerPacketListeners(
                 new RotationListener(playerRegistry, new RotationProcessor(new RotationFactory()))
         );
@@ -395,7 +341,7 @@ public class React {
                 playerFactory,
                 storageManager,
                 (joined) -> joinHandlers.forEach(consumer -> consumer.accept(joined)),
-                (quit) -> {}
+                (quit) -> rcpHost.quit(quit.getUniqueId())
         );
         pluginManager.registerEvents(connectionListener, plugin);
 
@@ -412,8 +358,10 @@ public class React {
                     "g4vrk",
                     plugin.getDescription().getVersion(),
                     playerRegistry,
-                    offlinePlayer -> inferenceServer == null ? "Unavailable" :
-                            inferenceServer.getSelectedModelDisplay()
+                    offlinePlayer -> {
+                        final String status = rcpHost.status();
+                        return status == null ? "Unavailable" : status;
+                    }
             );
 
             this.placeholderExpansion.register();
@@ -437,56 +385,22 @@ public class React {
         logger.info(" ");
     }
 
-    /** Stores the key from /react connect in this language's inference.yml. */
-    public void saveApiKey(final @NotNull String apiKey) throws java.io.IOException {
-        // The config manager extracts the language's files straight into the data folder.
-        InferenceKeyStore.save(new File(plugin.getDataFolder(), "inference.yml").toPath(), apiKey);
-    }
-
     public @NotNull CompletableFuture<Void> reloadAsync() {
         return CompletableFuture.runAsync(this::reload);
     }
 
     public synchronized void reload() {
 
-        final String languageNameLower = language.name().toLowerCase();
-
-        final File configsDir = new File(plugin.getDataFolder(), languageNameLower);
-
-        final Map<String, Config> reloadedConfigs;
         try {
-
-            this.yamlConfigManager.prepareExpected(resourceHolder, languageNameLower, configsDir);
-
-            reloadedConfigs = yamlConfigManager.loadAndSave(configsDir);
-
-        } catch (final Exception ex) {
+            this.configs.load();
+        } catch (final ConfigurateException ex) {
             throw new RuntimeException("An internal error occurred when trying to load configurations", ex);
         }
 
-        this.configMap.clear();
-        this.configMap.putAll(reloadedConfigs);
-
-        this.actionsConfig = Objects.requireNonNull(configMap.get("actions.yml"));
-        this.mainConfig = Objects.requireNonNull(configMap.get("main-config.yml"));
-        this.punishmentsConfig = Objects.requireNonNull(configMap.get("punishments.yml"));
-        this.historyConfig = Objects.requireNonNull(configMap.get("history.yml"));
-        this.inferenceConfig = Objects.requireNonNull(configMap.get("inference.yml"));
-
+        this.helpActions.onReload(configs.actions());
         this.alertsArgument.reload();
         this.verboseArgument.reload();
         this.reloadArgument.reload();
-
-        final InferenceSettings inferenceSettings = inferenceSettingsFactory.create(inferenceConfig.root());
-
-        final boolean endpointChanged = !this.inferenceServer.getEndpoint().equals(inferenceSettings.getEndpoint());
-        this.inferenceServer.shutdown();
-
-        this.inferenceServer = new InferenceServer(logger, inferenceSettings, plugin.getDescription().getVersion());
-
-        this.inferenceAimProcessor = new InferenceAimProcessor(
-                logger, inferenceServer, scheduler
-        );
 
         this.punishmentManager.reload();
         this.inferenceHistoryPrinter.reload();
@@ -498,14 +412,10 @@ public class React {
         this.verbosePrinter.reload();
 
         for (final ReactPlayer player : this.playerRegistry.all()) {
-
-            if (endpointChanged) {
-                aimModels.clearHistory(player.getUniqueId());
-                player.rotationData.clear();
-            }
             player.checkManager.reload();
-
         }
+
+        this.reloadRCP();
 
     }
 
@@ -531,16 +441,6 @@ public class React {
             this.unregisterPacketListeners();
         } catch (final Exception ex) {
             this.logger.error("Could not unregister packet listeners", ex);
-        }
-
-        try {
-            if (this.inferenceServer != null) {
-                logger.info("Stopping inference server...");
-                this.inferenceServer.shutdown();
-                this.inferenceServer = null;
-            }
-        } catch (final Exception ex) {
-            this.logger.error("Could not stop the inference server", ex);
         }
 
         try {
@@ -580,10 +480,9 @@ public class React {
             this.logger.error("Could not clear channel recipients", ex);
         }
 
-        this.mainConfig = null;
-        this.inferenceConfig = null;
+        this.configs = null;
         this.schedulaAPI = null;
-        this.inferenceAimProcessor = null;
+        this.rcpHost = null;
         this.punishmentManager = null;
 
     }
@@ -603,10 +502,16 @@ public class React {
 
         this.rcpManager = new RCPManager(
                 plugin.getDataFolder(),
-                logger
+                logger,
+                rcpHost
         );
 
-        rcpManager.load();
+        this.rcpUpdater = new RCPUpdater(
+                rcpManager.directory().toPath(),
+                rcpManager.providersDirectory().toPath(),
+                language.name().toLowerCase(),
+                logger
+        );
 
     }
 
@@ -620,10 +525,45 @@ public class React {
 
     private void enableRCP() {
 
-        if (rcpManager != null) {
-            rcpManager.start();
+        final RCPManager manager = rcpManager;
+        final RCPUpdater updater = rcpUpdater;
+        if (manager == null || updater == null) {
+            return;
         }
 
+        scheduler.scheduleAsync(() -> {
+            updater.update();
+            try {
+                manager.start();
+            } catch (final IllegalStateException ex) {
+                logger.debug("RCP manager closed before it started", ex);
+            }
+        }, TickSchedule.instant());
+
+    }
+
+    private void registerHelp() {
+        commandManager.command(commandBuilderFactory.create().handler(context -> helpActions.root(context.sender())));
+        commandManager.exceptionController()
+                .registerHandler(NoPermissionException.class, context -> helpActions.noPermission(context.context().sender()))
+                .registerHandler(InvalidSyntaxException.class, context -> helpActions.unknownCommand(context.context().sender()))
+                .registerHandler(NoSuchCommandException.class, context -> helpActions.unknownCommand(context.context().sender()))
+                .registerHandler(InvalidCommandSenderException.class, context -> helpActions.playerOnly(context.context().sender()));
+    }
+
+    private void reloadRCP() {
+
+        if (rcpManager == null) {
+            return;
+        }
+
+        for (final RCPLifecycle lifecycle : rcpManager.components()) {
+            try {
+                lifecycle.onReload();
+            } catch (final Throwable ex) {
+                logger.error("RCP provider {} could not reload", lifecycle.getClass().getName(), ex);
+            }
+        }
     }
 
     private void disableAddons() {

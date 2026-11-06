@@ -42,3 +42,6 @@ async:
 
     # Exponential reconnect delay multiplier.
     multiplier: 2.0
+
+# Не меняйте / Do not change
+config-version: 1

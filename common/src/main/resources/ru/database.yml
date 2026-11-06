@@ -42,3 +42,6 @@ async:
 
     # Множитель экспоненциального увеличения задержки.
     multiplier: 2.0
+
+# Не меняйте / Do not change
+config-version: 1

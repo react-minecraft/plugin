@@ -1,5 +1,6 @@
 package com.g4vrk.react.player.model.rotation;
 
+import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.buffer.Buffer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

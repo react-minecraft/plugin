@@ -26,3 +26,6 @@ properties:
   use-server-prepared-statements: true
   rewrite-batched-statements: true
   tcp-keep-alive: true
+
+# Не меняйте / Do not change
+config-version: 1

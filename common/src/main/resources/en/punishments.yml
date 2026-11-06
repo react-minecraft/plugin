@@ -5,8 +5,6 @@
 # Plugin source code: https://github.com/g4vrk/React
 # (The AI model is not included in this project)
 #
-# Purchase access to our model -> https://www.react-ac.space/
-#
 
 punishments:
   aim:
@@ -27,3 +25,5 @@ punishments:
         # Reset the player's VL
         #- "[reset-vl]"
 
+# Не меняйте / Do not change
+config-version: 1

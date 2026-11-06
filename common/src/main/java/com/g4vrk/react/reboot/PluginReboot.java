@@ -51,7 +51,9 @@ public final class PluginReboot implements Runnable {
     // Paper calls onLoad inside loadPlugin; Spigot leaves it to the caller.
     private final boolean loadCallsOnLoad;
 
-    /** Sender-facing texts, built before the class loader closes. */
+    /**
+     * Sender-facing texts, built before the class loader closes.
+     */
     public record Messages(String unloaded, String loaded, String failed) {
     }
 

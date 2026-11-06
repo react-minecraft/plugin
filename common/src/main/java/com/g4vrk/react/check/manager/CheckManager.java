@@ -1,6 +1,6 @@
 package com.g4vrk.react.check.manager;
 
-import com.g4vrk.config.Config;
+import com.g4vrk.react.config.ReactConfigs;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.check.Check;
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 // realization like in GrimAC
 public final class CheckManager {
@@ -56,20 +55,17 @@ public final class CheckManager {
     }
 
     public void reload() {
-
-        for (final Map.Entry<Class<? extends Check>, Check> entry : checks.entrySet()) {
-
-            final Config config = React.INSTANCE.getCheckConfigRegistry()
-                    .config(entry.getKey());
-
-            if (entry.getValue() instanceof final ReloadObserver reloadableCheck) {
-
-                reloadableCheck.onReload(config);
-
+        final ReactConfigs configs = React.INSTANCE.getConfigs();
+        for (final Check check : checksValues) {
+            if (check instanceof final ReloadObserver<?> observer) {
+                reload(observer, configs.check(check.getConfigId()));
             }
-
         }
+    }
 
+    @SuppressWarnings("unchecked")
+    private static <C> void reload(final @NotNull ReloadObserver<C> observer, final @NotNull Object config) {
+        observer.onReload((C) config);
     }
 
 }

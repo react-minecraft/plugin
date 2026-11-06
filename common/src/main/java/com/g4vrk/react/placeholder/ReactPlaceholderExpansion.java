@@ -1,6 +1,6 @@
 package com.g4vrk.react.placeholder;
 
-import com.g4vrk.react.inference.ProbabilityFormatter;
+import com.g4vrk.react.util.ProbabilityFormatter;
 
 import com.g4vrk.react.color.resolver.ValueColorResolver;
 import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;

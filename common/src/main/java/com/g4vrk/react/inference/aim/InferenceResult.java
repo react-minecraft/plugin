@@ -7,29 +7,21 @@ import org.jetbrains.annotations.NotNull;
 @Value
 public class InferenceResult {
 
-    private static final double DEFAULT_VALUE = -1.0D;
+    private static final InferenceResult UNAVAILABLE = new InferenceResult(-1.0D, Double.NaN, true, "", "");
 
     double probability;
     double decisionThreshold;
     boolean enforcementEnabled;
-    String modelFamily;
-    String modelName;
+    @NotNull String modelFamily;
+    @NotNull String modelName;
 
-    public InferenceResult(double probability) {
-        this(probability, Double.NaN, true);
+    /** A model's verdict; the processor attaches which model gave it. */
+    public static @NotNull InferenceResult of(double probability, double decisionThreshold, boolean enforcementEnabled) {
+        return new InferenceResult(probability, decisionThreshold, enforcementEnabled, "", "");
     }
 
-    public InferenceResult(double probability, double decisionThreshold, boolean enforcementEnabled) {
-        this(probability, decisionThreshold, enforcementEnabled, "", "");
-    }
-
-    public InferenceResult(double probability, double decisionThreshold, boolean enforcementEnabled,
-                           String modelFamily, String modelName) {
-        this.probability = probability;
-        this.decisionThreshold = decisionThreshold;
-        this.enforcementEnabled = enforcementEnabled;
-        this.modelFamily = modelFamily == null ? "" : modelFamily;
-        this.modelName = modelName == null ? "" : modelName;
+    public @NotNull InferenceResult withModel(final @NotNull String family, final @NotNull String name) {
+        return new InferenceResult(probability, decisionThreshold, enforcementEnabled, family, name);
     }
 
     public String modelDisplay() {
@@ -42,6 +34,6 @@ public class InferenceResult {
     }
 
     public static @NotNull InferenceResult unavailable() {
-        return new InferenceResult(DEFAULT_VALUE);
+        return UNAVAILABLE;
     }
 }

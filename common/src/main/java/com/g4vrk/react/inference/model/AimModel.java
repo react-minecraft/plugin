@@ -7,9 +7,7 @@ import com.g4vrk.react.player.model.rotation.RotationData;
 import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import java.util.List;
 import java.util.UUID;
-import java.net.http.HttpResponse;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * One server model the Aim-AI check can ask. The check talks to every model through this
@@ -33,15 +31,8 @@ public interface AimModel {
     default void onReload(final @NotNull ReactPlayer player, final @NotNull AimAI check) {
     }
 
-    /** Reads a binary answer; null when the body is not in this model's format. */
-    default @Nullable InferenceResult readBinary(final byte @NotNull [] body, final @NotNull HttpResponse<?> response) {
-        return null;
-    }
-
-    /** Whether an answer may come without a decision threshold, leaving it to aim-ai.yml. */
-    default boolean usesLocalThreshold() {
-        return false;
-    }
+    /** Reads the model's answer; throws IllegalArgumentException when it is malformed. */
+    @NotNull InferenceResult readResponse(byte @NotNull [] body);
 
     /** The server or endpoint changed: windows collected so far no longer apply. */
     default void clearHistory(final @NotNull UUID player) {

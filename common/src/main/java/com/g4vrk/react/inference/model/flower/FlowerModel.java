@@ -1,26 +1,23 @@
 package com.g4vrk.react.inference.model.flower;
 
 import com.g4vrk.react.check.impl.aim.AimAI;
+import com.g4vrk.react.inference.aim.InferenceResult;
 import com.g4vrk.react.inference.http.model.HttpRequest;
 import com.g4vrk.react.inference.model.AimModel;
 import com.g4vrk.react.inference.model.ModelId;
+import com.g4vrk.react.inference.model.flower.protocol.FlowerCodec;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.player.model.rotation.Rotation;
 import com.g4vrk.react.player.model.rotation.RotationData;
-import com.g4vrk.react.inference.json.InferenceJsonCodec;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.nio.charset.StandardCharsets;
 import org.jetbrains.annotations.NotNull;
 
-/** Flower models read the last rotations as JSON, in the format of plugin version 1.3.0. */
+/** Flower models read the last rotations, sent as FlatBuffers (protocol/flower). */
 public final class FlowerModel implements AimModel {
-
-    private static final String JSON = "application/json; charset=utf-8";
 
     private final ModelId id;
     // Rotations since the last request, per player; each model keeps its own request step.
@@ -52,15 +49,7 @@ public final class FlowerModel implements AimModel {
         counter.set(0);
         final Rotation[] snapshot = Arrays.copyOfRange(history, history.length - id.window(), history.length);
         final String playerName = player.getName();
-        check.send(this, token -> {
-            final Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("name", playerName);
-            payload.put("frames", snapshot);
-            if (token != null) {
-                payload.put("token", token);
-            }
-            return new HttpRequest("POST", InferenceJsonCodec.writeObject(payload).getBytes(StandardCharsets.UTF_8), JSON);
-        });
+        check.send(this, token -> new HttpRequest(FlowerCodec.encodeRequest(snapshot, playerName, token)));
     }
 
     @Override
@@ -69,8 +58,9 @@ public final class FlowerModel implements AimModel {
     }
 
     @Override
-    public boolean usesLocalThreshold() {
-        return true;
+    public @NotNull InferenceResult readResponse(final byte @NotNull [] body) {
+        // No decision threshold: aim-ai.yml alert.threshold decides.
+        return InferenceResult.of(FlowerCodec.decodeProbability(body), Double.NaN, true);
     }
 
     @Override

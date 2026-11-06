@@ -43,7 +43,7 @@ public final class LimitedBodyHandler implements HttpResponse.BodyHandler<byte[]
 
         private LimitedBodySubscriber(final int maximumBytes) {
             this.maximumBytes = maximumBytes;
-            this.output = new ByteArrayOutputStream(Math.min(maximumBytes, 8192));
+            this.output = new ByteArrayOutputStream(Math.min(maximumBytes, 256));
         }
 
         @Override

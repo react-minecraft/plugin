@@ -1,15 +1,14 @@
 package com.g4vrk.react.inference.json;
 
-import com.g4vrk.react.player.model.rotation.Rotation;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/** JSON for the site's account endpoints (/react connect, key check); models speak FlatBuffers. */
 public final class InferenceJsonCodec {
 
     private static final int MAX_NESTING_DEPTH = 64;
@@ -72,65 +71,11 @@ public final class InferenceJsonCodec {
             output.append(value);
         } else if (value instanceof Number number) {
             appendNumber(output, number);
-        } else if (value instanceof Rotation rotation) {
-            appendRotation(output, rotation, depth + 1);
-        } else if (value.getClass().isArray()) {
-            appendArray(output, value, depth + 1);
         } else {
             throw new IllegalArgumentException(
                     "Unsupported inference JSON value type: " + value.getClass().getName()
             );
         }
-    }
-
-    private static void appendRotation(
-            final @NotNull StringBuilder output,
-            final @NotNull Rotation rotation,
-            final int depth
-    ) {
-        checkDepth(depth);
-
-        output.append('{');
-        appendProperty(output, "y", rotation.getY());
-        appendProperty(output, "x", rotation.getX());
-        appendProperty(output, "deltaY", rotation.getDeltaY());
-        appendProperty(output, "deltaX", rotation.getDeltaX());
-        appendProperty(output, "jerkY", rotation.getJerkY());
-        appendProperty(output, "jerkX", rotation.getJerkX());
-        appendProperty(output, "gcdErrorY", rotation.getGcdErrorY());
-        appendProperty(output, "gcdErrorX", rotation.getGcdErrorX());
-        output.setLength(output.length() - 1);
-        output.append('}');
-    }
-
-    private static void appendProperty(
-            final @NotNull StringBuilder output,
-            final @NotNull String name,
-            final float value
-    ) {
-        appendString(output, name);
-        output.append(':');
-        appendNumber(output, value);
-        output.append(',');
-    }
-
-    private static void appendArray(
-            final @NotNull StringBuilder output,
-            final @NotNull Object values,
-            final int depth
-    ) {
-        checkDepth(depth);
-        output.append('[');
-
-        for (int i = 0, length = Array.getLength(values); i < length; i++) {
-            if (i > 0) {
-                output.append(',');
-            }
-
-            appendValue(output, Array.get(values, i), depth + 1);
-        }
-
-        output.append(']');
     }
 
     private static void appendNumber(

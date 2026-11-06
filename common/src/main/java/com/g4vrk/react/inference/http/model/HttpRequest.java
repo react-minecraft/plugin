@@ -4,21 +4,21 @@ import java.util.Map;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
+/** A FlatBuffers window for a model; InferenceServer posts it with the FlatBuffers media type. */
 @Value
 public class HttpRequest {
-    @NotNull String method;
+
+    public static final String FLATBUFFERS = "application/x-flatbuffers";
+
     byte @NotNull [] body;
-    @NotNull String contentType;
     @NotNull Map<String, String> headers;
 
-    public HttpRequest(String method, byte[] body, String contentType) {
-        this(method, body, contentType, Map.of());
+    public HttpRequest(final byte @NotNull [] body) {
+        this(body, Map.of());
     }
 
-    public HttpRequest(String method, byte[] body, String contentType, Map<String, String> headers) {
-        this.method = method;
+    public HttpRequest(final byte @NotNull [] body, final @NotNull Map<String, String> headers) {
         this.body = body;
-        this.contentType = contentType;
         this.headers = Map.copyOf(headers);
     }
 }

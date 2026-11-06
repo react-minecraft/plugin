@@ -15,7 +15,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import com.g4vrk.react.inference.ModelId;
+import com.g4vrk.react.inference.model.ModelId;
 import com.g4vrk.react.util.moshi.MoshiHolder;
 import java.util.Collections;
 import java.util.EnumSet;

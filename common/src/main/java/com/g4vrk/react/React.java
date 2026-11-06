@@ -34,7 +34,6 @@ import com.g4vrk.react.config.manager.YamlConfigManager;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
 import com.g4vrk.react.listeners.bukkit.CombatListener;
 import com.g4vrk.react.listeners.bukkit.ConnectionListener;
-import com.g4vrk.react.listeners.packet.VectorListener;
 import com.g4vrk.react.inference.aim.InferenceAimProcessor;
 import com.g4vrk.react.inference.server.InferenceServer;
 import com.g4vrk.react.inference.server.settings.InferenceSettingsFactory;
@@ -85,7 +84,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import com.g4vrk.react.vector.service.AimStreamService;
+import com.g4vrk.react.inference.model.AimModels;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -153,7 +152,7 @@ public class React {
     private ReactPlaceholderExpansion placeholderExpansion;
 
     private CombatListener combatListener;
-    private AimStreamService vectorService;
+    private AimModels aimModels;
 
     private final Set<PacketListenerCommon> registeredListeners = new ObjectOpenHashSet<>();
 
@@ -303,7 +302,7 @@ public class React {
 
         this.scheduler = schedulaAPI.createScheduler();
 
-        this.vectorService = new AimStreamService(playerRegistry, scheduler);
+        this.aimModels = AimModels.create(playerRegistry, scheduler);
 
         logger.info("Creating Channel system...");
 
@@ -365,8 +364,8 @@ public class React {
         logger.info("React main command successfully prepared!");
 
         logger.info("Registering packet listeners...");
+        this.registerPacketListeners(aimModels.packetListeners());
         this.registerPacketListeners(
-                new VectorListener(playerRegistry, vectorService),
                 new RotationListener(playerRegistry, new RotationProcessor(new RotationFactory()))
         );
 
@@ -488,7 +487,7 @@ public class React {
         for (final ReactPlayer player : this.playerRegistry.all()) {
 
             if (endpointChanged) {
-                player.vectorData.clearHistory();
+                aimModels.clearHistory(player.getUniqueId());
                 player.rotationData.clear();
             }
             player.checkManager.reload();

@@ -3,7 +3,7 @@ package com.g4vrk.react.command.argument.impl;
 import com.g4vrk.react.React;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
-import com.g4vrk.react.inference.ModelId;
+import com.g4vrk.react.inference.model.ModelId;
 import com.g4vrk.react.inference.server.InferenceServer;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;

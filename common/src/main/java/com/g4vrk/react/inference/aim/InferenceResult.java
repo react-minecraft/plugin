@@ -1,5 +1,6 @@
 package com.g4vrk.react.inference.aim;
 
+import com.g4vrk.react.inference.model.ModelId;
 import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +33,8 @@ public class InferenceResult {
     }
 
     public String modelDisplay() {
-        return switch (modelFamily + "/" + modelName) {
-            case "flower/baseline" -> "Flower Baseline";
-            case "flower/ultra" -> "Flower Ultra";
-            case "vector/preview" -> "Vector Preview";
-            default -> "Model unknown";
-        };
+        final ModelId model = ModelId.fromIdentity(modelFamily + "/" + modelName);
+        return model == null ? "Model unknown" : model.displayName();
     }
 
     public boolean isAvailable() {

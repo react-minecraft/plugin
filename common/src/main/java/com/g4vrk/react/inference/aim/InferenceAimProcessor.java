@@ -1,29 +1,26 @@
 package com.g4vrk.react.inference.aim;
 
-import com.g4vrk.react.inference.ModelId;
+import com.g4vrk.react.inference.model.AimModel;
+import com.g4vrk.react.inference.model.ModelId;
 import com.g4vrk.react.inference.http.model.HttpRequest;
-import com.g4vrk.react.player.model.rotation.Rotation;
 import com.g4vrk.react.inference.server.InferenceServer;
 import com.g4vrk.react.util.moshi.MoshiHolder;
-import com.g4vrk.react.vector.model.AimFrame;
-import com.g4vrk.react.vector.protocol.FrameCodec;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import com.squareup.moshi.JsonAdapter;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.BufferedSource;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public final class InferenceAimProcessor {
 
@@ -57,50 +54,21 @@ public final class InferenceAimProcessor {
         return inferenceServer.isModelEnabled(model);
     }
 
-    /** Flower models read rotations as JSON, in the format of plugin version 1.3.0. */
+    /** Sends one window a model encoded; the token is null when the key goes in a header. */
     public void check(
             final @NotNull String playerName,
-            final @NotNull Rotation @NotNull [] snapshot,
-            final @NotNull ModelId model,
+            final @NotNull AimModel model,
+            final @NotNull Function<@Nullable String, HttpRequest> encoder,
             final @NotNull Consumer<InferenceResult> resultHandler
     ) {
-        if (!inferenceServer.isAcceptingRequests() || snapshot.length == 0) {
+        if (!inferenceServer.isAcceptingRequests()) {
             complete(resultHandler, InferenceResult.unavailable());
             return;
         }
         try {
-            final Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("name", playerName);
-            payload.put("frames", snapshot);
-            if (inferenceServer.getAuthBodyToken() != null) {
-                payload.put("token", inferenceServer.getAuthBodyToken());
-            }
-            final HttpRequest request = new HttpRequest("POST", RequestBody.create(
-                    MoshiHolder.REQUEST_ADAPTER.toJson(payload), MediaType.get("application/json; charset=utf-8")));
-            enqueue(playerName, request, model, resultHandler);
+            enqueue(playerName, encoder.apply(inferenceServer.getAuthBodyToken()), model, resultHandler);
         } catch (RuntimeException failure) {
-            logger.warn("Could not enqueue {} request for {}", model.displayName(), playerName, failure);
-            complete(resultHandler, InferenceResult.unavailable());
-        }
-    }
-
-    public void check(
-            final @NotNull String playerName,
-            final @NotNull AimFrame[] snapshot,
-            final @NotNull Consumer<InferenceResult> resultHandler
-    ) {
-        if (!inferenceServer.isAcceptingRequests() || snapshot.length == 0) {
-            complete(resultHandler, InferenceResult.unavailable());
-            return;
-        }
-        try {
-            final byte[] batch = FrameCodec.encodeBatch(snapshot, playerName, inferenceServer.getAuthBodyToken());
-            final HttpRequest request = new HttpRequest("POST",
-                    RequestBody.create(batch, MediaType.get("application/x-flatbuffers")),
-                    Map.of("Accept", "application/x-flatbuffers", "X-Batch", "1"));
-            enqueue(playerName, request, ModelId.VECTOR_PREVIEW, resultHandler);
-        } catch (RuntimeException failure) {
-            logger.warn("Could not enqueue VECTOR request for {}", playerName, failure);
+            logger.warn("Could not enqueue {} request for {}", model.id().displayName(), playerName, failure);
             complete(resultHandler, InferenceResult.unavailable());
         }
     }
@@ -108,21 +76,21 @@ public final class InferenceAimProcessor {
     private void enqueue(
             final String playerName,
             final HttpRequest request,
-            final ModelId model,
+            final AimModel model,
             final Consumer<InferenceResult> originalResultHandler
     ) {
         final long requestEpoch = inferenceServer.requestEpoch();
         final Consumer<InferenceResult> resultHandler = result -> {
             if (requestEpoch == inferenceServer.requestEpoch()) originalResultHandler.accept(result);
         };
-        inferenceServer.callAsync(request, model, new Callback() {
+        inferenceServer.callAsync(request, model.id(), new Callback() {
 
             @Override
             public void onFailure(
                     @NotNull Call call,
                     @NotNull IOException ex
             ) {
-                logger.warn("Could not send VECTOR frames for {}", playerName, ex);
+                logger.warn("Could not send {} request for {}", model.id().displayName(), playerName, ex);
 
                 complete(resultHandler, InferenceResult.unavailable());
             }
@@ -149,12 +117,9 @@ public final class InferenceAimProcessor {
                         }
                         if (response.isSuccessful()) {
                             final byte[] bytes = source.readByteArray();
-                            if (bytes.length >= 4 && bytes[0] == 'G' && bytes[1] == 'A'
-                                    && bytes[2] == 'I' && bytes[3] == 'B') {
-                                FrameCodec.Prediction prediction = FrameCodec.decodePrediction(bytes);
-                                complete(resultHandler, new InferenceResult(prediction.probability(),
-                                        prediction.threshold(), prediction.enforcementEnabled(),
-                                        response.header("X-React-Model-Family"), response.header("X-React-Model-Name")));
+                            final InferenceResult binary = model.readBinary(bytes, response);
+                            if (binary != null) {
+                                complete(resultHandler, binary);
                                 return;
                             }
                             responseText = new String(bytes, StandardCharsets.UTF_8);
@@ -206,8 +171,8 @@ public final class InferenceAimProcessor {
                     }
 
                     Double threshold = readNumber(result, "decision_threshold");
-                    if (threshold == null && model.isFlower()) {
-                        // Flower answers carry no threshold: aim-ai.yml alert.threshold decides.
+                    if (threshold == null && model.usesLocalThreshold()) {
+                        // The answer carries no threshold: aim-ai.yml alert.threshold decides.
                         complete(resultHandler, new InferenceResult(probability, Double.NaN, true,
                                 readModelPart(result, "model_family"), readModelPart(result, "model_name")));
                         return;
@@ -217,7 +182,7 @@ public final class InferenceAimProcessor {
                     if (threshold == null || !Double.isFinite(threshold) || threshold < 0 || threshold > 1
                             || !(enabled instanceof Boolean) || !(mode instanceof String)
                             || !((Boolean) enabled ? "enforce" : "observe").equals(mode)) {
-                        throw new IllegalArgumentException("Vector response requires a valid deployment mode and threshold");
+                        throw new IllegalArgumentException("Response requires a valid deployment mode and threshold");
                     }
                     complete(resultHandler, new InferenceResult(probability, threshold, (Boolean) enabled,
                             readModelPart(result, "model_family"), readModelPart(result, "model_name")));

@@ -6,6 +6,8 @@ import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.api.event.check.CheckPunishEvent;
+import com.g4vrk.react.api.punish.PunishmentRule;
+import com.g4vrk.react.api.punish.Punishments;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
@@ -17,9 +19,11 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurationNode;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 /**
@@ -31,7 +35,7 @@ import java.util.function.UnaryOperator;
  * {@code [alert]}, {@code [log]}, {@code [reset-vl]} and {@code [console]} are handled here.
  * A cancelled {@link CheckPunishEvent} skips a rule.</p>
  */
-public final class PunishmentManager implements ReloadObserver<ConfigurationNode> {
+public final class PunishmentManager implements Punishments, ReloadObserver<ConfigurationNode> {
 
     private static final char PERIOD_SEPARATOR = ';';
 
@@ -137,6 +141,24 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
         final String trimmed = line.trim();
         final int end = trimmed.indexOf(']');
         return trimmed.startsWith("[") && end > 0 ? trimmed.substring(1, end).toLowerCase(Locale.ROOT) : "";
+    }
+
+    @Override
+    public @NotNull Set<String> checks() {
+        return Collections.unmodifiableSet(this.rules.keySet());
+    }
+
+    @Override
+    public @NotNull List<PunishmentRule> rules(final @NotNull String check) {
+        final List<Rule> checkRules = this.rules.get(check.toLowerCase(Locale.ROOT));
+        if (checkRules == null) {
+            return List.of();
+        }
+        final List<PunishmentRule> out = new ObjectArrayList<>(checkRules.size());
+        for (final Rule rule : checkRules) {
+            out.add(new PunishmentRule(rule.start(), rule.period(), rule.lines()));
+        }
+        return Collections.unmodifiableList(out);
     }
 
     public void handleFail(

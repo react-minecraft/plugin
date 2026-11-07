@@ -1,5 +1,6 @@
 package com.g4vrk.react.player;
 
+import com.g4vrk.react.api.player.HistoryEntry;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.player.TrackedPlayer;
 import com.g4vrk.react.api.rcp.player.Rotation;
@@ -17,6 +18,7 @@ import com.g4vrk.react.Permissions;
 import com.g4vrk.react.api.event.player.PlayerBypassEvent;
 import com.g4vrk.react.storage.constant.StorageConstants;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -144,6 +146,16 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
         return bypassActive(StorageConstants.ALL_CHECKS)
                 || bypassActive(id)
                 || Permissions.hasBypassForCheck(bukkitPlayer, id);
+    }
+
+    @Override
+    public @NotNull List<HistoryEntry> history() {
+        final InferenceHistoryEntry[] entries = inferenceHistory.entries();
+        final List<HistoryEntry> out = new ObjectArrayList<>(entries.length);
+        for (final InferenceHistoryEntry entry : entries) {
+            out.add(new HistoryEntry(entry.getTimestamp(), entry.getCheck().id(), entry.getProbability()));
+        }
+        return Collections.unmodifiableList(out);
     }
 
     @Override

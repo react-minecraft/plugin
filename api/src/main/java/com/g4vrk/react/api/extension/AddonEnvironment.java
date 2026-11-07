@@ -2,6 +2,7 @@ package com.g4vrk.react.api.extension;
 
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
 import com.g4vrk.react.api.player.TrackedPlayerRegistry;
+import com.g4vrk.react.api.punish.Punishments;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,5 +26,12 @@ public interface AddonEnvironment extends ExtensionEnvironment {
      * @return the player registry
      */
     @NotNull TrackedPlayerRegistry players();
+
+    /**
+     * The rules of {@code punishments.yml}.
+     *
+     * @return the punishment rules
+     */
+    @NotNull Punishments punishments();
 
 }

@@ -72,4 +72,13 @@ public interface TrackedPlayer extends RCPPlayer {
      */
     boolean removeBypass(final @Nullable String check);
 
+    /**
+     * Gives the model verdicts kept for this player, oldest first.
+     *
+     * <p>Entries older than the {@code history-retention} storage setting are left out.</p>
+     *
+     * @return an unmodifiable snapshot
+     */
+    @NotNull List<HistoryEntry> history();
+
 }

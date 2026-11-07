@@ -3,6 +3,7 @@ package com.g4vrk.react.extension;
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
 import com.g4vrk.react.api.extension.AddonEnvironment;
 import com.g4vrk.react.api.player.TrackedPlayerRegistry;
+import com.g4vrk.react.api.punish.Punishments;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -14,6 +15,7 @@ public final class HostedAddonEnvironment extends ScopedEnvironment implements A
 
     private final AddonMetadata metadata;
     private final TrackedPlayerRegistry players;
+    private final Punishments punishments;
 
     public HostedAddonEnvironment(
             final @NotNull ExtensionContext context,
@@ -24,6 +26,7 @@ public final class HostedAddonEnvironment extends ScopedEnvironment implements A
         super(context, descriptor, directory, classLoader);
         this.metadata = descriptor.addonMetadata();
         this.players = context.players().view();
+        this.punishments = context.punishments();
     }
 
     @Override
@@ -34,6 +37,11 @@ public final class HostedAddonEnvironment extends ScopedEnvironment implements A
     @Override
     public @NotNull TrackedPlayerRegistry players() {
         return players;
+    }
+
+    @Override
+    public @NotNull Punishments punishments() {
+        return punishments;
     }
 
 }

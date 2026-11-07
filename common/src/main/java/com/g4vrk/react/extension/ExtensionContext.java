@@ -1,5 +1,6 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.react.api.punish.Punishments;
 import com.g4vrk.react.api.event.EventBus;
 import com.g4vrk.react.api.placeholder.PlaceholderRegistry;
 import com.g4vrk.react.api.text.TextFormatter;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
  * @param arguments    the table of extension subcommands
  * @param players      the tracked players
  * @param rcpHost      where RCP environments attach
+ * @param punishments  the rules of punishments.yml
  */
 public record ExtensionContext(
         @NotNull Plugin plugin,
@@ -37,7 +39,8 @@ public record ExtensionContext(
         @NotNull TextFormatter text,
         @NotNull ArgumentTable arguments,
         @NotNull PlayerRegistry players,
-        @NotNull RCPHost rcpHost
+        @NotNull RCPHost rcpHost,
+        @NotNull Punishments punishments
 ) {
 
     /**

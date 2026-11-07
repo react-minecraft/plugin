@@ -150,8 +150,9 @@ public class React {
                 () -> updates != null && updates.notifies(), () -> updates == null ? List.of() : updates.pending());
         this.updates = new UpdateService(dataFolder.toPath(), languageName, logger, pluginSource(),
                 () -> configs.main(), updateNotifier);
+        this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser);
         this.extensions = new ExtensionManager(new ExtensionContext(plugin, dataFolder.toPath(), logger, scheduler,
-                events, placeholders, text, arguments, playerRegistry, rcpHost), updates);
+                events, placeholders, text, arguments, playerRegistry, rcpHost, punishmentManager), updates);
 
         this.alertActions = new ReportActions(actionParser, configs.actions().alerts().alert());
         this.monitorActions = new ReportActions(actionParser, configs.actions().monitor().message());
@@ -159,7 +160,6 @@ public class React {
         ReactChannels.MONITOR.delivery(monitorActions);
         this.debugActions = new DebugActions(actionParser, configs.checks());
         ReactChannels.DEBUG.delivery(debugActions);
-        this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser);
         this.inferenceHistoryPrinter = new InferenceHistoryPrinter(text);
 
         logger.info("Registering commands...");

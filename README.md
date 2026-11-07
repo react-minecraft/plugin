@@ -68,8 +68,10 @@
 | Ключ                   | По умолчанию | Описание                                                                |
 |------------------------|--------------|-------------------------------------------------------------------------|
 | `settings.enabled`     | `true`       | Загружать ли React RCP                                                  |
-| `settings.auto-update` | `true`       | Проверять новую версию при старте и `/react reboot`; `false` - качать, только если RCP ещё нет |
-| `settings.channel`     | `release`    | `release` - только релизы, `all` - любая сборка CI (`nightly`)           |
+
+Обновления React RCP настраиваются в `plugins/React/update/rcp/React.yml`: `enabled`, `channel`
+(`release` или `prerelease`) и `pinned-version`. Общие настройки обновлений лежат в
+`plugins/React/update/settings.yml`.
 
 Свои настройки RCP хранит в `plugins/React/.rcp/React/`.
 

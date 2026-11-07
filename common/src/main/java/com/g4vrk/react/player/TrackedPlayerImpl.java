@@ -13,8 +13,18 @@ import com.g4vrk.react.storage.model.StoredInference;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.g4vrk.react.Permissions;
+import com.g4vrk.react.api.event.player.PlayerBypassEvent;
+import com.g4vrk.react.storage.constant.StorageConstants;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import com.g4vrk.react.player.model.rotation.RotationData;
@@ -38,6 +48,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     public final InferenceStatistic inferenceStatistic;
 
     private final AtomicBoolean dataReady = new AtomicBoolean();
+    private final Map<String, Long> bypasses = new ConcurrentHashMap<>();
     private final long sessionStartedAt = System.currentTimeMillis();
 
     public TrackedPlayerImpl(
@@ -127,13 +138,76 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
         dataReady.set(true);
     }
 
+    @Override
+    public boolean bypassed(final @NotNull String check) {
+        final String id = check.toLowerCase(Locale.ROOT);
+        return bypassActive(StorageConstants.ALL_CHECKS)
+                || bypassActive(id)
+                || Permissions.hasBypassForCheck(bukkitPlayer, id);
+    }
+
+    @Override
+    public @NotNull Map<String, Instant> bypasses() {
+        final Map<String, Instant> active = new Object2ObjectOpenHashMap<>();
+        for (final String key : bypasses.keySet()) {
+            if (bypassActive(key)) {
+                final long until = bypasses.getOrDefault(key, 0L);
+                active.put(key, until == Long.MAX_VALUE ? null : Instant.ofEpochMilli(until));
+            }
+        }
+        return Collections.unmodifiableMap(active);
+    }
+
+    @Override
+    public boolean bypass(final @Nullable String check, final @Nullable Instant until) {
+        final String key = bypassKey(check);
+        if (React.INSTANCE.events().post(new PlayerBypassEvent(uniqueId, check, until, true)).cancelled()) {
+            return false;
+        }
+        final long millis = until == null ? Long.MAX_VALUE : until.toEpochMilli();
+        bypasses.put(key, millis);
+        React.INSTANCE.storageManager().saveBypass(uniqueId, key, millis);
+        return true;
+    }
+
+    @Override
+    public boolean removeBypass(final @Nullable String check) {
+        final String key = bypassKey(check);
+        if (!bypassActive(key)
+                || React.INSTANCE.events().post(new PlayerBypassEvent(uniqueId, check, null, false)).cancelled()) {
+            return false;
+        }
+        bypasses.remove(key);
+        React.INSTANCE.storageManager().saveBypass(uniqueId, key, -1L);
+        return true;
+    }
+
+    private boolean bypassActive(final @NotNull String key) {
+        final Long until = bypasses.get(key);
+        if (until == null) {
+            return false;
+        }
+        if (until > System.currentTimeMillis()) {
+            return true;
+        }
+        bypasses.remove(key, until);
+        return false;
+    }
+
+    private static @NotNull String bypassKey(final @Nullable String check) {
+        return check == null ? StorageConstants.ALL_CHECKS : check.toLowerCase(Locale.ROOT);
+    }
+
     public void applyStorageData(final @NotNull PlayerStorageData data) {
         applyViolations(data, false);
+        bypasses.clear();
+        bypasses.putAll(data.bypasses());
         inferenceHistory.replace(mapHistory(data));
     }
 
     public void mergeStorageData(final @NotNull PlayerStorageData data) {
         applyViolations(data, true);
+        data.bypasses().forEach(bypasses::putIfAbsent);
         inferenceHistory.merge(mapHistory(data));
     }
 

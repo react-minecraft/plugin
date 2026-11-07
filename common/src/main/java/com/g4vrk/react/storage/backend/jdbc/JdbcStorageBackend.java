@@ -24,6 +24,9 @@ public final class JdbcStorageBackend implements StorageBackend {
 
     private static final String LOAD_VIOLATIONS = "SELECT check_name, violations, updated_at FROM " + VIOLATIONS_TABLE + " WHERE player_uuid = ?";
     private static final String LOAD_INFERENCE = "SELECT check_name, recorded_at, probability FROM " + INFERENCE_TABLE + " WHERE player_uuid = ? AND recorded_at >= ? ORDER BY recorded_at ASC";
+    private static final String LOAD_BYPASSES = "SELECT check_name, expires_at FROM " + BYPASS_TABLE + " WHERE player_uuid = ? AND expires_at > ?";
+    private static final String DELETE_BYPASS = "DELETE FROM " + BYPASS_TABLE + " WHERE player_uuid = ? AND check_name = ?";
+    private static final String DELETE_EXPIRED_BYPASSES = "DELETE FROM " + BYPASS_TABLE + " WHERE expires_at <= ?";
     private static final String DELETE_OLD_INFERENCE = "DELETE FROM " + INFERENCE_TABLE + " WHERE recorded_at < ?";
 
     private final HikariDataSource dataSource;
@@ -82,7 +85,8 @@ public final class JdbcStorageBackend implements StorageBackend {
     ) throws java.sql.SQLException {
         return executor.query(connection -> new PlayerStorageData(
                 loadViolations(connection, playerUuid),
-                loadInference(connection, playerUuid, historyCutoff)
+                loadInference(connection, playerUuid, historyCutoff),
+                loadBypasses(connection, playerUuid)
         ));
     }
 
@@ -94,9 +98,13 @@ public final class JdbcStorageBackend implements StorageBackend {
 
         executor.transaction(connection -> {
             try (final PreparedStatement violationStatement = connection.prepareStatement(dialect.violationUpsert());
-                 final PreparedStatement inferenceStatement = connection.prepareStatement(dialect.inferenceInsert())) {
+                 final PreparedStatement inferenceStatement = connection.prepareStatement(dialect.inferenceInsert());
+                 final PreparedStatement bypassStatement = connection.prepareStatement(dialect.bypassUpsert());
+                 final PreparedStatement liftStatement = connection.prepareStatement(DELETE_BYPASS)) {
                 boolean hasViolations = false;
                 boolean hasInference = false;
+                boolean hasBypasses = false;
+                boolean hasLifts = false;
 
                 for (final StorageMutation mutation : mutations) {
                     if (mutation instanceof final StorageMutation.Violation violation) {
@@ -107,6 +115,17 @@ public final class JdbcStorageBackend implements StorageBackend {
                         bindInference(inferenceStatement, inference);
                         inferenceStatement.addBatch();
                         hasInference = true;
+                    } else if (mutation instanceof final StorageMutation.Bypass bypass) {
+                        final PreparedStatement statement = bypass.lifted() ? liftStatement : bypassStatement;
+                        statement.setString(1, bypass.playerUuid().toString());
+                        statement.setString(2, bypass.check());
+                        if (bypass.lifted()) {
+                            hasLifts = true;
+                        } else {
+                            statement.setLong(3, bypass.until());
+                            hasBypasses = true;
+                        }
+                        statement.addBatch();
                     }
                 }
 
@@ -116,6 +135,12 @@ public final class JdbcStorageBackend implements StorageBackend {
                 if (hasInference) {
                     inferenceStatement.executeBatch();
                 }
+                if (hasLifts) {
+                    liftStatement.executeBatch();
+                }
+                if (hasBypasses) {
+                    bypassStatement.executeBatch();
+                }
             }
             return null;
         });
@@ -124,7 +149,10 @@ public final class JdbcStorageBackend implements StorageBackend {
     @Override
     public long deleteHistoryBefore(final long cutoff) throws Exception {
         return executor.query(connection -> {
-            try (final PreparedStatement statement = connection.prepareStatement(DELETE_OLD_INFERENCE)) {
+            try (final PreparedStatement statement = connection.prepareStatement(DELETE_OLD_INFERENCE);
+                 final PreparedStatement bypasses = connection.prepareStatement(DELETE_EXPIRED_BYPASSES)) {
+                bypasses.setLong(1, System.currentTimeMillis());
+                bypasses.executeUpdate();
                 statement.setLong(1, cutoff);
                 return statement.executeUpdate();
             }
@@ -171,6 +199,23 @@ public final class JdbcStorageBackend implements StorageBackend {
                             result.getString("check_name"),
                             result.getDouble("probability")
                     ));
+                }
+            }
+        }
+        return values;
+    }
+
+    private @NotNull Map<String, Long> loadBypasses(
+            final @NotNull Connection connection,
+            final @NotNull UUID playerUuid
+    ) throws java.sql.SQLException {
+        final Map<String, Long> values = new LinkedHashMap<>();
+        try (final PreparedStatement statement = connection.prepareStatement(LOAD_BYPASSES)) {
+            statement.setString(1, playerUuid.toString());
+            statement.setLong(2, System.currentTimeMillis());
+            try (final ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    values.put(result.getString("check_name"), result.getLong("expires_at"));
                 }
             }
         }

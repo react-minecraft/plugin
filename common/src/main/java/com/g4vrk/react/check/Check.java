@@ -1,6 +1,5 @@
 package com.g4vrk.react.check;
 
-import com.g4vrk.react.Permissions;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.CheckReport;
 import com.g4vrk.react.api.channel.ReactChannels;
@@ -51,10 +50,7 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
 
     @Override
     public final boolean active() {
-        return player.dataReady() && !Permissions.hasBypassForCheck(
-                player.bukkitPlayer,
-                id()
-        );
+        return player.dataReady() && !player.bypassed(id());
     }
 
     /**
@@ -152,8 +148,15 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
         }
     }
 
+    @Override
+    public final void debug(final @NotNull String message) {
+        if (!ReactChannels.DEBUG.recipients().isEmpty()) {
+            ReactChannels.DEBUG.publish(this.report(message));
+        }
+    }
+
     public final @NotNull CheckReport report(final @NotNull String details) {
-        return new CheckReport(player.uniqueId(), player.name(), name(), violations, details);
+        return new CheckReport(player.uniqueId(), player.name(), name(), id(), violations, details);
     }
 
     protected final synchronized void reward() {

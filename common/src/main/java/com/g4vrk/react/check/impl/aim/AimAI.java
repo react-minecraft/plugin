@@ -7,7 +7,6 @@ import com.g4vrk.react.api.event.check.InferenceResultEvent;
 import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.Check;
-import com.g4vrk.react.check.debug.DebugHandler;
 import com.g4vrk.react.check.decay.DecayStrategy;
 import com.g4vrk.react.check.decay.impl.LinearDecay;
 import com.g4vrk.react.check.info.CheckInfo;
@@ -28,24 +27,17 @@ import org.jetbrains.annotations.NotNull;
 )
 public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
-    private final DebugHandler debugHandler;
-
-    private boolean debug;
-
     private double alertThreshold;
 
     private DecayStrategy decayStrategy;
 
     public AimAI(final @NotNull TrackedPlayerImpl player) {
         super(player);
-
-        this.debugHandler = new DebugHandler(this);
     }
 
     @Override
     public void onReload(final @NotNull AimAIConfig config) {
 
-        this.debug = config.debug();
         this.alertThreshold = config.alert().threshold();
         this.decayStrategy = new LinearDecay(config.decay().amount());
 
@@ -82,18 +74,12 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         final boolean flagged = result.hasThreshold() ? probability >= threshold : probability > threshold;
 
         if (!result.enforcement()) {
-            if (debug) {
-                debugHandler.debug("Observation (" + result.displayName() + "): " + probability + ", threshold=" + threshold);
-            }
+            debug("Observation (" + result.displayName() + "): " + probability + ", threshold " + threshold);
         } else if (flagged) {
-            if (debug) {
-                debugHandler.debug("Flagged (" + result.displayName() + "): " + probability + " > " + threshold);
-            }
+            debug("Flagged (" + result.displayName() + "): " + probability + " > " + threshold);
             failAndAlert(1, details);
         } else {
-            if (debug) {
-                debugHandler.debug("Reward (" + result.displayName() + "): " + probability + " <= " + threshold);
-            }
+            debug("Reward (" + result.displayName() + "): " + probability + " <= " + threshold);
             reward();
         }
 

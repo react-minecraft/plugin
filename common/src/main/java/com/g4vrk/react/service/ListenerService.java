@@ -136,6 +136,7 @@ public final class ListenerService {
         try {
             ReactChannels.ALERTS.clear();
             ReactChannels.MONITOR.clear();
+            ReactChannels.DEBUG.clear();
         } catch (final Exception ex) {
             logger.error("Could not clear channel recipients", ex);
         }

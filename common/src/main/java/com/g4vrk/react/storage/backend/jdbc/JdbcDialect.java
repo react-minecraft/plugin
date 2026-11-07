@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.g4vrk.react.storage.constant.StorageConstants.BYPASS_TABLE;
 import static com.g4vrk.react.storage.constant.StorageConstants.INFERENCE_TABLE;
 import static com.g4vrk.react.storage.constant.StorageConstants.VIOLATIONS_TABLE;
 
@@ -14,42 +15,51 @@ public enum JdbcDialect {
                     "CREATE TABLE IF NOT EXISTS " + VIOLATIONS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, violations REAL NOT NULL, updated_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name))",
                     "CREATE TABLE IF NOT EXISTS " + INFERENCE_TABLE + " (id VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, recorded_at BIGINT NOT NULL, probability REAL NOT NULL)",
                     "CREATE INDEX IF NOT EXISTS react_inference_scores_player_time_idx ON " + INFERENCE_TABLE + " (player_uuid, recorded_at)",
-                    "CREATE INDEX IF NOT EXISTS react_inference_scores_time_idx ON " + INFERENCE_TABLE + " (recorded_at)"
+                    "CREATE INDEX IF NOT EXISTS react_inference_scores_time_idx ON " + INFERENCE_TABLE + " (recorded_at)",
+                    "CREATE TABLE IF NOT EXISTS " + BYPASS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, expires_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name))"
             ),
             "INSERT INTO " + VIOLATIONS_TABLE + " (player_uuid, check_name, violations, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(player_uuid, check_name) DO UPDATE SET violations = excluded.violations, updated_at = excluded.updated_at WHERE excluded.updated_at >= " + VIOLATIONS_TABLE + ".updated_at",
-            "INSERT OR IGNORE INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability) VALUES (?, ?, ?, ?, ?)"
+            "INSERT OR IGNORE INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability) VALUES (?, ?, ?, ?, ?)",
+            "INSERT OR REPLACE INTO " + BYPASS_TABLE + " (player_uuid, check_name, expires_at) VALUES (?, ?, ?)"
     ),
     H2(
             List.of(
                     "CREATE TABLE IF NOT EXISTS " + VIOLATIONS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, violations DOUBLE PRECISION NOT NULL, updated_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name))",
                     "CREATE TABLE IF NOT EXISTS " + INFERENCE_TABLE + " (id VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, recorded_at BIGINT NOT NULL, probability DOUBLE PRECISION NOT NULL)",
                     "CREATE INDEX IF NOT EXISTS react_inference_scores_player_time_idx ON " + INFERENCE_TABLE + " (player_uuid, recorded_at)",
-                    "CREATE INDEX IF NOT EXISTS react_inference_scores_time_idx ON " + INFERENCE_TABLE + " (recorded_at)"
+                    "CREATE INDEX IF NOT EXISTS react_inference_scores_time_idx ON " + INFERENCE_TABLE + " (recorded_at)",
+                    "CREATE TABLE IF NOT EXISTS " + BYPASS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, expires_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name))"
             ),
             "MERGE INTO " + VIOLATIONS_TABLE + " (player_uuid, check_name, violations, updated_at) KEY (player_uuid, check_name) VALUES (?, ?, ?, ?)",
-            "MERGE INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability) KEY (id) VALUES (?, ?, ?, ?, ?)"
+            "MERGE INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability) KEY (id) VALUES (?, ?, ?, ?, ?)",
+            "MERGE INTO " + BYPASS_TABLE + " (player_uuid, check_name, expires_at) KEY (player_uuid, check_name) VALUES (?, ?, ?)"
     ),
     MYSQL(
             List.of(
                     "CREATE TABLE IF NOT EXISTS " + VIOLATIONS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, violations DOUBLE NOT NULL, updated_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
-                    "CREATE TABLE IF NOT EXISTS " + INFERENCE_TABLE + " (id VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, recorded_at BIGINT NOT NULL, probability DOUBLE NOT NULL, INDEX react_inference_scores_player_time_idx (player_uuid, recorded_at), INDEX react_inference_scores_time_idx (recorded_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+                    "CREATE TABLE IF NOT EXISTS " + INFERENCE_TABLE + " (id VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, recorded_at BIGINT NOT NULL, probability DOUBLE NOT NULL, INDEX react_inference_scores_player_time_idx (player_uuid, recorded_at), INDEX react_inference_scores_time_idx (recorded_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+                    "CREATE TABLE IF NOT EXISTS " + BYPASS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, expires_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
             ),
             "INSERT INTO " + VIOLATIONS_TABLE + " (player_uuid, check_name, violations, updated_at) VALUES (?, ?, ?, ?) AS incoming ON DUPLICATE KEY UPDATE violations = IF(incoming.updated_at >= " + VIOLATIONS_TABLE + ".updated_at, incoming.violations, " + VIOLATIONS_TABLE + ".violations), updated_at = GREATEST(" + VIOLATIONS_TABLE + ".updated_at, incoming.updated_at)",
-            "INSERT INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability) VALUES (?, ?, ?, ?, ?) AS incoming ON DUPLICATE KEY UPDATE id = " + INFERENCE_TABLE + ".id"
+            "INSERT INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability) VALUES (?, ?, ?, ?, ?) AS incoming ON DUPLICATE KEY UPDATE id = " + INFERENCE_TABLE + ".id",
+            "REPLACE INTO " + BYPASS_TABLE + " (player_uuid, check_name, expires_at) VALUES (?, ?, ?)"
     );
 
     private final List<String> schemaStatements;
     private final String violationUpsert;
     private final String inferenceInsert;
+    private final String bypassUpsert;
 
     JdbcDialect(
             final @NotNull List<String> schemaStatements,
             final @NotNull String violationUpsert,
-            final @NotNull String inferenceInsert
+            final @NotNull String inferenceInsert,
+            final @NotNull String bypassUpsert
     ) {
         this.schemaStatements = schemaStatements;
         this.violationUpsert = violationUpsert;
         this.inferenceInsert = inferenceInsert;
+        this.bypassUpsert = bypassUpsert;
     }
 
     public static @NotNull JdbcDialect forType(final @NotNull DatabaseType type) {
@@ -71,5 +81,9 @@ public enum JdbcDialect {
 
     public @NotNull String inferenceInsert() {
         return inferenceInsert;
+    }
+
+    public @NotNull String bypassUpsert() {
+        return bypassUpsert;
     }
 }

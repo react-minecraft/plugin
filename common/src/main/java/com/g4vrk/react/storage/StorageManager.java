@@ -161,6 +161,21 @@ public final class StorageManager {
         enqueue(new StorageMutation.Inference(playerUuid, UUID.randomUUID(), inference), false);
     }
 
+    /**
+     * Stores a temporary bypass, or lifts it.
+     *
+     * @param playerUuid the player
+     * @param check      the check id, or {@code *} for every check
+     * @param until      when it ends in epoch millis, negative to lift it
+     */
+    public void saveBypass(
+            final @NotNull UUID playerUuid,
+            final @NotNull String check,
+            final long until
+    ) {
+        enqueue(new StorageMutation.Bypass(playerUuid, check, until), false);
+    }
+
     public void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
         for (final Check check : player.checkManager.checks()) {
             enqueue(new StorageMutation.Violation(

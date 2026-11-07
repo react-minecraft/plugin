@@ -67,4 +67,14 @@ public interface Check {
      */
     boolean active();
 
+    /**
+     * Sends a debug line to everyone who follows this check with {@code /react debug}.
+     *
+     * <p>The check config's {@code debug} actions show it, with the line as {@code <details>}.
+     * Nothing is built when nobody listens.</p>
+     *
+     * @param message the line, MiniMessage
+     */
+    void debug(final @NotNull String message);
+
 }

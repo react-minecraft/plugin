@@ -14,5 +14,9 @@ alert:
 decay:
   amount: 0.50
 
+# Строки для /react debug. <player> - игрок, <check> - проверка, <vl> - VL, <details> - сообщение проверки
+debug:
+  - "[bar] <gray>Aim-AI <dark_gray>»</dark_gray> <white><player></white> <gray><details>"
+
 # Не меняйте / Do not change
-config-version: 1
+config-version: 2

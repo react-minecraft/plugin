@@ -67,6 +67,53 @@ monitor:
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 
+# /react debug [players] [check] - debug lines of the checks, shown by each check's debug actions
+debug:
+
+  # Actions performed when debug is enabled
+  on-enable:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Debug <color:#11ff11>enabled ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Actions run when debug follows some players or one check. <players> - their names, <check> - the check
+  on-enable-players:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Debug of <color:#eb2544><players></color> <gray>(<check>)</gray> <color:#11ff11>enabled ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Actions performed when debug is disabled
+  on-disable:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Debug <color:#ff1111>disabled ✘"
+    - "[sound] entity.creeper.hurt;1.0;1.0"
+
+# /react bypass <players> [duration|forever] [check], /react bypass remove <players> [check], /react bypass list
+bypass:
+
+  # <players> - the names, <check> - the check, <duration> - how long
+  granted:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>bypass <white><check></white> for <white><duration>"
+
+  # <players> - the names, <check> - the check
+  removed:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>no longer bypass <white><check>"
+
+  # Nothing changed for <player>: no such bypass, or an addon cancelled it
+  cancelled:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Nothing changed for <gray><player>"
+
+  # <count> - how many online players have a bypass
+  list-header:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Bypasses: <color:#eb2544><count>"
+
+  # <player>, <check>, <duration> - the time left
+  list-entry:
+    - "[msg]  <dark_gray>•</dark_gray> <white><player> <gray><check> <dark_gray>|</dark_gray> <duration>"
+
+  list-empty:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Nobody online has a bypass"
+
+  all-checks: "all checks"
+  forever: "forever"
+
 # Plugin reload actions
 reload:
 
@@ -151,6 +198,8 @@ help:
     - "[msg] <color:#eb2544>/react alerts [players]</color> <gray>- alerts, optionally for some players"
     - "[msg] <color:#eb2544>/react monitor [players]</color> <gray>- analysis monitor, optionally for some players"
     - "[msg] <color:#eb2544>/react history <player></color> <gray>- check history"
+    - "[msg] <color:#eb2544>/react debug [players] [check]</color> <gray>- debug lines of the checks"
+    - "[msg] <color:#eb2544>/react bypass <players> [time] [check]</color> <gray>- let players skip checks"
     - "[msg] <color:#eb2544>/react reload</color> <gray>- reload configs"
     - "[msg] <color:#eb2544>/react reboot [target]</color> <gray>- restart the plugin, addons or RCPs"
     - "[msg] <color:#eb2544>/react rcps</color> <gray>- installed RCPs"

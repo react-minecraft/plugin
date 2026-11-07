@@ -13,9 +13,11 @@ public final class StorageConstants {
     public static final String VIOLATIONS_TABLE = "react_violations";
     public static final String INFERENCE_TABLE = "react_inference_scores";
     public static final String LEGACY_INFERENCE_TABLE = "react_inference_history";
+    public static final String BYPASS_TABLE = "react_bypasses";
 
     public static final String MONGO_VIOLATIONS_COLLECTION = "violations";
     public static final String MONGO_INFERENCE_COLLECTION = "inference_history";
+    public static final String MONGO_BYPASS_COLLECTION = "bypasses";
 
     public static final String FIELD_ID = "_id";
     public static final String FIELD_PLAYER_UUID = "player_uuid";
@@ -24,9 +26,12 @@ public final class StorageConstants {
     public static final String FIELD_TIMESTAMP = "timestamp";
     public static final String FIELD_PROBABILITY = "probability";
     public static final String FIELD_UPDATED_AT = "updated_at";
+    public static final String FIELD_EXPIRES_AT = "expires_at";
 
     public static final int UUID_LENGTH = 36;
     public static final int CHECK_NAME_LENGTH = 64;
+
+    public static final String ALL_CHECKS = "*";
 
     public static final String DEFAULT_RETENTION = "30d";
     public static final String DEFAULT_CLEANUP_INTERVAL = "1h";

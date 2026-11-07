@@ -20,6 +20,10 @@ public class Permissions {
     public @NotNull String MONITOR = PERMISSION_PREFIX + "monitor";
     public @NotNull String MONITOR_ENABLE_ON_JOIN = MONITOR + ".enable_on_join";
 
+    public @NotNull String DEBUG = PERMISSION_PREFIX + "debug";
+
+    public @NotNull String BYPASS_COMMAND = PERMISSION_PREFIX + "command.bypass";
+
     public @NotNull String NOTIFY_UPDATE = PERMISSION_PREFIX + "notify.update";
 
     public @NotNull String BASE_BYPASS = PERMISSION_PREFIX + "bypass";

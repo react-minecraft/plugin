@@ -8,6 +8,8 @@ import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.command.HelpActions;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
+import com.g4vrk.react.command.argument.impl.BypassArgument;
+import com.g4vrk.react.command.argument.impl.DebugArgument;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
 import com.g4vrk.react.command.argument.impl.RCPArgumentRouter;
 import com.g4vrk.react.command.argument.impl.RCPListArgument;
@@ -84,7 +86,9 @@ public final class CommandService {
         final ReloadArgument reload = new ReloadArgument(builderFactory, scheduler, parser);
         final RebootArgument reboot = new RebootArgument(builderFactory, parser, actions, extensions);
         final RCPListArgument rcps = new RCPListArgument(builderFactory, parser, actions, host, updates);
-        this.observers = List.of(help, alerts, monitor, reload, reboot, rcps);
+        final DebugArgument debug = new DebugArgument(builderFactory, parser);
+        final BypassArgument bypass = new BypassArgument(builderFactory, parser, actions, playerRegistry);
+        this.observers = List.of(help, alerts, monitor, debug, bypass, reload, reboot, rcps);
 
         manager.command(builderFactory.create().handler(context -> help.root(context.sender())));
         manager.exceptionController()
@@ -96,12 +100,14 @@ public final class CommandService {
         for (final LocalArgument argument : List.of(
                 alerts,
                 monitor,
+                debug,
+                bypass,
                 reload,
                 reboot,
                 new HistoryArgument(builderFactory, historyPrinter, playerRegistry),
                 rcps,
                 new RCPArgumentRouter(builderFactory, arguments, help))) {
-            manager.command(argument.build());
+            argument.builds().forEach(manager::command);
         }
     }
 

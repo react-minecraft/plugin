@@ -8,6 +8,8 @@ import java.util.List;
 public record ActionsConfig(
         Alerts alerts,
         Monitor monitor,
+        Debug debug,
+        Bypass bypass,
         Reload reload,
         Reboot reboot,
         Rcps rcps,
@@ -46,6 +48,31 @@ public record ActionsConfig(
             List<String> onEnablePlayers,
             List<String> onDisable
     ) implements ReportToggle {
+    }
+
+    @ConfigSerializable
+    public record Debug(
+            List<String> onEnable,
+            List<String> onEnablePlayers,
+            List<String> onDisable
+    ) implements ReportToggle {
+    }
+
+    /**
+     * The replies of {@code /react bypass}. {@code allChecks} and {@code forever} fill
+     * {@code <check>} and {@code <duration>} when there is no check or end.
+     */
+    @ConfigSerializable
+    public record Bypass(
+            List<String> granted,
+            List<String> removed,
+            List<String> cancelled,
+            List<String> listHeader,
+            List<String> listEntry,
+            List<String> listEmpty,
+            String allChecks,
+            String forever
+    ) {
     }
 
     @ConfigSerializable

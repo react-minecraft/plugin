@@ -9,6 +9,7 @@ public final class ReactChannels {
 
     public static final ReportChannel ALERTS = new ReportChannel();
     public static final ReportChannel MONITOR = new ReportChannel();
+    public static final ReportChannel DEBUG = new ReportChannel();
 
     private ReactChannels() {
     }

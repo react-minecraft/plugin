@@ -71,6 +71,7 @@ public class ConnectionListener implements Listener {
 
             ReactChannels.ALERTS.remove(bukkitPlayer);
             ReactChannels.MONITOR.remove(bukkitPlayer);
+            ReactChannels.DEBUG.remove(bukkitPlayer);
 
             onQuit.accept(bukkitPlayer);
 

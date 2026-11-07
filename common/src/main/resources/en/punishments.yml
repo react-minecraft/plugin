@@ -1,4 +1,3 @@
-
 #
 # React - AI-Powered Anti-Cheat
 #
@@ -6,6 +5,8 @@
 # (The AI model is not included in this project)
 #
 
+# Lines: [console], [alert], [log], [reset-vl] and every action of actions.yml.
+# Placeholders: <player>, <check>, <vl>
 punishments:
   aim:
 
@@ -13,11 +14,12 @@ punishments:
     checks:
       - "aim-ai"
 
-    # Actions performed when the player reaches a specific VL
-    actions:
+    # Run once when VL reaches N
+    at: {}
 
-      # Runs at 10 VL, then repeats every 8 VL
-      10;8:
+    # Run at N VL, then every M VL ("M" alone: every M VL)
+    every:
+      "10;8":
 
         # Execute a command as the console
         - "[console] kick <player> [React] Heuristic violations (Aim-AI)"
@@ -26,4 +28,4 @@ punishments:
         #- "[reset-vl]"
 
 # Не меняйте / Do not change
-config-version: 2
+config-version: 3

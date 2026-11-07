@@ -4,6 +4,7 @@ import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.config.ConfigMigrations;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.config.model.AimAIConfig;
+import com.g4vrk.react.config.model.CheckConfig;
 import com.g4vrk.react.config.model.HistoryConfig;
 import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.storage.config.DatabaseType;
@@ -37,6 +38,11 @@ public final class ReactConfigs {
                 root.removeChild("buffer");
                 root.removeChild("combat-ticks");
             })
+            .step(root -> {
+                if (!root.node("debug").isList()) {
+                    root.removeChild("debug");
+                }
+            })
             .build();
 
     private static final ConfigMigrations HISTORY_MIGRATIONS = ConfigMigrations.builder()
@@ -64,6 +70,16 @@ public final class ReactConfigs {
             .step(root -> {
             })
             .step(root -> BracePlaceholders.migrate(root, Map.of()))
+            .step(root -> {
+                for (final ConfigurationNode group : root.node("punishments").childrenMap().values()) {
+                    final ConfigurationNode actions = group.node("actions");
+                    for (final Map.Entry<Object, ? extends ConfigurationNode> entry : actions.childrenMap().entrySet()) {
+                        final String key = String.valueOf(entry.getKey());
+                        group.node(key.indexOf(';') == -1 ? "at" : "every", key).from(entry.getValue());
+                    }
+                    group.removeChild("actions");
+                }
+            })
             .build();
 
     private static final String[][] OFFICIAL_ADDONS = {
@@ -109,7 +125,7 @@ public final class ReactConfigs {
     private volatile ConfigurationNode punishments;
     private volatile ConfigurationNode database;
     private volatile ConfigurationNode databaseType;
-    private volatile Map<String, Object> checks;
+    private volatile Map<String, CheckConfig> checks;
 
     public ReactConfigs(
             final @NotNull Path directory,
@@ -214,6 +230,10 @@ public final class ReactConfigs {
         return history;
     }
 
+    public @NotNull Map<String, CheckConfig> checks() {
+        return checks;
+    }
+
     public @NotNull ConfigurationNode punishments() {
         return punishments;
     }
@@ -232,8 +252,8 @@ public final class ReactConfigs {
     /**
      * The settings of a check by its {@code configId}.
      */
-    public @NotNull Object check(final @NotNull String configId) {
-        final Object config = checks.get(configId);
+    public @NotNull CheckConfig check(final @NotNull String configId) {
+        final CheckConfig config = checks.get(configId);
         if (config == null) {
             throw new IllegalStateException("Missing configuration for check '" + configId + "'");
         }

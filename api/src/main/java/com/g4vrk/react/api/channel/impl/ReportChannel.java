@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ReportChannel extends AudienceChannel<CheckReport> {
 
     private final Map<Audience, Set<UUID>> targets = new ConcurrentHashMap<>();
+    private final Map<Audience, String> checks = new ConcurrentHashMap<>();
 
     private volatile Delivery delivery = (recipient, report) -> {
     };
@@ -36,8 +37,7 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
      */
     @Override
     public boolean subscribe(final @NotNull Audience recipient) {
-        this.targets.remove(recipient);
-        return super.subscribe(recipient);
+        return this.subscribe(recipient, null, null);
     }
 
     /**
@@ -45,13 +45,40 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
      * selection.
      */
     public boolean subscribe(final @NotNull Audience recipient, final @NotNull Collection<UUID> players) {
-        this.targets.put(recipient, Set.copyOf(players));
+        return this.subscribe(recipient, players, null);
+    }
+
+    /**
+     * Subscribes the recipient to reports of the given players and check, replacing its
+     * previous selection.
+     *
+     * @param recipient the recipient
+     * @param players   the players, or {@code null} for everyone
+     * @param checkId   the check's config id, or {@code null} for every check
+     * @return {@code true} when the recipient was not subscribed before
+     */
+    public boolean subscribe(
+            final @NotNull Audience recipient,
+            final @Nullable Collection<UUID> players,
+            final @Nullable String checkId
+    ) {
+        if (players == null) {
+            this.targets.remove(recipient);
+        } else {
+            this.targets.put(recipient, Set.copyOf(players));
+        }
+        if (checkId == null) {
+            this.checks.remove(recipient);
+        } else {
+            this.checks.put(recipient, checkId);
+        }
         return super.subscribe(recipient);
     }
 
     @Override
     public boolean remove(final @NotNull Audience recipient) {
         this.targets.remove(recipient);
+        this.checks.remove(recipient);
         return super.remove(recipient);
     }
 
@@ -65,6 +92,7 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
     @Override
     public void clear() {
         this.targets.clear();
+        this.checks.clear();
         super.clear();
     }
 
@@ -74,8 +102,10 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
 
         for (final Audience recipient : this.recipients()) {
             final Set<UUID> players = this.targets.get(recipient);
+            final String check = this.checks.get(recipient);
 
-            if (players == null || players.contains(report.player())) {
+            if ((players == null || players.contains(report.player()))
+                    && (check == null || check.equalsIgnoreCase(report.checkId()))) {
                 delivery.deliver(recipient, report);
             }
         }

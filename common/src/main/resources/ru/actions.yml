@@ -67,6 +67,53 @@ monitor:
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 # Действия связанные с перезагрузкой плагина
+# /react debug [игроки] [проверка] - debug-строки проверок, их показывают debug-действия каждой проверки
+debug:
+
+  # Действия при включении debug
+  on-enable:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Debug <color:#11ff11>включен ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Действия, когда debug следит за частью игроков или одной проверкой. <players> - их ники, <check> - проверка
+  on-enable-players:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Debug <color:#eb2544><players></color> <gray>(<check>)</gray> <color:#11ff11>включен ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Действия при выключении debug
+  on-disable:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Debug <color:#ff1111>выключен ✘"
+    - "[sound] entity.creeper.hurt;1.0;1.0"
+
+# /react bypass <игроки> [время|forever] [проверка], /react bypass remove <игроки> [проверка], /react bypass list
+bypass:
+
+  # <players> - ники, <check> - проверка, <duration> - на сколько
+  granted:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>обходят <white><check></white> на <white><duration>"
+
+  # <players> - ники, <check> - проверка
+  removed:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>больше не обходят <white><check>"
+
+  # Для <player> ничего не изменилось: такого обхода нет или аддон его отменил
+  cancelled:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Ничего не изменилось для <gray><player>"
+
+  # <count> - сколько игроков онлайн с обходом
+  list-header:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Обходы: <color:#eb2544><count>"
+
+  # <player>, <check>, <duration> - сколько осталось
+  list-entry:
+    - "[msg]  <dark_gray>•</dark_gray> <white><player> <gray><check> <dark_gray>|</dark_gray> <duration>"
+
+  list-empty:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Ни у кого онлайн нет обхода"
+
+  all-checks: "все проверки"
+  forever: "навсегда"
+
 reload:
 
   # Действия при начале перезагрузки
@@ -150,6 +197,8 @@ help:
     - "[msg] <color:#eb2544>/react alerts [ники]</color> <gray>- оповещения, можно указать ники"
     - "[msg] <color:#eb2544>/react monitor [ники]</color> <gray>- мониторинг аналитики, можно указать ники"
     - "[msg] <color:#eb2544>/react history <игрок></color> <gray>- история проверок"
+    - "[msg] <color:#eb2544>/react debug [игроки] [проверка]</color> <gray>- debug-строки проверок"
+    - "[msg] <color:#eb2544>/react bypass <игроки> [время] [проверка]</color> <gray>- обход проверок"
     - "[msg] <color:#eb2544>/react reload</color> <gray>- перезагрузить конфиги"
     - "[msg] <color:#eb2544>/react reboot [цель]</color> <gray>- перезапустить плагин, аддоны или RCP"
     - "[msg] <color:#eb2544>/react rcps</color> <gray>- установленные RCP"

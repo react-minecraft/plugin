@@ -1,4 +1,3 @@
-
 #
 # React - АнтиЧит основанный на Проверках от Нейросети
 #
@@ -6,6 +5,8 @@
 # (ИИ модель не входит в проект)
 #
 
+# Lines: [console], [alert], [log], [reset-vl] and every action of actions.yml.
+# Placeholders: <player>, <check>, <vl>
 punishments:
   aim:
 
@@ -13,16 +14,18 @@ punishments:
     checks:
       - "aim-ai"
 
-    # Действия при достижении определённого VL
-    actions:
+    # Один раз, когда VL дойдёт до N
+    at: {}
 
-      # Сработает после 25 VL, затем будет повторяться каждые 50 VL
-      10;8:
+    # На N VL, затем каждые M VL ("M" без N: каждые M VL)
+    every:
+      "10;8":
 
         # Выполнить команду от имени консоли
+        - "[console] kick <player> [React] Heuristic violations (Aim-AI)"
 
         # Сбросить VL игрока
         #- "[reset-vl]"
 
 # Не меняйте / Do not change
-config-version: 2
+config-version: 3

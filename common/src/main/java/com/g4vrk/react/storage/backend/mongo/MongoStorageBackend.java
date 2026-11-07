@@ -34,12 +34,14 @@ public final class MongoStorageBackend implements StorageBackend {
     private final MongoDatabase database;
     private final MongoCollection<Document> violations;
     private final MongoCollection<Document> inference;
+    private final MongoCollection<Document> bypasses;
 
     public MongoStorageBackend(final @NotNull MongoSettings settings) {
         this.client = MongoClients.create(clientSettings(settings));
         this.database = client.getDatabase(settings.database());
         this.violations = database.getCollection(MONGO_VIOLATIONS_COLLECTION);
         this.inference = database.getCollection(MONGO_INFERENCE_COLLECTION);
+        this.bypasses = database.getCollection(MONGO_BYPASS_COLLECTION);
     }
 
     @Override
@@ -48,6 +50,7 @@ public final class MongoStorageBackend implements StorageBackend {
         violations.createIndex(Indexes.ascending(FIELD_PLAYER_UUID));
         inference.createIndex(Indexes.compoundIndex(Indexes.ascending(FIELD_PLAYER_UUID), Indexes.ascending(FIELD_TIMESTAMP)));
         inference.createIndex(Indexes.ascending(FIELD_TIMESTAMP));
+        bypasses.createIndex(Indexes.ascending(FIELD_PLAYER_UUID));
     }
 
     @Override
@@ -74,7 +77,12 @@ public final class MongoStorageBackend implements StorageBackend {
                     number(document, FIELD_PROBABILITY)
             ));
         }
-        return new PlayerStorageData(loadedViolations, history);
+        final Map<String, Long> loadedBypasses = new java.util.LinkedHashMap<>();
+        for (final Document document : bypasses
+                .find(and(eq(FIELD_PLAYER_UUID, uuid), gt(FIELD_EXPIRES_AT, System.currentTimeMillis())))) {
+            loadedBypasses.put(document.getString(FIELD_CHECK), longNumber(document, FIELD_EXPIRES_AT));
+        }
+        return new PlayerStorageData(loadedViolations, history, loadedBypasses);
     }
 
     @Override
@@ -85,6 +93,7 @@ public final class MongoStorageBackend implements StorageBackend {
 
         final List<WriteModel<Document>> violationWrites = new ArrayList<>();
         final List<WriteModel<Document>> inferenceWrites = new ArrayList<>();
+        final List<WriteModel<Document>> bypassWrites = new ArrayList<>();
         final ReplaceOptions upsert = new ReplaceOptions().upsert(true);
 
         for (final StorageMutation mutation : mutations) {
@@ -113,6 +122,17 @@ public final class MongoStorageBackend implements StorageBackend {
                         .append(FIELD_TIMESTAMP, value.timestamp())
                         .append(FIELD_PROBABILITY, value.probability());
                 inferenceWrites.add(new ReplaceOneModel<>(eq(FIELD_ID, stored.id().toString()), document, upsert));
+            } else if (mutation instanceof final StorageMutation.Bypass bypass) {
+                final String id = bypass.playerUuid() + ":" + bypass.check();
+                if (bypass.lifted()) {
+                    bypassWrites.add(new DeleteOneModel<>(eq(FIELD_ID, id)));
+                } else {
+                    final Document document = new Document(FIELD_ID, id)
+                            .append(FIELD_PLAYER_UUID, bypass.playerUuid().toString())
+                            .append(FIELD_CHECK, bypass.check())
+                            .append(FIELD_EXPIRES_AT, bypass.until());
+                    bypassWrites.add(new ReplaceOneModel<>(eq(FIELD_ID, id), document, upsert));
+                }
             }
         }
 
@@ -122,10 +142,14 @@ public final class MongoStorageBackend implements StorageBackend {
         if (!inferenceWrites.isEmpty()) {
             inference.bulkWrite(inferenceWrites, new com.mongodb.client.model.BulkWriteOptions().ordered(false));
         }
+        if (!bypassWrites.isEmpty()) {
+            bypasses.bulkWrite(bypassWrites);
+        }
     }
 
     @Override
     public long deleteHistoryBefore(final long cutoff) {
+        bypasses.deleteMany(lte(FIELD_EXPIRES_AT, System.currentTimeMillis()));
         return inference.deleteMany(lt(FIELD_TIMESTAMP, cutoff)).getDeletedCount();
     }
 

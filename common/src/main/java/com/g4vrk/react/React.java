@@ -13,6 +13,7 @@ import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
 import com.g4vrk.react.api.ReactAPI;
 import com.g4vrk.react.api.channel.ReactChannels;
+import com.g4vrk.react.channel.DebugActions;
 import com.g4vrk.react.channel.ReportActions;
 import com.g4vrk.react.config.ReactConfigs;
 import com.g4vrk.react.config.lang.Language;
@@ -84,6 +85,7 @@ public class React {
 
     private ReportActions alertActions;
     private ReportActions monitorActions;
+    private DebugActions debugActions;
     private PunishmentManager punishmentManager;
     private InferenceHistoryPrinter inferenceHistoryPrinter;
 
@@ -155,7 +157,9 @@ public class React {
         this.monitorActions = new ReportActions(actionParser, configs.actions().monitor().message());
         ReactChannels.ALERTS.delivery(alertActions);
         ReactChannels.MONITOR.delivery(monitorActions);
-        this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler);
+        this.debugActions = new DebugActions(actionParser, configs.checks());
+        ReactChannels.DEBUG.delivery(debugActions);
+        this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser);
         this.inferenceHistoryPrinter = new InferenceHistoryPrinter(text);
 
         logger.info("Registering commands...");
@@ -194,6 +198,7 @@ public class React {
         listeners.reload();
         alertActions.actions(configs.actions().alerts().alert());
         monitorActions.actions(configs.actions().monitor().message());
+        debugActions.checks(configs.checks());
         updateNotifier.onReload(configs.actions());
 
         for (final TrackedPlayerImpl player : playerRegistry.values()) {

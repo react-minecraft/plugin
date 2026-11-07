@@ -14,7 +14,7 @@ public final class MonitorArgument extends ReportToggleArgument {
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull ActionParser<Audience> actionParser
     ) {
-        super(builderFactory, actionParser, ReactChannels.MONITOR, Permissions.MONITOR, ActionsConfig::monitor,
+        super(builderFactory, actionParser, ReactChannels.MONITOR, Permissions.MONITOR, ActionsConfig::monitor, false,
                 "monitor", "verbose");
     }
 

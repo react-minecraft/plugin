@@ -1,5 +1,7 @@
 package com.g4vrk.react.service;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.Permissions;
 import com.g4vrk.react.api.ReloadObserver;
@@ -39,10 +41,13 @@ import java.util.List;
 /**
  * The {@code /react} command: its manager, every argument, the help replies and the error handlers.
  */
+@Accessors(fluent = true)
 public final class CommandService {
 
     private final Logger logger;
+    @Getter
     private final LegacyPaperCommandManager<CommandSender> manager;
+    @Getter
     private final CommandBuilderFactory builderFactory;
 
     private List<ReloadObserver<ActionsConfig>> observers = List.of();

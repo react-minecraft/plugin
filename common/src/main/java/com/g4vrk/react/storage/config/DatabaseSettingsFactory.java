@@ -1,7 +1,6 @@
 package com.g4vrk.react.storage.config;
 
-import com.g4vrk.config.Config;
-import com.g4vrk.react.parse.time.TimeParser;
+import com.g4vrk.react.api.util.TimeParser;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.configurate.ConfigurationNode;
 
@@ -19,11 +18,10 @@ import static com.g4vrk.react.storage.constant.StorageConstants.*;
 public final class DatabaseSettingsFactory {
 
     public @NotNull DatabaseSettings create(
-            final @NotNull Map<String, Config> configs,
+            final @NotNull ConfigurationNode root,
+            final @NotNull ConfigurationNode typeRoot,
             final @NotNull File pluginDirectory
     ) {
-        final Config databaseConfig = requireConfig(configs, DATABASE_CONFIG);
-        final ConfigurationNode root = databaseConfig.root();
         final DatabaseType type = DatabaseType.parse(root.node("type").getString("sqlite"));
         final ConfigurationNode async = root.node("async");
         final ConfigurationNode history = root.node("history");
@@ -34,9 +32,9 @@ public final class DatabaseSettingsFactory {
 
         if (type == DatabaseType.MONGODB) {
             jdbcSettings = null;
-            mongoSettings = mongo(requireConfig(configs, type.configName()).root());
+            mongoSettings = mongo(typeRoot);
         } else {
-            jdbcSettings = jdbc(type, requireConfig(configs, type.configName()).root(), pluginDirectory);
+            jdbcSettings = jdbc(type, typeRoot, pluginDirectory);
             mongoSettings = null;
         }
 
@@ -199,16 +197,15 @@ public final class DatabaseSettingsFactory {
     }
 
     private @NotNull Duration positiveDuration(final String input, final @NotNull Duration fallback) {
-        final Duration parsed = TimeParser.parseDurationOrDefault(input, fallback);
-        return parsed.isZero() || parsed.isNegative() ? fallback : parsed;
-    }
-
-    private @NotNull Config requireConfig(final @NotNull Map<String, Config> configs, final @NotNull String name) {
-        final Config config = configs.get(name);
-        if (config == null) {
-            throw new IllegalStateException("Missing database configuration: " + name);
+        if (input == null || input.isBlank()) {
+            return fallback;
         }
-        return config;
+        try {
+            final Duration parsed = TimeParser.parse(input.trim());
+            return parsed.isZero() || parsed.isNegative() ? fallback : parsed;
+        } catch (final IllegalArgumentException ex) {
+            return fallback;
+        }
     }
 
     private @NotNull String normalize(final @NotNull Path path) {

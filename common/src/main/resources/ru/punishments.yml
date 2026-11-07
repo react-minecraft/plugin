@@ -5,8 +5,6 @@
 # Исходный код плагина: https://github.com/g4vrk/React
 # (ИИ модель не входит в проект)
 #
-# Купить доступ к нашей модели -> https://www.react-ac.space/
-#
 
 punishments:
   aim:
@@ -26,3 +24,5 @@ punishments:
         # Сбросить VL игрока
         #- "[reset-vl]"
 
+# Не меняйте / Do not change
+config-version: 1

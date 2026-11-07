@@ -1,6 +1,6 @@
 package com.g4vrk.react.placeholder;
 
-import com.g4vrk.react.inference.ProbabilityFormatter;
+import com.g4vrk.react.util.ProbabilityFormatter;
 
 import com.g4vrk.react.color.resolver.ValueColorResolver;
 import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
@@ -12,7 +12,7 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class ReactPlaceholderExpansion extends PlaceholderExpansion {
 
@@ -21,26 +21,12 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
     private final String version;
 
     private final PlayerRegistry registry;
-    private final java.util.function.Function<OfflinePlayer, String> selectedModel;
+    private final Function<OfflinePlayer, String> selectedModel;
 
     private final ValueColorResolver probabilityColorResolver = new ProbabilityColorResolver();
 
-    public ReactPlaceholderExpansion(
-            @NotNull String id,
-            @NotNull String author,
-            @NotNull String version,
-            @NotNull PlayerRegistry registry
-    ) {
-        this(id, author, version, registry, () -> "Unavailable");
-    }
-
     public ReactPlaceholderExpansion(String id, String author, String version,
-                                     PlayerRegistry registry, Supplier<String> selectedModel) {
-        this(id, author, version, registry, ignored -> selectedModel.get());
-    }
-
-    public ReactPlaceholderExpansion(String id, String author, String version,
-                                     PlayerRegistry registry, java.util.function.Function<OfflinePlayer, String> selectedModel) {
+                                     PlayerRegistry registry, Function<OfflinePlayer, String> selectedModel) {
         this.id = id;
         this.author = author;
         this.version = version;
@@ -76,9 +62,8 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
     ) {
 
         if (params.equals("model") || params.equals("model_family") || params.equals("model_name")) {
-            String display = selectedModel.apply(offlinePlayer);
-            if (display == null) display = "Unavailable";
-            String[] parts = display.split("/", 2);
+            final String display = selectedModel.apply(offlinePlayer);
+            final String[] parts = display.split("/", 2);
             return switch (params) {
                 case "model_family" -> parts[0];
                 case "model_name" -> parts.length == 2 ? parts[1] : display;

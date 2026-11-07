@@ -53,11 +53,34 @@
 
 1. Download the plugin `.jar` file.
 2. Move it to the `plugins/` folder.
-3. After starting the server, configure `inference.yml` to connect to an external analysis server.
+3. Start the server. After the first tick the plugin downloads the React RCP from
+   [GitHub](https://github.com/react-minecraft/rcp) into `plugins/React/.rcp/providers/`.
+4. Link the server to your account at https://www.react-ac.space/: `/react link <code>`.
 
 > [!IMPORTANT]
-> If you are using our model through https://www.react-ac.space/, no additional configuration is required. Simply
-> download the ready-to-use `inference.yml` from the website and replace the file in the plugin folder.
+> Every RCP build is checked against SHA-256 and an ed25519 signature. A build that fails the check is deleted and
+> the server keeps running without the RCP. When GitHub is unreachable, the last downloaded build is loaded.
+
+### React RCP
+
+The models and the React connection live in an RCP (Runtime Communication Protocol), not in the plugin.
+How it is loaded is set in `plugins/React/.rcp/react-rcp.yml`:
+
+| Key                    | Default   | Description                                                                         |
+|------------------------|-----------|-------------------------------------------------------------------------------------|
+| `settings.enabled`     | `true`    | Whether the React RCP is loaded                                                     |
+| `settings.auto-update` | `true`    | Check for a new version on start and `/react reboot`; `false` downloads it only once |
+| `settings.channel`     | `release` | `release` for releases only, `all` for every CI build (`nightly`)                   |
+
+The RCP keeps its own settings in `plugins/React/.rcp/React/`.
+
+| Command              | Description                                                        |
+|----------------------|--------------------------------------------------------------------|
+| `/react rcps`        | Every RCP: version, `api-version`, channel, time of the last check |
+| `/react reboot`      | Update and reload the plugin together with the RCP, no restart     |
+| `/react link`        | Get a link and confirm the server on the site                      |
+| `/react link <code>` | Link the server to your React account                              |
+| `/react link check`  | Check the link and the models you have                             |
 
 ---
 
@@ -85,6 +108,7 @@
 
 | Module   | Description                                   |
 |----------|-----------------------------------------------|
+| `api`    | Stable API for RCPs and addons, RCP and addon loaders |
 | `common` | Core anti-cheat logic, data, checks, and more |
 | `paper`  | Implementation for Paper servers              |
 | `folia`  | Implementation for Folia servers              |
@@ -96,6 +120,12 @@
 > [!IMPORTANT]
 > If you want to add your own functionality or mechanics to the plugin, you can create an addon. Help with addon
 > development is available at https://t.me/g4vrk/
+
+Examples with explanations:
+
+- **[example-rcp](https://github.com/react-minecraft/example-rcp)**: a model of its own, a result in the check and a `/react`
+  subcommand. An RCP builds against `react-api` only and loads while its `api-version` matches;
+- **[example-addon](https://github.com/react-minecraft/example-addon)**: an addon on the plugin's events, built against `react-common`.
 
 <details>
 <summary><b>Using JitPack</b></summary>
@@ -114,7 +144,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.github.g4vrk.React:react-common:VERSION")
+    compileOnly("com.github.react-minecraft.plugin:react-api:VERSION")
+    compileOnly("com.github.react-minecraft.plugin:react-common:VERSION")
 }
 ```
 
@@ -134,7 +165,7 @@ dependencies {
 </repositories>
 
 <dependency>
-    <groupId>com.github.g4vrk.React</groupId>
+    <groupId>com.github.react-minecraft.plugin</groupId>
     <artifactId>react-common</artifactId>
     <version>VERSION</version>
     <scope>provided</scope>

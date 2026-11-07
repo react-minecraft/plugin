@@ -1,4 +1,4 @@
-
+ 
 #
 # React - АнтиЧит основанный на Проверках от Нейросети
 #
@@ -42,13 +42,19 @@ permissions:
     children:
       react.command.usage: true
       react.command.reload: true
-      react.command.connect: true
+      react.command.reboot: true
+      react.command.link: true
+      react.command.rcps: true
       react.command.history: true
       react.alerts: true
       react.verbose: true
   react.command.reload:
     default: op
-  react.command.connect:
+  react.command.reboot:
+    default: op
+  react.command.link:
+    default: op
+  react.command.rcps:
     default: op
   react.command.history:
     default: op
@@ -56,16 +62,8 @@ permissions:
     default: op
 
 libraries:
-  - com.squareup.moshi:moshi:1.15.0
-  - com.squareup.moshi:moshi-adapters:1.15.0
-
   - org.spongepowered:configurate-yaml:4.2.0
-
-  - org.ejml:ejml-core:0.41
-  - org.ejml:ejml-ddense:0.41
-  - org.ejml:ejml-simple:0.41
 
   - org.xerial:sqlite-jdbc:3.42.0.0
 
   - org.incendo:cloud-paper:2.0.0
-

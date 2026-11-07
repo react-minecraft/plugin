@@ -2,8 +2,8 @@ package com.g4vrk.react.listeners.bukkit;
 
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.ReactChannels;
-import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.storage.StorageManager;
 import com.g4vrk.react.storage.model.PlayerStorageData;
@@ -22,7 +22,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class ConnectionListener implements Listener {
 
-    private final Logger logger = React.INSTANCE.getLogger();
+    private final Logger logger = React.INSTANCE.logger();
 
     private final PlayerRegistry playerRegistry;
     private final PlayerFactory playerFactory;

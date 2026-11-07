@@ -19,7 +19,7 @@ public final class FoliaReactAPI implements ReactAPI {
     }
 
     @Override
-    public @NotNull SchedulaAPI getSchedulaAPI() {
+    public @NotNull SchedulaAPI schedulaAPI() {
         return api;
     }
 }

@@ -52,11 +52,34 @@
 
 1. Скачайте `.jar` файл плагина
 2. Переместите его в папку `plugins/`
-3. После запуска настройте `inference.yml` для подключения внешнего сервера
+3. Запустите сервер. После первого тика плагин сам скачает React RCP с
+   [GitHub](https://github.com/react-minecraft/rcp) в `plugins/React/.rcp/providers/`
+4. Привяжите сервер к аккаунту на https://www.react-ac.space/: `/react link <код>`
 
 > [!IMPORTANT]
-> Если вы используете нашу модель на сайте https://www.react-ac.space/, то настраивать ничего не нужно - просто скачайте
-> готовый inference.yml с сайта и замените его в папке плагина
+> Каждая сборка RCP проверяется по SHA-256 и подписи ed25519. Если проверка не прошла, файл удаляется,
+> а сервер работает дальше без RCP. Без доступа к GitHub загружается последняя скачанная сборка.
+
+### React RCP
+
+Модели и подключение к React живут не в плагине, а в RCP (Runtime Communication Protocol).
+Настройки загрузки лежат в `plugins/React/.rcp/react-rcp.yml`:
+
+| Ключ                   | По умолчанию | Описание                                                                |
+|------------------------|--------------|-------------------------------------------------------------------------|
+| `settings.enabled`     | `true`       | Загружать ли React RCP                                                  |
+| `settings.auto-update` | `true`       | Проверять новую версию при старте и `/react reboot`; `false` - качать, только если RCP ещё нет |
+| `settings.channel`     | `release`    | `release` - только релизы, `all` - любая сборка CI (`nightly`)           |
+
+Свои настройки RCP хранит в `plugins/React/.rcp/React/`.
+
+| Команда                | Описание                                                       |
+|------------------------|----------------------------------------------------------------|
+| `/react rcps`          | Все RCP: версия, `api-version`, канал, время последней проверки |
+| `/react reboot`        | Обновить и перезагрузить плагин вместе с RCP без рестарта      |
+| `/react link`          | Получить ссылку и привязать сервер к аккаунту React            |
+| `/react link <код>`    | Привязать сервер к аккаунту React                               |
+| `/react link check`    | Проверить привязку и доступные модели                          |
 
 ---
 
@@ -84,6 +107,7 @@
 
 | Модуль   | Описание                                           |
 |----------|----------------------------------------------------|
+| `api`    | Стабильный API для RCP и аддонов, загрузчики RCP и аддонов |
 | `common` | Главная работа античита, данные, проверки и прочее |
 | `paper`  | Реализация для Paper серверов                      |
 | `folia`  | Реализация для Folia серверов                      |
@@ -95,6 +119,12 @@
 > [!IMPORTANT]
 > Если вы хотите добавить в плагин какую либо функцию / механику, то вы можете создать аддон, помощь в их создании
 > оказывает https://t.me/g4vrk/
+
+Примеры с пояснениями:
+
+- **[example-rcp](https://github.com/react-minecraft/example-rcp)**: своя модель, результат в проверке и подкоманда `/react`.
+  RCP собирается только против `react-api` и грузится, пока совпадает `api-version`;
+- **[example-addon](https://github.com/react-minecraft/example-addon)**: аддон на событиях плагина, собирается против `react-common`.
 
 <details>
 <summary><b>Подключение через JitPack</b></summary>
@@ -113,7 +143,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("com.github.g4vrk.React:react-common:VERSION")
+    compileOnly("com.github.react-minecraft.plugin:react-api:VERSION")
+    compileOnly("com.github.react-minecraft.plugin:react-common:VERSION")
 }
 ```
 
@@ -133,7 +164,7 @@ dependencies {
 </repositories>
 
 <dependency>
-    <groupId>com.github.g4vrk.React</groupId>
+    <groupId>com.github.react-minecraft.plugin</groupId>
     <artifactId>react-common</artifactId>
     <version>VERSION</version>
     <scope>provided</scope>

@@ -6,10 +6,9 @@ import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
-import com.g4vrk.config.Config;
 import com.g4vrk.react.React;
-import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
 import com.g4vrk.react.api.ReloadObserver;
+import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
@@ -28,7 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
-public final class PunishmentManager implements ReloadObserver {
+public final class PunishmentManager implements ReloadObserver<ConfigurationNode> {
 
     private static final char PERIOD_SEPARATOR = ';';
 
@@ -98,15 +97,13 @@ public final class PunishmentManager implements ReloadObserver {
 
     public void reload() {
 
-        final Config config = React.INSTANCE.getPunishmentsConfig();
-
-        this.onReload(config);
+        this.onReload(React.INSTANCE.configs().punishments());
 
     }
 
     @Override
     public void onReload(
-            final @NotNull Config config
+            final @NotNull ConfigurationNode config
     ) {
         rulesByCheck.clear();
 

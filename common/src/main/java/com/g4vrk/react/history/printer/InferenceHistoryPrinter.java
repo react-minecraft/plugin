@@ -1,8 +1,8 @@
 package com.g4vrk.react.history.printer;
 
-import com.g4vrk.react.inference.ProbabilityFormatter;
+import com.g4vrk.react.util.ProbabilityFormatter;
 
-import com.g4vrk.config.Config;
+import com.g4vrk.react.config.model.HistoryConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.color.resolver.ValueColorResolver;
@@ -12,13 +12,11 @@ import com.g4vrk.react.player.ReactPlayer;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
-import org.spongepowered.configurate.serialize.SerializationException;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-public class InferenceHistoryPrinter implements ReloadObserver {
+public class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
 
     private final Function<String, Component> serializer;
     private final ValueColorResolver probabilityColorResolver = new ProbabilityColorResolver();
@@ -35,26 +33,17 @@ public class InferenceHistoryPrinter implements ReloadObserver {
     }
 
     public void reload() {
-        onReload(React.INSTANCE.getHistoryConfig());
+        onReload(React.INSTANCE.configs().history());
     }
 
     @Override
-    public void onReload(@NotNull Config config) {
-        try {
-            header = loadFormat(config, "header");
-            entryFormat = loadFormat(config, "entry-format");
-            empty = loadFormat(config, "empty");
-            footer = loadFormat(config, "footer");
-        } catch (SerializationException ex) {
-            throw new RuntimeException(ex);
-        }
-        printEntries = Math.max(1, config.node("history", "inference", "format", "print-entries").getInt(18));
-    }
-
-    private @NotNull List<String> loadFormat(@NotNull Config config, @NotNull String key)
-            throws SerializationException {
-        return config.node("history", "inference", "format", key)
-                .getList(String.class, Collections.emptyList());
+    public void onReload(@NotNull HistoryConfig config) {
+        final HistoryConfig.Format format = config.format();
+        header = format.header();
+        entryFormat = format.entryFormat();
+        empty = format.empty();
+        footer = format.footer();
+        printEntries = Math.max(1, format.printEntries());
     }
 
     public void print(@NotNull Audience receiver, @NotNull ReactPlayer player) {

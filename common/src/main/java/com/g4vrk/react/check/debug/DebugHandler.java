@@ -15,7 +15,7 @@ public class DebugHandler {
 
     private final Check check;
 
-    private final Logger logger = React.INSTANCE.getLogger();
+    private final Logger logger = React.INSTANCE.logger();
 
     public final void debug(
             final @NotNull String message

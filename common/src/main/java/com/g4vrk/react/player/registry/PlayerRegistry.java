@@ -1,7 +1,6 @@
 package com.g4vrk.react.player.registry;
 
 import com.g4vrk.react.player.ReactPlayer;
-import com.g4vrk.react.React;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +30,6 @@ public final class PlayerRegistry {
         final ReactPlayer removed = players.remove(uuid);
         if (removed != null) {
             removed.clearTransientState();
-            if (React.INSTANCE.getAimModels() != null) {
-                React.INSTANCE.getAimModels().removePlayer(uuid);
-            }
         }
     }
 
@@ -55,9 +51,6 @@ public final class PlayerRegistry {
     }
 
     public void clear() {
-        if (React.INSTANCE.getAimModels() != null) {
-            players.keySet().forEach(React.INSTANCE.getAimModels()::removePlayer);
-        }
         players.values().forEach(ReactPlayer::clearTransientState);
         players.clear();
     }

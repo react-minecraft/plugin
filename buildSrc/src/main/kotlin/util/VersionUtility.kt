@@ -6,7 +6,7 @@ object VersionUtility {
 
     private const val DEFAULT_BRANCH = "local"
     private const val UNKNOWN_COMMIT = "unknown"
-    private const val MAIN_BRANCH = "master"
+    private val MAIN_BRANCHES = setOf("master", "main")
     private const val SHORT_COMMIT_LENGTH = 7
 
     fun branch(project: Project): String {
@@ -51,13 +51,17 @@ object VersionUtility {
         project: Project,
         baseVersion: String
     ): String {
+        if (System.getenv("REACT_RELEASE") == "true") {
+            return baseVersion
+        }
+
         val branch = branch(project)
         val commit = commitHash(project)
 
         return buildString {
             append(baseVersion)
 
-            if (branch != MAIN_BRANCH) {
+            if (branch !in MAIN_BRANCHES) {
                 append('-')
                 append(branch)
             }

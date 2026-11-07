@@ -1,12 +1,10 @@
 package com.g4vrk.react.api.channel.print.impl;
 
-import com.g4vrk.config.Config;
 import com.g4vrk.react.React;
 import com.g4vrk.react.player.ReactPlayer;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.spongepowered.configurate.ConfigurationNode;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -26,13 +24,7 @@ public class AlertPrinter extends ConfigurablePrinter {
 
     @Override
     protected @NotNull String rawFormat() {
-
-        final Config config = React.INSTANCE.getMainConfig();
-
-        final ConfigurationNode formatNode = config.node("alerts", "format");
-
-        return formatNode.getString("&c«React» &7| &f{player} - {check} {verbose}");
-
+        return React.INSTANCE.configs().main().alerts().format();
     }
 
     public void print(

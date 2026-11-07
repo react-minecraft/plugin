@@ -1,8 +1,8 @@
 package com.g4vrk.react.command.argument.impl;
 
+import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
-import com.g4vrk.config.Config;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.command.argument.LocalArgument;
@@ -13,12 +13,10 @@ import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.jetbrains.annotations.NotNull;
-import org.spongepowered.configurate.serialize.SerializationException;
 
-import java.util.Collections;
 import java.util.Objects;
 
-public final class ReloadArgument extends LocalArgument implements ReloadObserver {
+public final class ReloadArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
     private final CommandBuilderFactory builderFactory;
 
@@ -56,7 +54,7 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
                     React.INSTANCE.reloadAsync().whenComplete((ignored, failure) ->
                             scheduler.schedule(() -> {
                                 if (failure != null) {
-                                    React.INSTANCE.getLogger().error("React reload failed", failure);
+                                    React.INSTANCE.logger().error("React reload failed", failure);
                                 }
                                 finishActions.run(sender);
                             }, TickSchedule.instant())
@@ -66,26 +64,13 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
     }
 
     public void reload() {
-
-        final Config actionsConfig = React.INSTANCE.getActionsConfig();
-
-        this.onReload(actionsConfig);
-
+        this.onReload(React.INSTANCE.configs().actions());
     }
 
     @Override
-    public void onReload(@NotNull Config config) {
-
-        try {
-            this.startActions = this.actionParser.parseAll(
-                    config.node("reload", "on-start").getList(String.class, Collections.emptyList())
-            );
-            this.finishActions = this.actionParser.parseAll(
-                    config.node("reload", "on-finish").getList(String.class, Collections.emptyList())
-            );
-        } catch (final SerializationException ex) {
-            throw new RuntimeException("Failed to load configuration values for reload argument", ex);
-        }
-
+    public void onReload(@NotNull ActionsConfig config) {
+        this.startActions = this.actionParser.parseAll(config.reload().onStart());
+        this.finishActions = this.actionParser.parseAll(config.reload().onFinish());
     }
+
 }

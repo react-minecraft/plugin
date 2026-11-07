@@ -1,6 +1,6 @@
 package com.g4vrk.react.player.factory;
 
-import com.g4vrk.config.Config;
+import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.player.ReactPlayer;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public final class PlayerFactory implements ReloadObserver {
+public final class PlayerFactory implements ReloadObserver<MainConfig> {
 
     private boolean checkBedrockPlayers;
 
@@ -34,17 +34,12 @@ public final class PlayerFactory implements ReloadObserver {
     }
 
     public void reload() {
-
-        final Config config = React.INSTANCE.getMainConfig();
-
-        this.onReload(config);
-
+        this.onReload(React.INSTANCE.configs().main());
     }
 
     @Override
-    public void onReload(@NotNull Config config) {
-
-        this.checkBedrockPlayers = config.node("player", "check-bedrock-players").getBoolean(false);
-
+    public void onReload(@NotNull MainConfig config) {
+        this.checkBedrockPlayers = config.player().checkBedrockPlayers();
     }
+
 }

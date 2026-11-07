@@ -3,6 +3,8 @@ package com.g4vrk.react.player;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
 import com.g4vrk.react.api.channel.print.impl.VerbosePrinter;
+import com.g4vrk.react.api.rcp.player.RCPPlayer;
+import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.manager.CheckManager;
 import com.g4vrk.react.history.InferenceHistory;
@@ -20,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.g4vrk.react.player.model.rotation.RotationData;
 import com.g4vrk.react.check.impl.aim.AimAI;
 
-public final class ReactPlayer {
+public final class ReactPlayer implements RCPPlayer {
 
     private static final int MAX_ROTATION_WINDOW = 40;
 
@@ -52,12 +54,12 @@ public final class ReactPlayer {
         this.uniqueId = uniqueId;
         this.name = name;
         this.bukkitPlayer = bukkitPlayer;
-        this.alertPrinter = React.INSTANCE.getAlertPrinter();
-        this.verbosePrinter = React.INSTANCE.getVerbosePrinter();
+        this.alertPrinter = React.INSTANCE.alertPrinter();
+        this.verbosePrinter = React.INSTANCE.verbosePrinter();
         this.checkManager = new CheckManager(this);
         this.inferenceHistory = new InferenceHistory(
-                React.INSTANCE.getStorageManager().historyRetention(),
-                entry -> React.INSTANCE.getStorageManager().saveInference(
+                React.INSTANCE.storageManager().historyRetention(),
+                entry -> React.INSTANCE.storageManager().saveInference(
                         uniqueId,
                         new StoredInference(
                                 entry.getTimestamp(),
@@ -71,17 +73,47 @@ public final class ReactPlayer {
         this.combatActivity = new CombatActivity();
     }
 
+    @Override
+    public @NotNull UUID uniqueId() {
+        return uniqueId;
+    }
+
+    @Override
+    public @NotNull String name() {
+        return name;
+    }
+
+    @Override
+    public @NotNull Player bukkit() {
+        return bukkitPlayer;
+    }
+
+    @Override
+    public boolean inCombat() {
+        return combatActivity.isActive();
+    }
+
+    @Override
+    public void enterCombat() {
+        React.INSTANCE.listeners().combat().activate(this);
+    }
+
+    @Override
+    public boolean checked() {
+        final AimAI aim = checkManager.getCheck(AimAI.class);
+        return aim != null && aim.shouldCheck();
+    }
+
+    @Override
+    public @NotNull Rotation @NotNull [] rotations() {
+        return rotationData.snapshotHistory();
+    }
+
     public void clearTransientState() {
-        if (React.INSTANCE.getAimModels() != null) {
-            React.INSTANCE.getAimModels().resetPlayer(uniqueId);
-        }
         rotationData.clear();
         combatActivity.reset();
-        final AimAI aim =
-                checkManager.getCheck(
-                        AimAI.class);
-        if (aim != null) {
-            aim.resetSamples();
+        if (React.INSTANCE.rcpHost() != null) {
+            React.INSTANCE.rcpHost().reset(uniqueId);
         }
     }
 

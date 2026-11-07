@@ -1,11 +1,16 @@
 package com.g4vrk.react.command.argument.impl;
 
+import com.g4vrk.functionalActions.list.ExecutableActionList;
+import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
+import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
+import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.reboot.PluginReboot;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import com.g4vrk.text.LegacySerializers;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
@@ -16,12 +21,32 @@ import org.jetbrains.annotations.NotNull;
  * /react reboot: unloads React and loads it again from the jar in plugins/, so a replaced jar
  * or added and removed addons take effect without restarting the server.
  */
-public final class RebootArgument extends LocalArgument {
+public final class RebootArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
     private final CommandBuilderFactory builderFactory;
+    private final ActionParser<Audience> actionParser;
 
-    public RebootArgument(@NotNull CommandBuilderFactory builderFactory) {
+    private ExecutableActionList<? super Audience> starting;
+    private ExecutableActionList<? super Audience> cancelled;
+    private PluginReboot.Messages messages;
+
+    public RebootArgument(
+            final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull ActionParser<Audience> actionParser,
+            final @NotNull ActionsConfig config
+    ) {
         this.builderFactory = builderFactory;
+        this.actionParser = actionParser;
+        this.onReload(config);
+    }
+
+    @Override
+    public void onReload(final @NotNull ActionsConfig config) {
+        final ActionsConfig.Reboot reboot = config.reboot();
+        this.starting = actionParser.parseAll(reboot.starting());
+        this.cancelled = actionParser.parseAll(reboot.cancelled());
+        // Sent after the class loader closed: turned into plain legacy strings now.
+        this.messages = new PluginReboot.Messages(legacy(reboot.unloaded()), legacy(reboot.loaded()), legacy(reboot.failed()));
     }
 
     @Override
@@ -31,32 +56,27 @@ public final class RebootArgument extends LocalArgument {
                 .permission("react.command.reboot")
                 .handler(context -> {
                     final CommandSender sender = context.sender();
-                    final Plugin plugin = React.INSTANCE.getPlugin();
+                    final Plugin plugin = React.INSTANCE.plugin();
                     final PluginReboot reboot;
                     try {
-                        reboot = PluginReboot.prepare(plugin, sender, new PluginReboot.Messages(
-                                prefix() + text("Плагин выгружен, загружаем новый jar...", "Plugin unloaded, loading the new jar..."),
-                                prefix() + text("Плагин перезапущен:", "Plugin rebooted:"),
-                                prefix() + text("Перезапуск не удался.", "Reboot failed.")));
+                        reboot = PluginReboot.prepare(plugin, sender, messages);
                     } catch (final IllegalStateException refused) {
-                        React.INSTANCE.getLogger().warn("React reboot refused: {}", refused.getMessage());
-                        sender.sendMessage(Component.text(text("Перезапуск отменён: ", "Reboot cancelled: ")
-                                + refused.getMessage()).color(NamedTextColor.RED));
+                        React.INSTANCE.logger().warn("React reboot refused: {}", refused.getMessage());
+                        final String reason = String.valueOf(refused.getMessage());
+                        cancelled.run(sender, text -> text.replace("{reason}", reason));
                         return;
                     }
-                    sender.sendMessage(Component.text(text("Перезапускаем React из ", "Rebooting React from ")
-                            + reboot.jar().getName() + " (" + reboot.newVersion() + ")...").color(NamedTextColor.GRAY));
+                    starting.run(sender, text -> text
+                            .replace("{jar}", reboot.jar().getName())
+                            .replace("{version}", reboot.newVersion()));
                     // Run outside the command dispatch: disabling React tears down this command manager.
                     Bukkit.getScheduler().runTask(plugin, reboot);
                 });
     }
 
-    private static String prefix() {
-        return "§7[§fReact§7] §f";
-    }
-
-    private static String text(final String russian, final String english) {
-        return "RU".equalsIgnoreCase(React.INSTANCE.getLanguage().name()) ? russian : english;
+    private static String legacy(final String text) {
+        return LegacyComponentSerializer.legacySection()
+                .serialize(LegacySerializers.INSTANCE.universalSerializer().serialize(text));
     }
 
 }

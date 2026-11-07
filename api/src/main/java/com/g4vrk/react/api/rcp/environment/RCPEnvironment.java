@@ -1,6 +1,6 @@
 package com.g4vrk.react.api.rcp.environment;
 
-import com.g4vrk.react.api.rcp.command.RCPCommand;
+import com.g4vrk.react.api.rcp.argument.RCPArgument;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 /**
  * Everything the plugin gives one RCP.
  *
- * <p>Listeners, packet listeners and commands registered here are removed by the plugin
+ * <p>Listeners, packet listeners and arguments registered here are removed by the plugin
  * when the RCP is disabled, so an RCP never unregisters them itself. Registration may
  * happen on any thread: the plugin moves it to the server thread when it has to.</p>
  */
@@ -54,7 +54,10 @@ public interface RCPEnvironment {
      */
     void registerPacketListener(@NotNull Object listener);
 
-    void registerCommand(@NotNull RCPCommand command);
+    /**
+     * Adds {@code /react <name>}. Names of the plugin's own arguments and of other RCPs are taken.
+     */
+    void registerArgument(@NotNull String name, @NotNull RCPArgument argument);
 
     /**
      * Sets what the RCP reports as its state, shown in {@code /react rcps} and in the

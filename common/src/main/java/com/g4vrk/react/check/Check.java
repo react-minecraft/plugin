@@ -54,7 +54,7 @@ public abstract class Check extends AbstractCheck {
         this.violations += amount;
         this.persistViolations();
 
-        final PunishmentManager punishmentManager = React.INSTANCE.getPunishmentManager();
+        final PunishmentManager punishmentManager = React.INSTANCE.punishmentManager();
 
         if (punishmentManager != null) {
             punishmentManager.handleFail(this, previous, this.violations);
@@ -132,8 +132,8 @@ public abstract class Check extends AbstractCheck {
     }
 
     private void persistViolations() {
-        if (React.INSTANCE.getStorageManager() != null) {
-            React.INSTANCE.getStorageManager().saveViolation(
+        if (React.INSTANCE.storageManager() != null) {
+            React.INSTANCE.storageManager().saveViolation(
                     player.getUniqueId(),
                     getConfigId(),
                     violations

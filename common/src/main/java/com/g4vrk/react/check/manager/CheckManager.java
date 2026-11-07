@@ -55,7 +55,7 @@ public final class CheckManager {
     }
 
     public void reload() {
-        final ReactConfigs configs = React.INSTANCE.getConfigs();
+        final ReactConfigs configs = React.INSTANCE.configs();
         for (final Check check : checksValues) {
             if (check instanceof final ReloadObserver<?> observer) {
                 reload(observer, configs.check(check.getConfigId()));

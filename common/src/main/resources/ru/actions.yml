@@ -62,6 +62,43 @@ reload:
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
     - "[sound] entity.player.levelup;1.0;1.0"
 
+# /react reboot
+reboot:
+
+  # Перед перезапуском. {jar} - файл плагина, {version} - его версия
+  starting:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Перезапускаем React из <white>{jar}</white> ({version})..."
+
+  # Перезапуск невозможен. {reason} - почему
+  cancelled:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Перезапуск отменён: <gray>{reason}"
+    - "[sound] entity.creeper.hurt;1.0;1.0"
+
+  # Эти три сообщения уходят, пока плагин выгружен, поэтому это просто текст, а не действия.
+  # В loaded есть {old} и {new} - версии до и после, в failed есть {reason}
+  unloaded: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин выгружен, загружаем новый jar..."
+  loaded: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин перезапущен: <gray>{old} <dark_gray>-></dark_gray> <white>{new}"
+  failed: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Перезапуск не удался: <gray>{reason}"
+
+# /react rcps
+rcps:
+
+  # {count} - сколько RCP загружено
+  header:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>RCP: <color:#eb2544>{count}"
+
+  # Одна RCP без статуса. {name}, {version}, {api} - версия API
+  entry:
+    - "[msg]  <dark_gray>•</dark_gray> <white>{name} <gray>v{version} <dark_gray>|</dark_gray> api {api}"
+
+  # Одна RCP со статусом. {status} - что она о себе пишет
+  entry-with-status:
+    - "[msg]  <dark_gray>•</dark_gray> <white>{name} <gray>v{version} <dark_gray>|</dark_gray> api {api} <dark_gray>|</dark_gray> <color:#ff3655>{status}"
+
+  # Обновление React RCP. {version}, {channel}, {state}, {checked}
+  react:
+    - "[msg]  <dark_gray>»</dark_gray> <white>React RCP <gray>{version} <dark_gray>|</dark_gray> {channel} <dark_gray>|</dark_gray> {state} <dark_gray>|</dark_gray> {checked}"
+
 # Помощь и ответы на ошибки команд
 help:
 
@@ -86,6 +123,21 @@ help:
   # Команда только для игроков
   player-only:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Команда доступна только игрокам."
+
+# Тексты для плейсхолдеров выше и для PlaceholderAPI
+texts:
+
+  # %react_model%, когда ни одна RCP не написала статус
+  unavailable: "Недоступно"
+
+  # {version} в /react rcps
+  no-version: "-"
+  version: "v{version}"
+
+  # {checked} в /react rcps. {minutes} - сколько минут назад
+  not-checked: "не проверялось"
+  checked-now: "проверено только что"
+  checked-ago: "проверено {minutes} мин назад"
 
 # Не меняйте / Do not change
 config-version: 1

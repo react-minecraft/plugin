@@ -54,7 +54,7 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
                     React.INSTANCE.reloadAsync().whenComplete((ignored, failure) ->
                             scheduler.schedule(() -> {
                                 if (failure != null) {
-                                    React.INSTANCE.getLogger().error("React reload failed", failure);
+                                    React.INSTANCE.logger().error("React reload failed", failure);
                                 }
                                 finishActions.run(sender);
                             }, TickSchedule.instant())
@@ -64,7 +64,7 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
     }
 
     public void reload() {
-        this.onReload(React.INSTANCE.getConfigs().actions());
+        this.onReload(React.INSTANCE.configs().actions());
     }
 
     @Override

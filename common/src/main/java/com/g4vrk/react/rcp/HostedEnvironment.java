@@ -1,6 +1,7 @@
 package com.g4vrk.react.rcp;
 
-import com.g4vrk.react.api.rcp.command.RCPCommand;
+import com.g4vrk.react.api.rcp.argument.RCPArgument;
+import com.g4vrk.react.rcp.argument.RegisteredArgument;
 import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
@@ -30,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class HostedEnvironment implements RCPEnvironment {
 
-    private static final Set<String> RESERVED_COMMANDS = Set.of(
+    private static final Set<String> RESERVED_ARGUMENTS = Set.of(
             "alerts", "verbose", "reload", "history", "reboot", "rcps", "help"
     );
 
@@ -41,7 +42,7 @@ public final class HostedEnvironment implements RCPEnvironment {
 
     private final List<RCPPlayerListener> listeners = new CopyOnWriteArrayList<>();
     private final List<PacketListenerCommon> packetListeners = new CopyOnWriteArrayList<>();
-    private final Map<String, RCPCommand> commands = new ConcurrentHashMap<>();
+    private final Map<String, RegisteredArgument> arguments = new ConcurrentHashMap<>();
 
     private volatile @Nullable String status;
     private volatile boolean released;
@@ -122,15 +123,14 @@ public final class HostedEnvironment implements RCPEnvironment {
     }
 
     @Override
-    public void registerCommand(final @NotNull RCPCommand command) {
+    public void registerArgument(final @NotNull String name, final @NotNull RCPArgument argument) {
         ensureActive();
-        final String name = command.name().toLowerCase(Locale.ROOT);
-        if (RESERVED_COMMANDS.contains(name)) {
-            throw new IllegalArgumentException("/react " + name + " belongs to the plugin");
+        final String key = name.toLowerCase(Locale.ROOT);
+        if (RESERVED_ARGUMENTS.contains(key)) {
+            throw new IllegalArgumentException("/react " + key + " belongs to the plugin");
         }
-        final RCPCommand taken = host.command(name);
-        if (taken != null || commands.putIfAbsent(name, command) != null) {
-            throw new IllegalArgumentException("/react " + name + " is already registered");
+        if (host.argument(key) != null || arguments.putIfAbsent(key, new RegisteredArgument(key, argument)) != null) {
+            throw new IllegalArgumentException("/react " + key + " is already registered");
         }
     }
 
@@ -147,8 +147,8 @@ public final class HostedEnvironment implements RCPEnvironment {
         return listeners;
     }
 
-    @NotNull Map<String, RCPCommand> commands() {
-        return commands;
+    @NotNull Map<String, RegisteredArgument> arguments() {
+        return arguments;
     }
 
     private void ensureActive() {
@@ -160,7 +160,7 @@ public final class HostedEnvironment implements RCPEnvironment {
     void release() {
         released = true;
         listeners.clear();
-        commands.clear();
+        arguments.clear();
         status = null;
         for (final PacketListenerCommon listener : packetListeners) {
             try {

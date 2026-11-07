@@ -53,7 +53,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         this.alertThreshold = config.alert().threshold();
         this.decayStrategy = new LinearDecay(config.decay().amount());
 
-        final RCPHost host = React.INSTANCE.getRcpHost();
+        final RCPHost host = React.INSTANCE.rcpHost();
         if (host != null) {
             host.reload(player);
         }
@@ -65,7 +65,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
     }
 
     public void onRotation(final @NotNull Rotation rotation) {
-        final RCPHost host = React.INSTANCE.getRcpHost();
+        final RCPHost host = React.INSTANCE.rcpHost();
         if (host != null && shouldCheck()) {
             host.rotation(player, rotation);
         }

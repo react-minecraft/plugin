@@ -5,6 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ReactAPI {
 
-    @NotNull SchedulaAPI getSchedulaAPI();
+    @NotNull SchedulaAPI schedulaAPI();
 
 }

@@ -54,12 +54,12 @@ public final class ReactPlayer implements RCPPlayer {
         this.uniqueId = uniqueId;
         this.name = name;
         this.bukkitPlayer = bukkitPlayer;
-        this.alertPrinter = React.INSTANCE.getAlertPrinter();
-        this.verbosePrinter = React.INSTANCE.getVerbosePrinter();
+        this.alertPrinter = React.INSTANCE.alertPrinter();
+        this.verbosePrinter = React.INSTANCE.verbosePrinter();
         this.checkManager = new CheckManager(this);
         this.inferenceHistory = new InferenceHistory(
-                React.INSTANCE.getStorageManager().historyRetention(),
-                entry -> React.INSTANCE.getStorageManager().saveInference(
+                React.INSTANCE.storageManager().historyRetention(),
+                entry -> React.INSTANCE.storageManager().saveInference(
                         uniqueId,
                         new StoredInference(
                                 entry.getTimestamp(),
@@ -95,7 +95,7 @@ public final class ReactPlayer implements RCPPlayer {
 
     @Override
     public void enterCombat() {
-        React.INSTANCE.getCombatListener().activate(this);
+        React.INSTANCE.listeners().combat().activate(this);
     }
 
     @Override
@@ -112,8 +112,8 @@ public final class ReactPlayer implements RCPPlayer {
     public void clearTransientState() {
         rotationData.clear();
         combatActivity.reset();
-        if (React.INSTANCE.getRcpHost() != null) {
-            React.INSTANCE.getRcpHost().reset(uniqueId);
+        if (React.INSTANCE.rcpHost() != null) {
+            React.INSTANCE.rcpHost().reset(uniqueId);
         }
     }
 

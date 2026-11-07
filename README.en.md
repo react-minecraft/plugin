@@ -72,12 +72,15 @@ How it is loaded is set in `plugins/React/.rcp/react-rcp.yml`:
 | `settings.auto-update` | `true`    | Check for a new version on start and `/react reboot`; `false` downloads it only once |
 | `settings.channel`     | `release` | `release` for releases only, `all` for every CI build (`nightly`)                   |
 
-The RCP keeps its own settings in `plugins/React/.rcp/react-inference/`.
+The RCP keeps its own settings in `plugins/React/.rcp/React/`.
 
 | Command              | Description                                                        |
 |----------------------|--------------------------------------------------------------------|
 | `/react rcps`        | Every RCP: version, `api-version`, channel, time of the last check |
+| `/react reboot`      | Update and reload the plugin together with the RCP, no restart     |
+| `/react link`        | Get a link and confirm the server on the site                      |
 | `/react link <code>` | Link the server to your React account                              |
+| `/react link check`  | Check the link and the models you have                             |
 
 ---
 

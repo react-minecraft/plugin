@@ -33,7 +33,7 @@ public class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
     }
 
     public void reload() {
-        onReload(React.INSTANCE.getConfigs().history());
+        onReload(React.INSTANCE.configs().history());
     }
 
     @Override

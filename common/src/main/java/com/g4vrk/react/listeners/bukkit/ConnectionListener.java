@@ -22,7 +22,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class ConnectionListener implements Listener {
 
-    private final Logger logger = React.INSTANCE.getLogger();
+    private final Logger logger = React.INSTANCE.logger();
 
     private final PlayerRegistry playerRegistry;
     private final PlayerFactory playerFactory;

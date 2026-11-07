@@ -202,7 +202,7 @@ public final class PluginReboot implements Runnable {
         }
         syncCommands();
         logger.info("[" + name + "] Rebooted " + name + " " + oldVersion + " -> " + loaded.getDescription().getVersion());
-        tell(messages.loaded() + " " + oldVersion + " -> " + loaded.getDescription().getVersion());
+        tell(messages.loaded().replace("{old}", oldVersion).replace("{new}", loaded.getDescription().getVersion()));
     }
 
     private void unregisterCommands(final ClassLoader oldLoader) {
@@ -233,7 +233,7 @@ public final class PluginReboot implements Runnable {
 
     private void fail(final String reason, final Throwable failure) {
         logger.log(Level.SEVERE, "[" + plugin.getName() + "] " + reason, failure);
-        tell(messages.failed() + " " + reason + ": " + failure);
+        tell(messages.failed().replace("{reason}", reason + ": " + failure));
     }
 
     private void tell(final String message) {

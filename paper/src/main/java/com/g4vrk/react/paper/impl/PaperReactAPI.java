@@ -19,7 +19,7 @@ public final class PaperReactAPI implements ReactAPI {
     }
 
     @Override
-    public @NotNull SchedulaAPI getSchedulaAPI() {
+    public @NotNull SchedulaAPI schedulaAPI() {
         return api;
     }
 }

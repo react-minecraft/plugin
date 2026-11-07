@@ -65,7 +65,7 @@ public final class AlertsArgument extends LocalArgument implements ReloadObserve
     }
 
     public void reload() {
-        this.onReload(React.INSTANCE.getConfigs().actions());
+        this.onReload(React.INSTANCE.configs().actions());
     }
 
     @Override

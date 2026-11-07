@@ -34,7 +34,7 @@ public final class PlayerFactory implements ReloadObserver<MainConfig> {
     }
 
     public void reload() {
-        this.onReload(React.INSTANCE.getConfigs().main());
+        this.onReload(React.INSTANCE.configs().main());
     }
 
     @Override

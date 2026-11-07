@@ -24,7 +24,7 @@ public class AlertPrinter extends ConfigurablePrinter {
 
     @Override
     protected @NotNull String rawFormat() {
-        return React.INSTANCE.getConfigs().main().alerts().format();
+        return React.INSTANCE.configs().main().alerts().format();
     }
 
     public void print(

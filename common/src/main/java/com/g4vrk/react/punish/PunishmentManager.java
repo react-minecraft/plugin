@@ -97,7 +97,7 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
 
     public void reload() {
 
-        this.onReload(React.INSTANCE.getConfigs().punishments());
+        this.onReload(React.INSTANCE.configs().punishments());
 
     }
 

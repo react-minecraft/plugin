@@ -20,7 +20,7 @@ public class VerbosePrinter extends AlertPrinter {
 
     @Override
     protected @NotNull String rawFormat() {
-        return React.INSTANCE.getConfigs().main().verbose().format();
+        return React.INSTANCE.configs().main().verbose().format();
     }
 
 }

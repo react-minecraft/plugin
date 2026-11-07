@@ -33,7 +33,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     }
 
     public void reload() {
-        this.onReload(React.INSTANCE.getConfigs().main());
+        this.onReload(React.INSTANCE.configs().main());
     }
 
     @Override

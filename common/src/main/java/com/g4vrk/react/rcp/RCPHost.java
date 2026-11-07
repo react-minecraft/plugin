@@ -1,6 +1,6 @@
 package com.g4vrk.react.rcp;
 
-import com.g4vrk.react.api.rcp.command.RCPCommand;
+import com.g4vrk.react.rcp.argument.RegisteredArgument;
 import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.internal.environment.RCPEnvironmentFactory;
@@ -27,7 +27,7 @@ import java.util.function.Consumer;
 
 /**
  * The plugin's side of every loaded RCP: builds their environments, passes player events
- * to their listeners and keeps their commands and statuses.
+ * to their listeners and keeps their arguments and statuses.
  */
 public final class RCPHost implements RCPEnvironmentFactory, RCPPlayers {
 
@@ -111,21 +111,21 @@ public final class RCPHost implements RCPEnvironmentFactory, RCPPlayers {
         }
     }
 
-    public @Nullable RCPCommand command(final @NotNull String name) {
+    public @Nullable RegisteredArgument argument(final @NotNull String name) {
         final String key = name.toLowerCase(Locale.ROOT);
         for (final HostedEnvironment environment : environments) {
-            final RCPCommand command = environment.commands().get(key);
-            if (command != null) {
-                return command;
+            final RegisteredArgument argument = environment.arguments().get(key);
+            if (argument != null) {
+                return argument;
             }
         }
         return null;
     }
 
-    public @NotNull List<RCPCommand> commands() {
-        final List<RCPCommand> commands = new ArrayList<>();
-        environments.forEach(environment -> commands.addAll(environment.commands().values()));
-        return commands;
+    public @NotNull List<RegisteredArgument> arguments() {
+        final List<RegisteredArgument> arguments = new ArrayList<>();
+        environments.forEach(environment -> arguments.addAll(environment.arguments().values()));
+        return arguments;
     }
 
     public @NotNull List<? extends HostedEnvironment> environments() {

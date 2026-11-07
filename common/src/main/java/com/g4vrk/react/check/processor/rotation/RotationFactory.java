@@ -16,11 +16,11 @@ public final class RotationFactory {
         final float normalizedYaw = AngleMath.normalizeAngle(yaw);
         final float normalizedPitch = AngleMath.normalizeAngle(pitch);
 
-        final float deltaYaw = previous == null ? 0F : AngleMath.normalizeDelta(normalizedYaw - previous.getX());
-        final float deltaPitch = previous == null ? 0F : AngleMath.normalizeDelta(normalizedPitch - previous.getY());
+        final float deltaYaw = previous == null ? 0F : AngleMath.normalizeDelta(normalizedYaw - previous.x());
+        final float deltaPitch = previous == null ? 0F : AngleMath.normalizeDelta(normalizedPitch - previous.y());
 
-        final float accelYaw = previous == null ? 0F : AngleMath.calculateAcceleration(deltaYaw, previous.getDeltaX());
-        final float accelPitch = previous == null ? 0F : AngleMath.calculateAcceleration(deltaPitch, previous.getDeltaY());
+        final float accelYaw = previous == null ? 0F : AngleMath.calculateAcceleration(deltaYaw, previous.deltaX());
+        final float accelPitch = previous == null ? 0F : AngleMath.calculateAcceleration(deltaPitch, previous.deltaY());
 
         return new Rotation(
                 normalizedPitch,

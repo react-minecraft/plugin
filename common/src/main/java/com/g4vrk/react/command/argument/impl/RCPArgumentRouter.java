@@ -1,10 +1,10 @@
 package com.g4vrk.react.command.argument.impl;
 
-import com.g4vrk.react.api.rcp.command.RCPCommand;
 import com.g4vrk.react.command.HelpActions;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.rcp.RCPHost;
+import com.g4vrk.react.rcp.argument.RegisteredArgument;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -16,19 +16,19 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Routes {@code /react <name> [args]} to the subcommands RCPs register.
+ * Routes {@code /react <name> [args]} to the arguments RCPs register.
  *
- * <p>The command tree is built once at startup, so RCP commands are looked up by name at
+ * <p>The command tree is built once at startup, so RCP arguments are looked up by name at
  * dispatch time instead of being added to the tree. The plugin's own literals win over
  * this argument.</p>
  */
-public final class RCPCommandArgument extends LocalArgument {
+public final class RCPArgumentRouter extends LocalArgument {
 
     private final CommandBuilderFactory builderFactory;
     private final RCPHost host;
     private final HelpActions help;
 
-    public RCPCommandArgument(
+    public RCPArgumentRouter(
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull RCPHost host,
             final @NotNull HelpActions help
@@ -42,30 +42,30 @@ public final class RCPCommandArgument extends LocalArgument {
     public @NotNull Command.Builder<CommandSender> build() {
         return builderFactory.create()
                 .required("name", StringParser.stringParser(), SuggestionProvider.blocking((context, input) ->
-                        host.commands().stream()
-                                .filter(command -> context.sender().hasPermission(command.permission()))
-                                .map(command -> Suggestion.suggestion(command.name()))
+                        host.arguments().stream()
+                                .filter(argument -> context.sender().hasPermission(argument.permission()))
+                                .map(argument -> Suggestion.suggestion(argument.name()))
                                 .toList()))
                 .optional("args", StringParser.greedyStringParser(), SuggestionProvider.blocking((context, input) -> {
-                    final RCPCommand command = host.command(context.get("name"));
-                    if (command == null || !context.sender().hasPermission(command.permission())) {
+                    final RegisteredArgument argument = host.argument(context.get("name"));
+                    if (argument == null || !context.sender().hasPermission(argument.permission())) {
                         return List.of();
                     }
-                    return command.suggest(context.sender(), split(input.remainingInput()))
+                    return argument.argument().suggest(context.sender(), split(input.remainingInput()))
                             .stream().map(Suggestion::suggestion).toList();
                 }))
                 .handler(context -> {
                     final CommandSender sender = context.sender();
-                    final RCPCommand command = host.command(context.get("name"));
-                    if (command == null) {
+                    final RegisteredArgument argument = host.argument(context.get("name"));
+                    if (argument == null) {
                         help.unknownCommand(sender);
                         return;
                     }
-                    if (!sender.hasPermission(command.permission())) {
+                    if (!sender.hasPermission(argument.permission())) {
                         help.noPermission(sender);
                         return;
                     }
-                    command.execute(sender, split(context.getOrDefault("args", "")));
+                    argument.argument().execute(sender, split(context.getOrDefault("args", "")));
                 });
     }
 

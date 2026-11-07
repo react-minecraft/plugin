@@ -4,7 +4,9 @@ import com.g4vrk.react.Permissions;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.CheckReport;
 import com.g4vrk.react.api.channel.ReactChannels;
-import com.g4vrk.react.api.event.PlayerCheckFailEvent;
+import com.g4vrk.react.api.event.channel.AlertEvent;
+import com.g4vrk.react.api.event.channel.MonitorEvent;
+import com.g4vrk.react.api.event.check.CheckFlagEvent;
 import com.g4vrk.react.check.decay.DecayStrategy;
 import com.g4vrk.react.check.info.CheckInfo;
 import com.g4vrk.react.player.TrackedPlayerImpl;
@@ -55,7 +57,33 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
         );
     }
 
-    protected final synchronized void fail(
+    /**
+     * Raises the violation level unless a {@link CheckFlagEvent} handler cancels it.
+     *
+     * @param amount how much to add
+     * @return {@code true} when the level was raised
+     */
+    protected final boolean fail(
+            final double amount
+    ) {
+        return this.fail(amount, "");
+    }
+
+    private boolean fail(
+            final double amount,
+            final @NotNull String details
+    ) {
+        final CheckFlagEvent event = React.INSTANCE.events().post(new CheckFlagEvent(this, amount, details));
+
+        if (event.cancelled()) {
+            return false;
+        }
+
+        this.apply(event.amount());
+        return true;
+    }
+
+    private synchronized void apply(
             final double amount
     ) {
         final double previous = this.violations;
@@ -68,9 +96,6 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
         if (punishmentManager != null) {
             punishmentManager.handleFail(this, previous, this.violations);
         }
-
-        new PlayerCheckFailEvent(player, this).callEvent();
-
     }
 
     protected final void failAndAlert(
@@ -89,16 +114,18 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
             final double amount,
             final @NotNull String details
     ) {
-        this.fail(amount);
-        this.alert(details);
+        if (this.fail(amount, details)) {
+            this.alert(details);
+        }
     }
 
     protected final void failAndMonitor(
             final double amount,
             final @NotNull String details
     ) {
-        this.fail(amount);
-        this.monitor(details);
+        if (this.fail(amount, details)) {
+            this.monitor(details);
+        }
     }
 
     protected final void alert() {
@@ -108,13 +135,21 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
     protected final void alert(
             final @NotNull String details
     ) {
-        ReactChannels.ALERTS.publish(this.report(details));
+        final AlertEvent event = React.INSTANCE.events().post(new AlertEvent(this.report(details)));
+
+        if (!event.cancelled()) {
+            ReactChannels.ALERTS.publish(event.report());
+        }
     }
 
     protected final void monitor(
             final @NotNull String details
     ) {
-        ReactChannels.MONITOR.publish(this.report(details));
+        final MonitorEvent event = React.INSTANCE.events().post(new MonitorEvent(this.report(details)));
+
+        if (!event.cancelled()) {
+            ReactChannels.MONITOR.publish(event.report());
+        }
     }
 
     public final @NotNull CheckReport report(final @NotNull String details) {

@@ -3,7 +3,7 @@ package com.g4vrk.react.check.impl.aim;
 import com.g4vrk.react.config.model.AimAIConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.event.InferenceHistoryEntryAddedEvent;
+import com.g4vrk.react.api.event.check.InferenceResultEvent;
 import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.Check;
@@ -106,7 +106,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
         player.inferenceHistory.add(entry);
 
-        new InferenceHistoryEntryAddedEvent(player, entry).callEvent();
+        React.INSTANCE.events().post(new InferenceResultEvent(this, probability, entry.getTimestamp()));
     }
 
 }

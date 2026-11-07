@@ -1,6 +1,8 @@
 package com.g4vrk.react;
 
 import com.g4vrk.react.api.text.TextFormatter;
+import com.g4vrk.react.event.SimpleEventBus;
+import com.g4vrk.react.api.event.plugin.ReloadEvent;
 import com.g4vrk.react.text.MiniTextFormatter;
 import com.g4vrk.functionalActions.defaults.DefaultActions;
 import com.g4vrk.functionalActions.parser.ActionParser;
@@ -56,6 +58,7 @@ public class React {
     private final Logger logger = LoggerFactory.getLogger("React");
     private final Serializers serializers = LegacySerializers.INSTANCE;
     private final TextFormatter text = new MiniTextFormatter(serializers);
+    private final SimpleEventBus events = new SimpleEventBus(logger);
 
     private Plugin plugin;
     private SchedulaAPI schedulaAPI;
@@ -179,6 +182,7 @@ public class React {
         }
 
         extensions.reload();
+        events.post(new ReloadEvent());
     }
 
     public void terminate() {

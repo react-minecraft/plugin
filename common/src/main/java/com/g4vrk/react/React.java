@@ -22,8 +22,13 @@ import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.punish.PunishmentManager;
 import com.g4vrk.react.rcp.RCPHost;
+import com.g4vrk.react.reboot.PluginReboot;
+import com.g4vrk.react.extension.ArgumentTable;
+import com.g4vrk.react.extension.ExtensionContext;
+import com.g4vrk.react.extension.ExtensionManager;
+import com.g4vrk.react.update.UpdateNotifier;
+import com.g4vrk.react.update.UpdateService;
 import com.g4vrk.react.service.CommandService;
-import com.g4vrk.react.service.ExtensionService;
 import com.g4vrk.react.service.ListenerService;
 import com.g4vrk.react.storage.StorageManager;
 import com.g4vrk.react.storage.config.DatabaseSettingsFactory;
@@ -44,6 +49,8 @@ import org.slf4j.LoggerFactory;
 import org.spongepowered.configurate.ConfigurateException;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -80,8 +87,12 @@ public class React {
     private PunishmentManager punishmentManager;
     private InferenceHistoryPrinter inferenceHistoryPrinter;
 
+    private ArgumentTable arguments;
+    private UpdateNotifier updateNotifier;
+    private UpdateService updates;
+    private ExtensionManager extensions;
+
     private CommandService commands;
-    private ExtensionService extensions;
     private ListenerService listeners;
 
     public void initialize(final @NotNull Plugin plugin, final @NotNull ReactAPI api) {
@@ -122,10 +133,6 @@ public class React {
         DefaultActions.Adventure.registerDefaults(actionRegistry, serializers.universalSerializer()::serialize, ";");
         this.actionParser = new SimpleActionParser<>(actionRegistry);
 
-        logger.info("Loading addons...");
-        this.extensions = new ExtensionService(dataFolder, logger);
-        extensions.loadAddons();
-
         logger.info("Creating Data management modules...");
         this.storageManager = new StorageManager(logger, new DatabaseSettingsFactory()
                 .create(configs.database(), configs.databaseType(), dataFolder));
@@ -134,10 +141,15 @@ public class React {
         this.playerFactory = new PlayerFactory();
         this.playerRegistry = new PlayerRegistry();
         this.scheduler = schedulaAPI.createScheduler();
-        this.rcpHost = new RCPHost(plugin, scheduler, playerRegistry, logger);
+        this.rcpHost = new RCPHost(playerRegistry);
+        this.arguments = new ArgumentTable();
 
-        logger.info("Loading RCP providers...");
-        extensions.loadProviders(rcpHost, languageName);
+        this.updateNotifier = new UpdateNotifier(events, actionParser, configs.actions(),
+                () -> updates != null && updates.notifies(), () -> updates == null ? List.of() : updates.pending());
+        this.updates = new UpdateService(dataFolder.toPath(), languageName, logger, pluginSource(),
+                () -> configs.main(), updateNotifier);
+        this.extensions = new ExtensionManager(new ExtensionContext(plugin, dataFolder.toPath(), logger, scheduler,
+                events, placeholders, text, arguments, playerRegistry, rcpHost), updates);
 
         this.alertActions = new ReportActions(actionParser, configs.actions().alerts().alert());
         this.monitorActions = new ReportActions(actionParser, configs.actions().monitor().message());
@@ -149,14 +161,13 @@ public class React {
         logger.info("Registering commands...");
         this.commands = new CommandService(plugin, logger);
         commands.register(actionParser, configs.actions(), scheduler, inferenceHistoryPrinter,
-                playerRegistry, rcpHost, extensions.updater());
+                playerRegistry, rcpHost, arguments, extensions, updates);
 
         this.listeners = new ListenerService(plugin, logger);
-        listeners.register(configs, playerRegistry, playerFactory, storageManager, rcpHost);
+        listeners.register(configs, playerRegistry, playerFactory, storageManager, rcpHost, updateNotifier::join);
 
-        logger.info("Starting RCP providers and addons...");
-        extensions.startProviders(scheduler);
-        extensions.startAddons();
+        logger.info("Starting addons and RCP providers...");
+        extensions.start(updates::onStart).thenRun(() -> updates.start(extensions));
 
         logger.info(" ");
         logger.info("React successfully enabled!");
@@ -183,6 +194,7 @@ public class React {
         listeners.reload();
         alertActions.actions(configs.actions().alerts().alert());
         monitorActions.actions(configs.actions().monitor().message());
+        updateNotifier.onReload(configs.actions());
 
         for (final TrackedPlayerImpl player : playerRegistry.values()) {
             player.checkManager.reload();
@@ -195,6 +207,9 @@ public class React {
     public void terminate() {
         logger.info("Terminating the plugin...");
 
+        if (updates != null) {
+            updates.close();
+        }
         if (extensions != null) {
             extensions.close();
         }
@@ -225,6 +240,24 @@ public class React {
         this.schedulaAPI = null;
         this.rcpHost = null;
         this.punishmentManager = null;
+    }
+
+    private @NotNull UpdateService.Plugin pluginSource() {
+        Path jar;
+        try {
+            jar = PluginReboot.findJar(plugin).toPath();
+        } catch (final IllegalStateException ex) {
+            logger.warn("Plugin updates are off: {}", ex.getMessage());
+            jar = null;
+        }
+        String prefix = "react-paper";
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            prefix = "react-folia";
+        } catch (final ClassNotFoundException ignored) {
+            // Not Folia.
+        }
+        return new UpdateService.Plugin(jar, plugin.getServer().getUpdateFolderFile().toPath(), prefix);
     }
 
     private void loadConfigs() {

@@ -35,40 +35,43 @@ public class AngleMath {
     }
 
     private static float calculateGCD(
-            float a
+            final float a
     ) {
-        a = Math.abs(a);
+        float x = Math.abs(a);
         float b = 0.1f;
 
         while (b > GCD_EPSILON) {
-            float temp = a % b;
-            a = b;
+            final float temp = x % b;
+            x = b;
             b = temp;
         }
 
-        return a;
+        return x;
     }
 
     public static float normalizeAngle(
-            float angle
+            final float angle
     ) {
-        angle = angle % 360.0f;
-        if (angle > 180.0f) {
-            angle -= 360.0f;
-        } else if (angle < -180.0f) {
-            angle += 360.0f;
+        float normalized = angle % 360.0f;
+        if (normalized > 180.0f) {
+            normalized -= 360.0f;
+        } else if (normalized < -180.0f) {
+            normalized += 360.0f;
         }
-        return angle;
+        return normalized;
     }
 
     public static float normalizeDelta(
-            float delta
+            final float delta
     ) {
-        delta %= 360.0f;
+        float normalized = delta % 360.0f;
 
-        if (delta > 180.0f) delta -= 360.0f;
-        else if (delta < -180.0f) delta += 360.0f;
+        if (normalized > 180.0f) {
+            normalized -= 360.0f;
+        } else if (normalized < -180.0f) {
+            normalized += 360.0f;
+        }
 
-        return delta;
+        return normalized;
     }
 }

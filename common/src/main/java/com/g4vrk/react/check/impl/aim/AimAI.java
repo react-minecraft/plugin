@@ -36,14 +36,14 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
     private DecayStrategy decayStrategy;
 
-    public AimAI(@NotNull TrackedPlayerImpl player) {
+    public AimAI(final @NotNull TrackedPlayerImpl player) {
         super(player);
 
         this.debugHandler = new DebugHandler(this);
     }
 
     @Override
-    public void onReload(@NotNull AimAIConfig config) {
+    public void onReload(final @NotNull AimAIConfig config) {
 
         this.debug = config.debug();
         this.alertThreshold = config.alert().threshold();

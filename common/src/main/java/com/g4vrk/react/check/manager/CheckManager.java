@@ -22,7 +22,7 @@ public final class CheckManager {
     private final List<Check> checksValues;
 
     public CheckManager(
-            @NotNull TrackedPlayerImpl player
+            final @NotNull TrackedPlayerImpl player
     ) {
 
         this.checks = new ImmutableClassToInstanceMap.Builder<Check>()

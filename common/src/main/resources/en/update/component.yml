@@ -1,0 +1,16 @@
+#
+# Updates of one component
+#
+
+# Whether this component is updated
+enabled: true
+
+# release - releases only
+# prerelease - every CI build (nightly)
+channel: release
+
+# A version to stay on, e.g. "2.0.1". Empty - follow the channel
+pinned-version: ""
+
+# Не меняйте / Do not change
+config-version: 1

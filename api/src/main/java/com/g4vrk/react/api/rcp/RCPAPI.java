@@ -5,14 +5,19 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * Version of the contract between the plugin and its RCPs.
  *
- * <p>An RCP names the version it was built for in {@code rcp-metadata.yml} as
- * {@code api-version}. The plugin loads only RCPs with exactly its own version, and raises
- * it whenever a change would break RCPs built before.</p>
+ * <p>An RCP names the version it was built for in {@code rcp-metadata.yml}, an addon in
+ * {@code react-addon.yml}, as {@code api-version}. The plugin loads only extensions with
+ * exactly its own version, and raises it whenever a change would break extensions built before.</p>
  */
 @ApiStatus.AvailableSince("2.0")
 public final class RCPAPI {
 
-    public static final int VERSION = 1;
+    /**
+     * The {@code api-version} that RCPs and addons must name.
+     *
+     * <p>Version 2 gave both kinds the shared {@code ExtensionEnvironment}.</p>
+     */
+    public static final int VERSION = 2;
 
     /**
      * Base address of the React backend, overridable with the {@code react.api.url}

@@ -21,7 +21,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     private long combatTicks;
 
     public CombatListener(
-            @NotNull PlayerRegistry playerRegistry
+            final @NotNull PlayerRegistry playerRegistry
     ) {
         this.playerRegistry = playerRegistry;
 
@@ -37,12 +37,12 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     }
 
     @Override
-    public void onReload(@NotNull MainConfig config) {
+    public void onReload(final @NotNull MainConfig config) {
         combatTicks = Math.max(1L, config.player().combat().time().toMillis() / 50L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onHit(EntityDamageByEntityEvent event) {
+    public void onHit(final EntityDamageByEntityEvent event) {
 
         if (!(event.getDamager() instanceof Player damager) || !CombatTargets.isSupported(event.getEntity())) return;
 
@@ -54,7 +54,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     /**
      * Also used for packet attacks on invulnerable training mannequins.
      */
-    public void activate(TrackedPlayerImpl localDamager) {
+    public void activate(final TrackedPlayerImpl localDamager) {
 
         final CombatActivity damagerCombatActivity = localDamager != null ? localDamager.combatActivity : null;
 

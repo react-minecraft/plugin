@@ -32,11 +32,11 @@ public class ConnectionListener implements Listener {
     private final Consumer<Player> onQuit;
 
     public ConnectionListener(
-            @NotNull PlayerRegistry playerRegistry,
-            @NotNull PlayerFactory playerFactory,
-            @NotNull StorageManager storageManager,
-            @NotNull Consumer<Player> onJoin,
-            @NotNull Consumer<Player> onQuit
+            final @NotNull PlayerRegistry playerRegistry,
+            final @NotNull PlayerFactory playerFactory,
+            final @NotNull StorageManager storageManager,
+            final @NotNull Consumer<Player> onJoin,
+            final @NotNull Consumer<Player> onQuit
     ) {
         this.playerRegistry = playerRegistry;
         this.playerFactory = playerFactory;
@@ -46,7 +46,7 @@ public class ConnectionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onUserLogin(@NotNull PlayerJoinEvent event) {
+    public void onUserLogin(final @NotNull PlayerJoinEvent event) {
         try {
             registerPlayer(event.getPlayer());
         } catch (final Exception ex) {
@@ -56,7 +56,7 @@ public class ConnectionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onUserDisconnect(@NotNull PlayerQuitEvent event) {
+    public void onUserDisconnect(final @NotNull PlayerQuitEvent event) {
         try {
 
             final Player bukkitPlayer = event.getPlayer();
@@ -80,16 +80,16 @@ public class ConnectionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onWorldChange(PlayerChangedWorldEvent event) {
+    public void onWorldChange(final PlayerChangedWorldEvent event) {
         clearTransientState(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onRespawn(PlayerRespawnEvent event) {
+    public void onRespawn(final PlayerRespawnEvent event) {
         clearTransientState(event.getPlayer());
     }
 
-    private void clearTransientState(Player bukkitPlayer) {
+    private void clearTransientState(final Player bukkitPlayer) {
         TrackedPlayerImpl player = playerRegistry.get(bukkitPlayer.getUniqueId());
         if (player != null) {
             player.clearTransientState();

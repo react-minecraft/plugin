@@ -11,11 +11,11 @@ public interface StorageBackend extends AutoCloseable {
 
     void initialize() throws Exception;
 
-    @NotNull PlayerStorageData loadPlayer(@NotNull UUID playerUuid, long historyCutoff) throws Exception;
+    @NotNull PlayerStorageData loadPlayer(final @NotNull UUID playerUuid, final long historyCutoff) throws Exception;
 
-    void writeBatch(@NotNull List<StorageMutation> mutations) throws Exception;
+    void writeBatch(final @NotNull List<StorageMutation> mutations) throws Exception;
 
-    long deleteHistoryBefore(long cutoff) throws Exception;
+    long deleteHistoryBefore(final long cutoff) throws Exception;
 
     @Override
     void close() throws Exception;

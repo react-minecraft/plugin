@@ -3,8 +3,8 @@ package com.g4vrk.react.command.argument.impl;
 import com.g4vrk.react.command.HelpActions;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
-import com.g4vrk.react.rcp.RCPHost;
-import com.g4vrk.react.rcp.argument.RegisteredArgument;
+import com.g4vrk.react.extension.ArgumentTable;
+import com.g4vrk.react.extension.RegisteredArgument;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -16,25 +16,25 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Routes {@code /react <name> [args]} to the arguments RCPs register.
+ * Routes {@code /react <name> [args]} to the arguments RCPs and addons register.
  *
- * <p>The command tree is built once at startup, so RCP arguments are looked up by name at
+ * <p>The command tree is built once at startup, so extension arguments are looked up by name at
  * dispatch time instead of being added to the tree. The plugin's own literals win over
  * this argument.</p>
  */
 public final class RCPArgumentRouter extends LocalArgument {
 
     private final CommandBuilderFactory builderFactory;
-    private final RCPHost host;
+    private final ArgumentTable arguments;
     private final HelpActions help;
 
     public RCPArgumentRouter(
             final @NotNull CommandBuilderFactory builderFactory,
-            final @NotNull RCPHost host,
+            final @NotNull ArgumentTable arguments,
             final @NotNull HelpActions help
     ) {
         this.builderFactory = builderFactory;
-        this.host = host;
+        this.arguments = arguments;
         this.help = help;
     }
 
@@ -42,12 +42,12 @@ public final class RCPArgumentRouter extends LocalArgument {
     public @NotNull Command.Builder<CommandSender> build() {
         return builderFactory.create()
                 .required("name", StringParser.stringParser(), SuggestionProvider.blocking((context, input) ->
-                        host.arguments().stream()
+                        arguments.all().stream()
                                 .filter(argument -> context.sender().hasPermission(argument.permission()))
                                 .map(argument -> Suggestion.suggestion(argument.name()))
                                 .toList()))
                 .optional("args", StringParser.greedyStringParser(), SuggestionProvider.blocking((context, input) -> {
-                    final RegisteredArgument argument = host.argument(context.get("name"));
+                    final RegisteredArgument argument = arguments.get(context.get("name"));
                     if (argument == null || !context.sender().hasPermission(argument.permission())) {
                         return List.of();
                     }
@@ -56,7 +56,7 @@ public final class RCPArgumentRouter extends LocalArgument {
                 }))
                 .handler(context -> {
                     final CommandSender sender = context.sender();
-                    final RegisteredArgument argument = host.argument(context.get("name"));
+                    final RegisteredArgument argument = arguments.get(context.get("name"));
                     if (argument == null) {
                         help.unknownCommand(sender);
                         return;

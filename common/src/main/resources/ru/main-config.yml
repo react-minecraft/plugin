@@ -17,5 +17,22 @@ player:
     # Сколько секунд после удара, идет анализ поворотов?
     time: 2s
 
+# Официальные аддоны. Аддон скачивается из GitHub релизов при старте, если
+# download-next-start: true и его jar ещё нет в addons/.
+# Обновления установленных аддонов настраиваются в update/addons/<имя>.yml
+official-addons:
+  hologram:
+    repository: react-minecraft/hologram-addon
+    download-next-start: true
+  menu:
+    repository: react-minecraft/menu-addon
+    download-next-start: true
+  punish:
+    repository: react-minecraft/punish-addon
+    download-next-start: true
+  collect:
+    repository: react-minecraft/collect-addon
+    download-next-start: false
+
 # Не меняйте / Do not change
-config-version: 2
+config-version: 3

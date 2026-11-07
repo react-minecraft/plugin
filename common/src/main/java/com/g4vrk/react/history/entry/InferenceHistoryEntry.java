@@ -16,16 +16,16 @@ public final class InferenceHistoryEntry {
     private final double probability;
 
     public InferenceHistoryEntry(
-            @NotNull Check check,
-            double probability
+            final @NotNull Check check,
+            final double probability
     ) {
         this(currentTimeMillis(), check, probability);
     }
 
     public InferenceHistoryEntry(
-            long timestamp,
-            @NotNull Check check,
-            double probability
+            final long timestamp,
+            final @NotNull Check check,
+            final double probability
     ) {
         this.timestamp = timestamp;
         this.check = check;

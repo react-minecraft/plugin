@@ -1,0 +1,23 @@
+#
+# React - updates
+#
+# The plugin, the RCPs and the addons are updated from their GitHub releases.
+# Every release is checked against SHA-256 and the React ed25519 signature.
+#
+# Each component has its own file, created on the first check:
+#   update/plugin.yml        - the plugin, applied on restart
+#   update/rcp/<name>.yml    - an RCP, applied with /react reboot <name>
+#   update/addons/<name>.yml - an addon, applied with /react reboot <name>
+#
+
+# How often to check for updates (at least 10m)
+interval: 6h
+
+# Reboot an RCP or addon right after its update is downloaded
+auto-reboot: false
+
+# Tell alert recipients and players with react.notify.update about downloads
+notify: true
+
+# Не меняйте / Do not change
+config-version: 1

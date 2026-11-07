@@ -24,6 +24,8 @@ import org.bukkit.plugin.PluginManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import java.util.function.Consumer;
+
 /**
  * Everything React listens to: rotation packets, combat, joins and quits, the alert and monitor
  * channels players join automatically, and the PlaceholderAPI expansion.
@@ -47,7 +49,8 @@ public final class ListenerService {
             final @NotNull PlayerRegistry playerRegistry,
             final @NotNull PlayerFactory playerFactory,
             final @NotNull StorageManager storage,
-            final @NotNull RCPHost host
+            final @NotNull RCPHost host,
+            final @NotNull Consumer<Player> onJoin
     ) {
         logger.info("Registering packet listeners...");
         this.packetListeners = new PacketListenerCommon[]{
@@ -72,6 +75,7 @@ public final class ListenerService {
                 joined -> {
                     alerts.accept(joined);
                     monitor.accept(joined);
+                    onJoin.accept(joined);
                 },
                 quit -> host.quit(quit.getUniqueId())
         );

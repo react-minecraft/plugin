@@ -46,6 +46,6 @@ public final class JdbcExecutor {
 
     @FunctionalInterface
     public interface ConnectionFunction<T> {
-        T apply(@NotNull Connection connection) throws SQLException;
+        T apply(final @NotNull Connection connection) throws SQLException;
     }
 }

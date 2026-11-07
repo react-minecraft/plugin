@@ -7,9 +7,10 @@ import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
-import com.g4vrk.react.rcp.HostedEnvironment;
+import com.g4vrk.react.extension.HostedRCPEnvironment;
 import com.g4vrk.react.rcp.RCPHost;
-import com.g4vrk.react.rcp.update.RCPUpdater;
+import com.g4vrk.react.update.UpdateChannel;
+import com.g4vrk.react.update.UpdateService;
 import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
@@ -30,7 +31,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
     private final CommandBuilderFactory builderFactory;
     private final ActionParser<Audience> actionParser;
     private final RCPHost host;
-    private final RCPUpdater updater;
+    private final UpdateService updates;
 
     private ExecutableActionList<? super Audience> header;
     private ExecutableActionList<? super Audience> entry;
@@ -43,12 +44,12 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
             final @NotNull ActionParser<Audience> actionParser,
             final @NotNull ActionsConfig config,
             final @NotNull RCPHost host,
-            final @NotNull RCPUpdater updater
+            final @NotNull UpdateService updates
     ) {
         this.builderFactory = builderFactory;
         this.actionParser = actionParser;
         this.host = host;
-        this.updater = updater;
+        this.updates = updates;
         this.onReload(config);
     }
 
@@ -69,10 +70,10 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                 .permission("react.command.rcps")
                 .handler(context -> {
                     final CommandSender sender = context.sender();
-                    final List<? extends HostedEnvironment> environments = host.environments();
+                    final List<HostedRCPEnvironment> environments = host.environments();
 
                     run(header, sender, Map.of("<count>", Integer.toString(environments.size())));
-                    for (final HostedEnvironment environment : environments) {
+                    for (final HostedRCPEnvironment environment : environments) {
                         final RCPMetadata metadata = environment.metadata();
                         final String status = environment.currentStatus();
                         run(status == null ? entry : entryWithStatus, sender, Map.of(
@@ -82,7 +83,10 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                                 "<status>", status == null ? "" : status));
                     }
 
-                    final RCPUpdater.Status status = updater.status();
+                    final UpdateService.Status reported = updates.reactRCPStatus();
+                    final UpdateService.Status status = reported == null
+                            ? new UpdateService.Status(null, UpdateChannel.RELEASE, null, "not checked")
+                            : reported;
                     run(react, sender, Map.of(
                             "<version>", status.version() == null
                                     ? texts.noVersion()

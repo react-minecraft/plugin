@@ -38,7 +38,7 @@ public final class PlayerFactory implements ReloadObserver<MainConfig> {
     }
 
     @Override
-    public void onReload(@NotNull MainConfig config) {
+    public void onReload(final @NotNull MainConfig config) {
         this.checkBedrockPlayers = config.player().checkBedrockPlayers();
     }
 

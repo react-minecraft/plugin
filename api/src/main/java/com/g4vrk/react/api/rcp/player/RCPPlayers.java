@@ -10,12 +10,12 @@ import java.util.UUID;
 @ApiStatus.AvailableSince("2.0")
 public interface RCPPlayers {
 
-    @Nullable RCPPlayer get(@NotNull UUID uniqueId);
+    @Nullable RCPPlayer get(final @NotNull UUID uniqueId);
 
     /**
      * The player whose entity has this id, as packets name it.
      */
-    @Nullable RCPPlayer byEntityId(int entityId);
+    @Nullable RCPPlayer byEntityId(final int entityId);
 
     @NotNull Collection<? extends RCPPlayer> online();
 

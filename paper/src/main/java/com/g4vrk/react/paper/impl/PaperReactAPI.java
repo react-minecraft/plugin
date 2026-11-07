@@ -11,7 +11,7 @@ public final class PaperReactAPI implements ReactAPI {
     private final SchedulaAPI api;
 
     public PaperReactAPI(
-            @NotNull Plugin plugin
+            final @NotNull Plugin plugin
     ) {
         this.api = SchedulaAPI.builder()
                 .factory(new PaperSchedulerFactory(plugin))

@@ -7,13 +7,13 @@ public final class ExponentialDecay implements DecayStrategy {
     private final double multiplier;
 
     public ExponentialDecay(
-            double multiplier
+            final double multiplier
     ) {
         this.multiplier = multiplier;
     }
 
     @Override
-    public double decay(double violations) {
+    public double decay(final double violations) {
         return violations * multiplier;
     }
 

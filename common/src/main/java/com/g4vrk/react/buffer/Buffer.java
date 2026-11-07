@@ -19,7 +19,7 @@ public final class Buffer<T> implements Iterable<T> {
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public Buffer(int capacity, @NotNull IntFunction<T[]> arrayFactory) {
+    public Buffer(final int capacity, final @NotNull IntFunction<T[]> arrayFactory) {
         if (capacity <= 0) {
             throw new IllegalArgumentException("capacity must be higher than 0");
         }
@@ -29,7 +29,7 @@ public final class Buffer<T> implements Iterable<T> {
         this.arrayFactory = arrayFactory;
     }
 
-    public void add(T value) {
+    public void add(final T value) {
         lock.writeLock().lock();
         try {
             buffer[head] = value;
@@ -108,7 +108,7 @@ public final class Buffer<T> implements Iterable<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public T getUnsafe(int index) {
+    public T getUnsafe(final int index) {
         lock.readLock().lock();
         try {
             if (index < 0 || index >= size) throw new IndexOutOfBoundsException();

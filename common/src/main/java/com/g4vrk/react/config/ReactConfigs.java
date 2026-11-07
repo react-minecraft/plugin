@@ -66,12 +66,29 @@ public final class ReactConfigs {
             .step(root -> BracePlaceholders.migrate(root, Map.of()))
             .build();
 
+    private static final String[][] OFFICIAL_ADDONS = {
+            {"hologram", "hologram-addon", "true"},
+            {"menu", "menu-addon", "true"},
+            {"punish", "punish-addon", "true"},
+            {"collect", "collect-addon", "false"}
+    };
+
     private static final ConfigMigrations MAIN_MIGRATIONS = ConfigMigrations.builder()
             .step(root -> {
             })
             .step(root -> {
                 root.removeChild("alerts");
                 root.removeChild("verbose");
+            })
+            .step(root -> {
+                final ConfigurationNode addons = root.node("official-addons");
+                if (!addons.virtual()) {
+                    return;
+                }
+                for (final String[] addon : OFFICIAL_ADDONS) {
+                    addons.node(addon[0], "repository").set("react-minecraft/" + addon[1]);
+                    addons.node(addon[0], "download-next-start").set(Boolean.parseBoolean(addon[2]));
+                }
             })
             .build();
 

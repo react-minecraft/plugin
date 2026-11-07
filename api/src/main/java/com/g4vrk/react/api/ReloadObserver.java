@@ -11,6 +11,6 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.AvailableSince("2.0")
 public interface ReloadObserver<C> {
 
-    void onReload(@NotNull C config);
+    void onReload(final @NotNull C config);
 
 }

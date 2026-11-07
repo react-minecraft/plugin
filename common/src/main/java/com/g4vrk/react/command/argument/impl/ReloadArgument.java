@@ -28,9 +28,9 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
     private ExecutableActionList<? super Audience> finishActions;
 
     public ReloadArgument(
-            @NotNull CommandBuilderFactory builderFactory,
-            @NotNull Scheduler scheduler,
-            @NotNull ActionParser<Audience> actionParser
+            final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull Scheduler scheduler,
+            final @NotNull ActionParser<Audience> actionParser
     ) {
         this.builderFactory = builderFactory;
         this.scheduler = scheduler;
@@ -68,7 +68,7 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
     }
 
     @Override
-    public void onReload(@NotNull ActionsConfig config) {
+    public void onReload(final @NotNull ActionsConfig config) {
         this.startActions = this.actionParser.parseAll(config.reload().onStart());
         this.finishActions = this.actionParser.parseAll(config.reload().onFinish());
     }

@@ -14,12 +14,12 @@ public class PluginResourceHolder implements ResourceHolder {
     private final Plugin plugin;
 
     @Override
-    public @Nullable InputStream getResource(@NotNull String fileName) {
+    public @Nullable InputStream getResource(final @NotNull String fileName) {
         return this.plugin.getResource(fileName);
     }
 
     @Override
-    public void saveResource(@NotNull String fileName, boolean replace) {
+    public void saveResource(final @NotNull String fileName, final boolean replace) {
         this.plugin.saveResource(fileName, replace);
     }
 

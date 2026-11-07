@@ -255,7 +255,14 @@ public final class PluginReboot implements Runnable {
         }
     }
 
-    private static @NotNull File findJar(final Plugin plugin) {
+    /**
+     * Finds the jar a plugin was loaded from in the plugins folder.
+     *
+     * @param plugin the plugin
+     * @return the jar
+     * @throws IllegalStateException when there is no such jar or several
+     */
+    public static @NotNull File findJar(final @NotNull Plugin plugin) {
         // The data folder is plugins/<name>. The class's code source is no guide: Paper loads
         // remapped copies from plugins/.paper-remapped/.
         final File folder = plugin.getDataFolder().getAbsoluteFile().getParentFile();

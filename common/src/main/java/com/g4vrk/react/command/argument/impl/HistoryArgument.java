@@ -22,9 +22,9 @@ public final class HistoryArgument extends LocalArgument {
     private final PlayerRegistry playerRegistry;
 
     public HistoryArgument(
-            @NotNull CommandBuilderFactory builderFactory,
-            @NotNull InferenceHistoryPrinter printer,
-            @NotNull PlayerRegistry playerRegistry
+            final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull InferenceHistoryPrinter printer,
+            final @NotNull PlayerRegistry playerRegistry
     ) {
         this.builderFactory = builderFactory;
         this.printer = printer;

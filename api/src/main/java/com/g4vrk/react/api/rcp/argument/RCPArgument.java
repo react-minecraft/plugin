@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * An argument of {@code /react} that an RCP adds.
  *
- * <p>The name is given at registration: {@code environment.registerArgument("link", argument)}.
+ * <p>The name is given at registration: {@code environment.arguments().register("link", argument)}.
  * The plugin checks {@code react.command.<name>} and runs {@link #execute} on the server thread.</p>
  */
 @ApiStatus.AvailableSince("2.0")
@@ -17,7 +17,7 @@ public interface RCPArgument {
 
     String PERMISSION_PREFIX = "react.command.";
 
-    void execute(@NotNull CommandSender sender, @NotNull List<String> args);
+    void execute(final @NotNull CommandSender sender, final @NotNull List<String> args);
 
     default @NotNull List<String> suggest(final @NotNull CommandSender sender, final @NotNull List<String> args) {
         return List.of();

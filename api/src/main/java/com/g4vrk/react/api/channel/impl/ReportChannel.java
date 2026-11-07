@@ -84,7 +84,7 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
     @FunctionalInterface
     public interface Delivery {
 
-        void deliver(@NotNull Audience recipient, @NotNull CheckReport report);
+        void deliver(final @NotNull Audience recipient, final @NotNull CheckReport report);
 
     }
 

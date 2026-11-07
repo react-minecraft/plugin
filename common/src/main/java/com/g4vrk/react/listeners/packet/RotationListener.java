@@ -18,7 +18,7 @@ public final class RotationListener extends PacketListenerAbstract {
     private final RotationProcessor rotationProcessor;
 
     @Override
-    public void onPacketReceive(@NotNull PacketReceiveEvent event) {
+    public void onPacketReceive(final @NotNull PacketReceiveEvent event) {
 
         if (event.getConnectionState() != ConnectionState.PLAY || !WrapperPlayClientPlayerFlying.isFlying(event.getPacketType())) return;
 

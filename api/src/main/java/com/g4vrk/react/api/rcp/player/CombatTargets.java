@@ -12,11 +12,11 @@ import org.bukkit.entity.Player;
 public final class CombatTargets {
     private CombatTargets() {}
 
-    public static boolean isSupported(Entity entity) {
+    public static boolean isSupported(final Entity entity) {
         return entity instanceof Player || isMannequin(entity);
     }
 
-    public static boolean isMannequin(Entity entity) {
+    public static boolean isMannequin(final Entity entity) {
         return entity != null && "minecraft:mannequin".equals(entity.getType().getKey().toString());
     }
 }

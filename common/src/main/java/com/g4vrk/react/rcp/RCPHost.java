@@ -1,71 +1,40 @@
 package com.g4vrk.react.rcp;
 
-import com.g4vrk.react.rcp.argument.RegisteredArgument;
-import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
-import com.g4vrk.react.api.rcp.internal.environment.RCPEnvironmentFactory;
-import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.RCPPlayers;
 import com.g4vrk.react.api.rcp.player.Rotation;
+import com.g4vrk.react.extension.HostedRCPEnvironment;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
- * The plugin's side of every loaded RCP: builds their environments, passes player events
- * to their listeners and keeps their arguments and statuses.
+ * The plugin's side of every loaded RCP: passes player events to their listeners and keeps
+ * their statuses.
  */
-public final class RCPHost implements RCPEnvironmentFactory, RCPPlayers {
+public final class RCPHost implements RCPPlayers {
 
-    private final Plugin plugin;
-    private final Scheduler scheduler;
     private final PlayerRegistry playerRegistry;
-    private final Logger logger;
+    private final List<HostedRCPEnvironment> environments = new CopyOnWriteArrayList<>();
 
-    private final List<HostedEnvironment> environments = new CopyOnWriteArrayList<>();
-
-    public RCPHost(
-            final @NotNull Plugin plugin,
-            final @NotNull Scheduler scheduler,
-            final @NotNull PlayerRegistry playerRegistry,
-            final @NotNull Logger logger
-    ) {
-        this.plugin = plugin;
-        this.scheduler = scheduler;
+    public RCPHost(final @NotNull PlayerRegistry playerRegistry) {
         this.playerRegistry = playerRegistry;
-        this.logger = logger;
     }
 
-    @Override
-    public @NotNull RCPEnvironment create(
-            final @NotNull RCPMetadata metadata,
-            final @NotNull Path directory,
-            final @NotNull Logger rcpLogger
-    ) {
-        final HostedEnvironment environment = new HostedEnvironment(this, metadata, directory, rcpLogger);
+    public void attach(final @NotNull HostedRCPEnvironment environment) {
         environments.add(environment);
-        return environment;
     }
 
-    @Override
-    public void release(final @NotNull RCPEnvironment environment) {
-        if (environment instanceof HostedEnvironment hosted && environments.remove(hosted)) {
-            hosted.release();
-        }
+    public void detach(final @NotNull HostedRCPEnvironment environment) {
+        environments.remove(environment);
     }
 
     @Override
@@ -100,58 +69,29 @@ public final class RCPHost implements RCPEnvironmentFactory, RCPPlayers {
     }
 
     private void dispatch(final @NotNull Consumer<RCPPlayerListener> event) {
-        for (final HostedEnvironment environment : environments) {
-            for (final RCPPlayerListener listener : environment.listeners()) {
+        for (final HostedRCPEnvironment environment : environments) {
+            for (final RCPPlayerListener listener : environment.playerListeners()) {
                 try {
                     event.accept(listener);
                 } catch (final Throwable failure) {
-                    environment.logger().warn("A player listener of RCP '{}' failed", environment.metadata().name(), failure);
+                    environment.logger().warn("A player listener of RCP '{}' failed", environment.name(), failure);
                 }
             }
         }
     }
 
-    public @Nullable RegisteredArgument argument(final @NotNull String name) {
-        final String key = name.toLowerCase(Locale.ROOT);
-        for (final HostedEnvironment environment : environments) {
-            final RegisteredArgument argument = environment.arguments().get(key);
-            if (argument != null) {
-                return argument;
-            }
-        }
-        return null;
-    }
-
-    public @NotNull List<RegisteredArgument> arguments() {
-        final List<RegisteredArgument> arguments = new ArrayList<>();
-        environments.forEach(environment -> arguments.addAll(environment.arguments().values()));
-        return arguments;
-    }
-
-    public @NotNull List<? extends HostedEnvironment> environments() {
+    public @NotNull List<HostedRCPEnvironment> environments() {
         return List.copyOf(environments);
     }
 
     public @Nullable String status() {
-        for (final HostedEnvironment environment : environments) {
+        for (final HostedRCPEnvironment environment : environments) {
             final String status = environment.currentStatus();
             if (status != null) {
                 return status;
             }
         }
         return null;
-    }
-
-    @NotNull Plugin plugin() {
-        return plugin;
-    }
-
-    @NotNull Scheduler scheduler() {
-        return scheduler;
-    }
-
-    @NotNull Logger hostLogger() {
-        return logger;
     }
 
 }

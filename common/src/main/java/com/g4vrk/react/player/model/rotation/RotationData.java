@@ -13,7 +13,7 @@ public final class RotationData {
     private Buffer<Rotation> history;
 
     public RotationData(
-            int bufferSize
+            final int bufferSize
     ) {
         this.history = new Buffer<>(bufferSize, Rotation[]::new);
     }

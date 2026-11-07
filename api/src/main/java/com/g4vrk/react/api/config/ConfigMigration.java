@@ -13,6 +13,6 @@ import org.spongepowered.configurate.serialize.SerializationException;
 @FunctionalInterface
 public interface ConfigMigration {
 
-    void migrate(@NotNull ConfigurationNode root) throws SerializationException;
+    void migrate(final @NotNull ConfigurationNode root) throws SerializationException;
 
 }

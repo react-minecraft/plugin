@@ -11,6 +11,7 @@ public record ActionsConfig(
         Reload reload,
         Reboot reboot,
         Rcps rcps,
+        Updates updates,
         Help help,
         Texts texts
 ) {
@@ -53,7 +54,7 @@ public record ActionsConfig(
 
     /**
      * {@code /react reboot}. The three texts go out while the plugin is unloaded, so they are plain
-     * messages and not actions.
+     * messages and not actions. The {@code extensions} lists answer {@code /react reboot <target>}.
      */
     @ConfigSerializable
     public record Reboot(
@@ -61,7 +62,10 @@ public record ActionsConfig(
             List<String> cancelled,
             String unloaded,
             String loaded,
-            String failed
+            String failed,
+            List<String> extensionsStarting,
+            List<String> extensionsDone,
+            List<String> extensionsUnknown
     ) {
     }
 
@@ -72,6 +76,13 @@ public record ActionsConfig(
             List<String> entryWithStatus,
             List<String> react
     ) {
+    }
+
+    /**
+     * Update notifications: a downloaded plugin jar, and a staged addon or RCP jar.
+     */
+    @ConfigSerializable
+    public record Updates(List<String> plugin, List<String> extension) {
     }
 
     @ConfigSerializable

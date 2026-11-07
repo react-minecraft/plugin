@@ -11,7 +11,7 @@ public final class FoliaReactAPI implements ReactAPI {
     private final SchedulaAPI api;
 
     public FoliaReactAPI(
-            @NotNull Plugin plugin
+            final @NotNull Plugin plugin
     ) {
         this.api = SchedulaAPI.builder()
                 .factory(new FoliaSchedulerFactory(plugin))

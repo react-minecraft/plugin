@@ -99,6 +99,18 @@ reboot:
   loaded: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин перезапущен: <gray><old> <dark_gray>-></dark_gray> <white><new>"
   failed: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Перезапуск не удался: <gray><reason>"
 
+  # /react reboot <цель> для аддонов и RCP. <target> - all, rcp, addons или имя
+  extensions-starting:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Перезапускаем <white><target></white>..."
+
+  # <loaded>, <unloaded>, <failed> - имена или "-"
+  extensions-done:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Перезапущено. <gray>Загружено: <white><loaded></white> <dark_gray>|</dark_gray> выгружено: <white><unloaded></white> <dark_gray>|</dark_gray> с ошибкой: <color:#ff3655><failed>"
+
+  # Цель <target> не найдена
+  extensions-unknown:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Нет аддона или RCP <gray><target>"
+
 # /react rcps
 rcps:
 
@@ -118,6 +130,17 @@ rcps:
   react:
     - "[msg]  <dark_gray>»</dark_gray> <white>React RCP <gray><version> <dark_gray>|</dark_gray> <channel> <dark_gray>|</dark_gray> <state> <dark_gray>|</dark_gray> <checked>"
 
+# Уведомления об обновлениях: получателям алертов и игрокам с react.notify.update при входе
+updates:
+
+  # Новый jar плагина лежит в plugins/update и применится после рестарта. <name>, <version>
+  plugin:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>React <color:#eb2544><version></color> скачан, применится после рестарта"
+
+  # Новый jar аддона или RCP подготовлен. <name>, <version>
+  extension:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><name> <color:#eb2544><version></color> скачан: <click:run_command:'/react reboot <name>'><u>/react reboot <name></u></click>"
+
 # Помощь и ответы на ошибки команд
 help:
 
@@ -128,7 +151,7 @@ help:
     - "[msg] <color:#eb2544>/react monitor [ники]</color> <gray>- мониторинг аналитики, можно указать ники"
     - "[msg] <color:#eb2544>/react history <игрок></color> <gray>- история проверок"
     - "[msg] <color:#eb2544>/react reload</color> <gray>- перезагрузить конфиги"
-    - "[msg] <color:#eb2544>/react reboot</color> <gray>- перезапустить плагин"
+    - "[msg] <color:#eb2544>/react reboot [цель]</color> <gray>- перезапустить плагин, аддоны или RCP"
     - "[msg] <color:#eb2544>/react rcps</color> <gray>- установленные RCP"
 
   # Нет прав на команду

@@ -100,6 +100,18 @@ reboot:
   loaded: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Plugin rebooted: <gray><old> <dark_gray>-></dark_gray> <white><new>"
   failed: "<b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Reboot failed: <gray><reason>"
 
+  # /react reboot <target> for addons and RCPs. <target> - all, rcp, addons or a name
+  extensions-starting:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Rebooting <white><target></white>..."
+
+  # <loaded>, <unloaded>, <failed> - the names, or "-"
+  extensions-done:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Rebooted. <gray>Loaded: <white><loaded></white> <dark_gray>|</dark_gray> unloaded: <white><unloaded></white> <dark_gray>|</dark_gray> failed: <color:#ff3655><failed>"
+
+  # Nothing matched <target>
+  extensions-unknown:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>No addon or RCP <gray><target>"
+
 # /react rcps
 rcps:
 
@@ -119,6 +131,17 @@ rcps:
   react:
     - "[msg]  <dark_gray>»</dark_gray> <white>React RCP <gray><version> <dark_gray>|</dark_gray> <channel> <dark_gray>|</dark_gray> <state> <dark_gray>|</dark_gray> <checked>"
 
+# Update notifications, for alert recipients and players with react.notify.update on join
+updates:
+
+  # A new plugin jar is in plugins/update and applies on restart. <name>, <version>
+  plugin:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>React <color:#eb2544><version></color> is downloaded, it applies on restart"
+
+  # A new addon or RCP jar is staged. <name>, <version>
+  extension:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><name> <color:#eb2544><version></color> is downloaded: <click:run_command:'/react reboot <name>'><u>/react reboot <name></u></click>"
+
 # Help and replies to command errors
 help:
 
@@ -129,7 +152,7 @@ help:
     - "[msg] <color:#eb2544>/react monitor [players]</color> <gray>- analysis monitor, optionally for some players"
     - "[msg] <color:#eb2544>/react history <player></color> <gray>- check history"
     - "[msg] <color:#eb2544>/react reload</color> <gray>- reload configs"
-    - "[msg] <color:#eb2544>/react reboot</color> <gray>- restart the plugin"
+    - "[msg] <color:#eb2544>/react reboot [target]</color> <gray>- restart the plugin, addons or RCPs"
     - "[msg] <color:#eb2544>/react rcps</color> <gray>- installed RCPs"
 
   # No permission for the command

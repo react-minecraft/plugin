@@ -532,7 +532,7 @@ public final class StorageManager {
 
     @FunctionalInterface
     private interface BackendFunction<T> {
-        T apply(@NotNull StorageBackend storage) throws Exception;
+        T apply(final @NotNull StorageBackend storage) throws Exception;
     }
 
     @FunctionalInterface

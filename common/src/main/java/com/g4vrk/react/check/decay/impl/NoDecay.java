@@ -6,7 +6,7 @@ public final class NoDecay implements DecayStrategy {
 
     @Override
     public double decay(
-            double violations
+            final double violations
     ) {
         return violations;
     }

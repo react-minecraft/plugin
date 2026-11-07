@@ -9,7 +9,7 @@ public final class InferenceStatistic {
 
     private final InferenceHistory history;
 
-    public InferenceStatistic(@NotNull InferenceHistory history) {
+    public InferenceStatistic(final @NotNull InferenceHistory history) {
         this.history = history;
     }
 

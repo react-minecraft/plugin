@@ -7,13 +7,13 @@ public final class LinearDecay implements DecayStrategy {
     private final double amount;
 
     public LinearDecay(
-            double amount
+            final double amount
     ) {
         this.amount = amount;
     }
 
     @Override
-    public double decay(double violations) {
+    public double decay(final double violations) {
         return Math.max(0.0, violations - amount);
     }
 

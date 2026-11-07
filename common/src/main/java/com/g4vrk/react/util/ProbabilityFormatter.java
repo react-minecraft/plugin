@@ -9,7 +9,7 @@ public final class ProbabilityFormatter {
     private ProbabilityFormatter() {
     }
 
-    public static String format(double probability) {
+    public static String format(final double probability) {
         return BigDecimal.valueOf(probability).stripTrailingZeros().toPlainString();
     }
 }

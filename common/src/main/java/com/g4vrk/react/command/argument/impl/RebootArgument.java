@@ -63,12 +63,12 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                     } catch (final IllegalStateException refused) {
                         React.INSTANCE.logger().warn("React reboot refused: {}", refused.getMessage());
                         final String reason = String.valueOf(refused.getMessage());
-                        cancelled.run(sender, text -> text.replace("{reason}", reason));
+                        cancelled.run(sender, text -> text.replace("<reason>", reason));
                         return;
                     }
                     starting.run(sender, text -> text
-                            .replace("{jar}", reboot.jar().getName())
-                            .replace("{version}", reboot.newVersion()));
+                            .replace("<jar>", reboot.jar().getName())
+                            .replace("<version>", reboot.newVersion()));
                     // Run outside the command dispatch: disabling React tears down this command manager.
                     Bukkit.getScheduler().runTask(plugin, reboot);
                 });

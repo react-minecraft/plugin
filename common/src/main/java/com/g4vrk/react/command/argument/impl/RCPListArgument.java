@@ -71,25 +71,25 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                     final CommandSender sender = context.sender();
                     final List<? extends HostedEnvironment> environments = host.environments();
 
-                    run(header, sender, Map.of("{count}", Integer.toString(environments.size())));
+                    run(header, sender, Map.of("<count>", Integer.toString(environments.size())));
                     for (final HostedEnvironment environment : environments) {
                         final RCPMetadata metadata = environment.metadata();
                         final String status = environment.currentStatus();
                         run(status == null ? entry : entryWithStatus, sender, Map.of(
-                                "{name}", metadata.name(),
-                                "{version}", metadata.version(),
-                                "{api}", Integer.toString(metadata.apiVersion()),
-                                "{status}", status == null ? "" : status));
+                                "<name>", metadata.name(),
+                                "<version>", metadata.version(),
+                                "<api>", Integer.toString(metadata.apiVersion()),
+                                "<status>", status == null ? "" : status));
                     }
 
                     final RCPUpdater.Status status = updater.status();
                     run(react, sender, Map.of(
-                            "{version}", status.version() == null
+                            "<version>", status.version() == null
                                     ? texts.noVersion()
-                                    : texts.version().replace("{version}", status.version()),
-                            "{channel}", status.channel().name().toLowerCase(Locale.ROOT),
-                            "{state}", status.state(),
-                            "{checked}", checked(status.lastCheck())));
+                                    : texts.version().replace("<version>", status.version()),
+                            "<channel>", status.channel().name().toLowerCase(Locale.ROOT),
+                            "<state>", status.state(),
+                            "<checked>", checked(status.lastCheck())));
                 });
     }
 
@@ -98,7 +98,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
             return texts.notChecked();
         }
         final long minutes = Duration.between(instant, Instant.now()).toMinutes();
-        return minutes < 1 ? texts.checkedNow() : texts.checkedAgo().replace("{minutes}", Long.toString(minutes));
+        return minutes < 1 ? texts.checkedNow() : texts.checkedAgo().replace("<minutes>", Long.toString(minutes));
     }
 
     private static void run(

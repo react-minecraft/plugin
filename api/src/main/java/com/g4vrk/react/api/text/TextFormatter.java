@@ -3,6 +3,7 @@ package com.g4vrk.react.api.text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.jetbrains.annotations.ApiStatus;
+import com.g4vrk.react.api.player.TrackedPlayer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,5 +24,19 @@ public interface TextFormatter {
      * @return the formatted component
      */
     @NotNull Component format(final @NotNull String text, final @NotNull TagResolver @NotNull ... resolvers);
+
+    /**
+     * Formats text for a player, so {@code <react_key:query>} placeholders resolve too.
+     *
+     * @param text      the raw text
+     * @param player    the player the placeholders are resolved for
+     * @param resolvers extra placeholders
+     * @return the formatted component
+     */
+    @NotNull Component format(
+            final @NotNull String text,
+            final @NotNull TrackedPlayer player,
+            final @NotNull TagResolver @NotNull ... resolvers
+    );
 
 }

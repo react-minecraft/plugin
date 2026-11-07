@@ -1,36 +1,48 @@
 package com.g4vrk.react.placeholder;
 
-import com.g4vrk.react.util.ProbabilityFormatter;
-
-import com.g4vrk.react.color.resolver.ValueColorResolver;
-import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
+import com.g4vrk.react.api.placeholder.PlaceholderRegistry;
+import com.g4vrk.react.color.ProbabilityColor;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.statistic.InferenceStatistic;
+import com.g4vrk.react.util.ProbabilityFormatter;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.function.Function;
 
-public class ReactPlaceholderExpansion extends PlaceholderExpansion {
+/**
+ * PlaceholderAPI expansion with the old {@code inference-history.*} and {@code model} values.
+ *
+ * <p>Anything else is looked up in the {@link PlaceholderRegistry}: {@code %react_vl_aim%} asks
+ * key {@code vl} with query {@code aim}.</p>
+ */
+public final class ReactPlaceholderExpansion extends PlaceholderExpansion {
 
     private final String id;
     private final String author;
     private final String version;
 
     private final PlayerRegistry registry;
+    private final PlaceholderRegistry placeholders;
     private final Function<OfflinePlayer, String> selectedModel;
 
-    private final ValueColorResolver probabilityColorResolver = new ProbabilityColorResolver();
-
-    public ReactPlaceholderExpansion(String id, String author, String version,
-                                     PlayerRegistry registry, Function<OfflinePlayer, String> selectedModel) {
+    public ReactPlaceholderExpansion(
+            final @NotNull String id,
+            final @NotNull String author,
+            final @NotNull String version,
+            final @NotNull PlayerRegistry registry,
+            final @NotNull PlaceholderRegistry placeholders,
+            final @NotNull Function<OfflinePlayer, String> selectedModel
+    ) {
         this.id = id;
         this.author = author;
         this.version = version;
         this.registry = registry;
+        this.placeholders = placeholders;
         this.selectedModel = selectedModel;
     }
 
@@ -75,17 +87,21 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
             return null;
         }
 
-        final String prefix = "inference-history.";
-
-        if (!params.startsWith(prefix)) {
-            return null;
-        }
-
         final TrackedPlayerImpl player =
                 registry.get(offlinePlayer.getUniqueId());
 
         if (player == null) {
             return null;
+        }
+
+        final String prefix = "inference-history.";
+
+        if (!params.startsWith(prefix)) {
+            final int separator = params.indexOf('_');
+
+            return separator < 0
+                    ? placeholders.resolve(player, params, "")
+                    : placeholders.resolve(player, params.substring(0, separator), params.substring(separator + 1));
         }
 
         final String path = params.substring(prefix.length());
@@ -129,12 +145,7 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
                 }
 
                 case "probability:colored" -> {
-                    final double probability = entry.getProbability();
-
-                    yield "<" +
-                            probabilityColorResolver.resolve(probability).asHexString() +
-                            ">" +
-                            ProbabilityFormatter.format(probability);
+                    yield ProbabilityColor.miniMessage(entry.getProbability());
                 }
 
                 case "check" -> entry.getCheck().name();
@@ -154,12 +165,7 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
 
             case "avg-probability:colored" -> {
 
-                final double average = statisticResult.averageProbability();
-
-                yield "<" +
-                        probabilityColorResolver.resolve(average).asHexString() +
-                        ">" +
-                        ProbabilityFormatter.format(average);
+                yield ProbabilityColor.miniMessage(statisticResult.averageProbability());
             }
 
             default -> null;

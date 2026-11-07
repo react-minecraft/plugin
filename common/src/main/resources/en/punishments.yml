@@ -20,10 +20,10 @@ punishments:
       10;8:
 
         # Execute a command as the console
-        - "[console] kick {player} [React] Heuristic violations (Aim-AI)"
+        - "[console] kick <player> [React] Heuristic violations (Aim-AI)"
 
         # Reset the player's VL
         #- "[reset-vl]"
 
 # Не меняйте / Do not change
-config-version: 1
+config-version: 2

@@ -18,6 +18,8 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The plugin's own files in {@code plugins/React}, loaded together on start and on reload.
@@ -26,11 +28,42 @@ import java.util.Map;
  */
 public final class ReactConfigs {
 
+    private static final Pattern HISTORY_LINK = Pattern.compile(
+            "<click:run_command:'/react history \\{player} \\{page:(previous|next)}'>(.*?)</click>"
+    );
+
     private static final ConfigMigrations AIM_AI_MIGRATIONS = ConfigMigrations.builder()
             .step(root -> {
                 root.removeChild("buffer");
                 root.removeChild("combat-ticks");
             })
+            .build();
+
+    private static final ConfigMigrations HISTORY_MIGRATIONS = ConfigMigrations.builder()
+            .step(root -> {
+            })
+            .step(root -> {
+                BracePlaceholders.rewrite(root, text -> HISTORY_LINK.matcher(text).replaceAll(match -> {
+                    final String tag = match.group(1).equals("previous") ? "prev" : "next";
+                    return Matcher.quoteReplacement("<" + tag + ">" + match.group(2) + "</" + tag + ">");
+                }));
+                BracePlaceholders.migrate(root, Map.of(
+                        "{page:current}", "<page>",
+                        "{page:max}", "<pages>",
+                        "{page:previous}", "<previous-page>",
+                        "{page:next}", "<next-page>",
+                        "{avg-probability:colored}", "<avg-probability>",
+                        "{avg-probability}", "<avg-probability-plain>",
+                        "{probability:colored}", "<probability>",
+                        "{probability}", "<probability-plain>"
+                ));
+            })
+            .build();
+
+    private static final ConfigMigrations PUNISHMENTS_MIGRATIONS = ConfigMigrations.builder()
+            .step(root -> {
+            })
+            .step(root -> BracePlaceholders.migrate(root, Map.of()))
             .build();
 
     private static final ConfigMigrations MAIN_MIGRATIONS = ConfigMigrations.builder()
@@ -72,8 +105,9 @@ public final class ReactConfigs {
 
         this.mainFile = file(MainConfig.class, "main-config.yml").migrations(MAIN_MIGRATIONS).build();
         this.actionsFile = file(ActionsConfig.class, "actions.yml").migrations(actionsMigrations()).build();
-        this.historyFile = file(HistoryConfig.class, "history.yml").build();
-        this.punishmentsFile = file(ConfigurationNode.class, "punishments.yml").keepMissing().build();
+        this.historyFile = file(HistoryConfig.class, "history.yml").migrations(HISTORY_MIGRATIONS).build();
+        this.punishmentsFile = file(ConfigurationNode.class, "punishments.yml").keepMissing()
+                .migrations(PUNISHMENTS_MIGRATIONS).build();
         this.databaseFile = file(ConfigurationNode.class, "database.yml").build();
         this.aimAIFile = file(AimAIConfig.class, "checks/aim-ai.yml").migrations(AIM_AI_MIGRATIONS).build();
     }
@@ -98,6 +132,7 @@ public final class ReactConfigs {
                     moveFormat(legacy.node("alerts", "format"), root.node("alerts", "alert"));
                     moveFormat(legacy.node("verbose", "format"), root.node("monitor", "message"));
                 })
+                .step(root -> BracePlaceholders.migrate(root, Map.of()))
                 .build();
     }
 

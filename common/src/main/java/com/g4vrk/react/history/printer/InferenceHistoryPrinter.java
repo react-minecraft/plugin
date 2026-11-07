@@ -1,115 +1,112 @@
 package com.g4vrk.react.history.printer;
 
-import com.g4vrk.react.util.ProbabilityFormatter;
-
-import com.g4vrk.react.config.model.HistoryConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.color.resolver.ValueColorResolver;
-import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
+import com.g4vrk.react.api.text.TextFormatter;
+import com.g4vrk.react.color.ProbabilityColor;
+import com.g4vrk.react.config.model.HistoryConfig;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
 import com.g4vrk.react.player.TrackedPlayerImpl;
+import com.g4vrk.react.util.ProbabilityFormatter;
 import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.minimessage.tag.Tag;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.function.Function;
 
-public class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
+/**
+ * Prints {@code /react history} pages from {@code history.yml}.
+ *
+ * <p>Every line knows {@code <player>}, {@code <size>}, {@code <page>}, {@code <pages>},
+ * {@code <avg-probability>} (colored) and {@code <avg-probability-plain>}, plus the clickable
+ * {@code <prev>} and {@code <next>} that open the neighbour pages. Entry lines also know
+ * {@code <probability>}, {@code <probability-plain>} and {@code <check>}.</p>
+ */
+public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
 
-    private final Function<String, Component> serializer;
-    private final ValueColorResolver probabilityColorResolver = new ProbabilityColorResolver();
+    private final TextFormatter formatter;
 
-    private List<String> header;
-    private List<String> entryFormat;
-    private List<String> empty;
-    private List<String> footer;
-    private int printEntries;
+    private volatile HistoryConfig.Format format;
 
-    public InferenceHistoryPrinter(@NotNull Function<String, Component> serializer) {
-        this.serializer = serializer;
-        reload();
+    public InferenceHistoryPrinter(final @NotNull TextFormatter formatter) {
+        this.formatter = formatter;
+        this.reload();
     }
 
     public void reload() {
-        onReload(React.INSTANCE.configs().history());
+        this.onReload(React.INSTANCE.configs().history());
     }
 
     @Override
-    public void onReload(@NotNull HistoryConfig config) {
-        final HistoryConfig.Format format = config.format();
-        header = format.header();
-        entryFormat = format.entryFormat();
-        empty = format.empty();
-        footer = format.footer();
-        printEntries = Math.max(1, format.printEntries());
+    public void onReload(final @NotNull HistoryConfig config) {
+        this.format = config.format();
     }
 
-    public void print(@NotNull Audience receiver, @NotNull TrackedPlayerImpl player) {
-        print(receiver, player, 1);
+    public void print(final @NotNull Audience receiver, final @NotNull TrackedPlayerImpl player) {
+        this.print(receiver, player, 1);
     }
 
-    public void print(@NotNull Audience receiver, @NotNull TrackedPlayerImpl player, int page) {
+    public void print(final @NotNull Audience receiver, final @NotNull TrackedPlayerImpl player, final int requested) {
+        final HistoryConfig.Format format = this.format;
+        final int perPage = Math.max(1, format.printEntries());
         final InferenceHistoryEntry[] history = player.inferenceHistory.entries();
-        final int totalPages = Math.max(1, (int) Math.ceil((double) history.length / printEntries));
-        page = Math.max(1, Math.min(page, totalPages));
+        final int pages = Math.max(1, (int) Math.ceil((double) history.length / perPage));
+        final int page = Math.max(1, Math.min(requested, pages));
         final double average = player.inferenceStatistic.averageProbability();
-        final Function<String, String> common = commonProcessor(player, history.length, page, totalPages, average);
 
-        send(receiver, header, common, average, null);
+        final TagResolver common = TagResolver.resolver(
+                Placeholder.unparsed("player", player.name()),
+                Placeholder.unparsed("size", Integer.toString(history.length)),
+                Placeholder.unparsed("page", Integer.toString(page)),
+                Placeholder.unparsed("pages", Integer.toString(pages)),
+                Placeholder.component("avg-probability", ProbabilityColor.component(average)),
+                Placeholder.unparsed("avg-probability-plain", ProbabilityFormatter.format(average)),
+                pageLink("prev", player, Math.max(1, page - 1)),
+                pageLink("next", player, Math.min(pages, page + 1))
+        );
+
+        this.send(receiver, format.header(), common);
+
         if (history.length == 0) {
-            send(receiver, empty, common, average, null);
+            this.send(receiver, format.empty(), common);
         } else {
-            final int start = history.length - 1 - (page - 1) * printEntries;
-            final int end = Math.max(-1, start - printEntries);
+            final int start = history.length - 1 - (page - 1) * perPage;
+            final int end = Math.max(-1, start - perPage);
+
             for (int index = start; index > end; index--) {
-                send(receiver, entryFormat, common, average, history[index]);
+                final InferenceHistoryEntry entry = history[index];
+
+                this.send(receiver, format.entryFormat(), TagResolver.resolver(
+                        common,
+                        Placeholder.component("probability", ProbabilityColor.component(entry.getProbability())),
+                        Placeholder.unparsed("probability-plain", ProbabilityFormatter.format(entry.getProbability())),
+                        Placeholder.unparsed("check", entry.getCheck().name())
+                ));
             }
         }
-        send(receiver, footer, common, average, null);
+
+        this.send(receiver, format.footer(), common);
     }
 
-    private @NotNull Function<String, String> commonProcessor(
-            @NotNull TrackedPlayerImpl player, int size, int page, int totalPages, double average
+    private static @NotNull TagResolver pageLink(
+            final @NotNull String name,
+            final @NotNull TrackedPlayerImpl player,
+            final int page
     ) {
-        return text -> text
-                .replace("{player}", player.name())
-                .replace("{size}", String.valueOf(size))
-                .replace("{page:previous}", String.valueOf(Math.max(1, page - 1)))
-                .replace("{page:current}", String.valueOf(page))
-                .replace("{page:next}", String.valueOf(Math.min(totalPages, page + 1)))
-                .replace("{page:max}", String.valueOf(totalPages))
-                .replace("{avg-probability}", ProbabilityFormatter.format(average));
+        return TagResolver.resolver(name, Tag.styling(ClickEvent.runCommand("/react history " + player.name() + " " + page)));
     }
 
     private void send(
-            @NotNull Audience receiver,
-            @NotNull List<String> lines,
-            @NotNull Function<String, String> common,
-            double average,
-            InferenceHistoryEntry entry
+            final @NotNull Audience receiver,
+            final @NotNull List<String> lines,
+            final @NotNull TagResolver resolver
     ) {
-        for (String line : lines) {
-            String text = common.apply(line);
-            if (entry != null) {
-                text = text.replace("{probability}", ProbabilityFormatter.format(entry.getProbability()))
-                        .replace("{check}", entry.getCheck().name());
-            }
-            Component component = serializer.apply(text);
-            component = replaceColored(component, "{avg-probability:colored}", average);
-            if (entry != null) {
-                component = replaceColored(component, "{probability:colored}", entry.getProbability());
-            }
-            receiver.sendMessage(component);
+        for (final String line : lines) {
+            receiver.sendMessage(formatter.format(line, resolver));
         }
     }
 
-    private @NotNull Component replaceColored(
-            @NotNull Component component, @NotNull String placeholder, double probability
-    ) {
-        final Component colored = Component.text(ProbabilityFormatter.format(probability))
-                .color(probabilityColorResolver.resolve(probability));
-        return component.replaceText(builder -> builder.matchLiteral(placeholder).replacement(colored));
-    }
 }

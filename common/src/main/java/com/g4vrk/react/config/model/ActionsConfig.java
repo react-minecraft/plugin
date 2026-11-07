@@ -17,7 +17,7 @@ public record ActionsConfig(
 
     /**
      * The actions of {@code /react alerts} and {@code /react monitor}. {@code onEnablePlayers} runs
-     * when only some players are followed and gets their names in {@code {players}}.
+     * when only some players are followed and gets their names in {@code <players>}.
      */
     public interface ReportToggle {
 

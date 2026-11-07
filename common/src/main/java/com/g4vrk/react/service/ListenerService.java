@@ -1,5 +1,6 @@
 package com.g4vrk.react.service;
 
+import com.g4vrk.react.React;
 import com.g4vrk.react.Permissions;
 import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
@@ -86,6 +87,7 @@ public final class ListenerService {
                     "g4vrk",
                     plugin.getDescription().getVersion(),
                     playerRegistry,
+                    React.INSTANCE.placeholders(),
                     offlinePlayer -> {
                         final String status = host.status();
                         return status == null ? configs.actions().texts().unavailable() : status;

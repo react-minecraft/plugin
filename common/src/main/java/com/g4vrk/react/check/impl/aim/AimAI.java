@@ -11,8 +11,7 @@ import com.g4vrk.react.check.debug.DebugHandler;
 import com.g4vrk.react.check.decay.DecayStrategy;
 import com.g4vrk.react.check.decay.impl.LinearDecay;
 import com.g4vrk.react.check.info.CheckInfo;
-import com.g4vrk.react.color.resolver.ValueColorResolver;
-import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
+import com.g4vrk.react.color.ProbabilityColor;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.rcp.RCPHost;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
         configId = "aim-ai"
 )
 public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
-
-    private final ValueColorResolver colorResolver = new ProbabilityColorResolver();
 
     private final DebugHandler debugHandler;
 
@@ -78,7 +75,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
         final double probability = result.probability();
 
-        final String details = "<color:" + colorResolver.resolve(probability).asHexString() + ">"
+        final String details = "<color:" + ProbabilityColor.color(probability).asHexString() + ">"
                 + ProbabilityFormatter.format(probability) + " (" + result.displayName() + ")" + "</color>";
 
         final double threshold = result.hasThreshold() ? result.threshold() : alertThreshold;

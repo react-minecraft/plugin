@@ -90,7 +90,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         this.channel.subscribe(sender, players.stream().map(Player::getUniqueId).toList());
 
         final String names = players.stream().map(Player::getName).collect(Collectors.joining(", "));
-        this.enabledPlayersActions.run(sender, text -> text.replace("{players}", names));
+        this.enabledPlayersActions.run(sender, text -> text.replace("<players>", names));
     }
 
     @Override

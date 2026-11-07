@@ -3,6 +3,8 @@ package com.g4vrk.react;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.react.event.SimpleEventBus;
 import com.g4vrk.react.api.event.plugin.ReloadEvent;
+import com.g4vrk.react.placeholder.BuiltinPlaceholders;
+import com.g4vrk.react.placeholder.SimplePlaceholderRegistry;
 import com.g4vrk.react.text.MiniTextFormatter;
 import com.g4vrk.functionalActions.defaults.DefaultActions;
 import com.g4vrk.functionalActions.parser.ActionParser;
@@ -57,7 +59,8 @@ public class React {
 
     private final Logger logger = LoggerFactory.getLogger("React");
     private final Serializers serializers = LegacySerializers.INSTANCE;
-    private final TextFormatter text = new MiniTextFormatter(serializers);
+    private final SimplePlaceholderRegistry placeholders = new SimplePlaceholderRegistry(logger);
+    private final TextFormatter text = new MiniTextFormatter(serializers, placeholders);
     private final SimpleEventBus events = new SimpleEventBus(logger);
 
     private Plugin plugin;
@@ -82,6 +85,10 @@ public class React {
     private ListenerService listeners;
 
     public void initialize(final @NotNull Plugin plugin, final @NotNull ReactAPI api) {
+        if (placeholders.keys().isEmpty()) {
+            BuiltinPlaceholders.register(placeholders);
+        }
+
         this.plugin = plugin;
         this.schedulaAPI = api.schedulaAPI();
     }
@@ -137,7 +144,7 @@ public class React {
         ReactChannels.ALERTS.delivery(alertActions);
         ReactChannels.MONITOR.delivery(monitorActions);
         this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler);
-        this.inferenceHistoryPrinter = new InferenceHistoryPrinter(serializers.universalSerializer()::serialize);
+        this.inferenceHistoryPrinter = new InferenceHistoryPrinter(text);
 
         logger.info("Registering commands...");
         this.commands = new CommandService(plugin, logger);

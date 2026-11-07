@@ -302,9 +302,9 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
         final Context context = new Context(check, vl);
 
         final Function<String, String> placeholders = args -> args == null ? null : args
-                .replace("{player}", playerName)
-                .replace("{check}", checkName)
-                .replace("{vl}", String.valueOf(vl));
+                .replace("<player>", playerName)
+                .replace("<check>", checkName)
+                .replace("<vl>", String.valueOf(vl));
 
         for (final ExecutableAction<? super Context> action : rule.actions()) {
 

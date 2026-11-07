@@ -12,8 +12,8 @@ import java.util.List;
 /**
  * Runs an action list from {@code actions.yml} for every report a recipient gets.
  *
- * <p>Placeholders: {@code {player}}, {@code {check}}, {@code {violations}} (also {@code {vl}})
- * and {@code {details}}.</p>
+ * <p>Placeholders: {@code <player>}, {@code <check>}, {@code <violations>} (also {@code <vl>})
+ * and {@code <details>}.</p>
  */
 public final class ReportActions implements ReportChannel.Delivery {
 
@@ -35,11 +35,11 @@ public final class ReportActions implements ReportChannel.Delivery {
         final String violations = String.valueOf(report.violations());
 
         this.actions.run(recipient, text -> text
-                .replace("{player}", report.playerName())
-                .replace("{check}", report.check())
-                .replace("{violations}", violations)
-                .replace("{vl}", violations)
-                .replace("{details}", report.details()));
+                .replace("<player>", report.playerName())
+                .replace("<check>", report.check())
+                .replace("<violations>", violations)
+                .replace("<vl>", violations)
+                .replace("<details>", report.details()));
     }
 
 }

@@ -81,6 +81,8 @@ The RCP keeps its own settings in `plugins/React/.rcp/React/`.
 | `/react link`        | Get a link and confirm the server on the site                      |
 | `/react link <code>` | Link the server to your React account                              |
 | `/react link check`  | Check the link and the models you have                             |
+| `/react alerts [players]`  | Alerts about everyone or only the given players            |
+| `/react monitor [players]` | Every analysis as it happens (alias `/react verbose`)      |
 
 ---
 

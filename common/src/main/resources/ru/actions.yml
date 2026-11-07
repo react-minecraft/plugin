@@ -20,10 +20,20 @@
 # Действия связанные с оповещениями
 alerts:
 
+  # Действия для каждого оповещения. {player} - игрок, {check} - проверка,
+  # {violations} или {vl} - нарушения, {details} - подробности от проверки
+  alert:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#eb2544>{player}</color> <white>провалил <color:#eb2544>{check}</color> <dark_gray>(x{vl}) <gray>{details}</gray>"
+
   # Действия при включении оповещений
   on-enable:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Действия, когда оповещения включены только для некоторых игроков. {players} - их ники
+  on-enable-players:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения по игрокам <color:#eb2544>{players}</color> <color:#11ff11>включены ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Действия при выключении оповещений
@@ -32,16 +42,25 @@ alerts:
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
-# Действия связанные с оповещениями при любом анализе
-verbose:
+# /react monitor (или /react verbose) - мониторинг каждого анализа
+monitor:
 
-  # Действия при включении оповещений
+  # Действия для каждого анализа, плейсхолдеры как у alerts.alert
+  message:
+    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <dark_gray>Аналитика: <color:#747474>{player}</color> <dark_gray>-></dark_gray> <color:#747474>{check}</color> <dark_gray>{details}</dark_gray>"
+
+  # Действия при включении мониторинга
   on-enable:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
-  # Действия при выключении оповещений
+  # Действия, когда мониторинг включён только для некоторых игроков. {players} - их ники
+  on-enable-players:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг игроков <color:#eb2544>{players}</color> <color:#11ff11>включен ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Действия при выключении мониторинга
   on-disable:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
@@ -105,8 +124,8 @@ help:
   # /react без аргументов
   root:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Команды:"
-    - "[msg] <color:#eb2544>/react alerts</color> <gray>- оповещения"
-    - "[msg] <color:#eb2544>/react verbose</color> <gray>- мониторинг аналитики"
+    - "[msg] <color:#eb2544>/react alerts [ники]</color> <gray>- оповещения, можно указать ники"
+    - "[msg] <color:#eb2544>/react monitor [ники]</color> <gray>- мониторинг аналитики, можно указать ники"
     - "[msg] <color:#eb2544>/react history <игрок></color> <gray>- история проверок"
     - "[msg] <color:#eb2544>/react reload</color> <gray>- перезагрузить конфиги"
     - "[msg] <color:#eb2544>/react reboot</color> <gray>- перезапустить плагин"
@@ -140,4 +159,4 @@ texts:
   checked-ago: "проверено {minutes} мин назад"
 
 # Не меняйте / Do not change
-config-version: 1
+config-version: 2

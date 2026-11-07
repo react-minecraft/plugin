@@ -1,77 +1,20 @@
 package com.g4vrk.react.command.argument.impl;
 
-import com.g4vrk.react.config.model.ActionsConfig;
-import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.Permissions;
-import com.g4vrk.react.React;
-import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.ReactChannels;
-import com.g4vrk.react.api.channel.impl.ChatMessageChannel;
-import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
+import com.g4vrk.react.config.model.ActionsConfig;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
-import org.incendo.cloud.Command;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
-public final class AlertsArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
-
-    private final ChatMessageChannel alertsChannel;
-
-    private final CommandBuilderFactory builderFactory;
-
-    private final ActionParser<Audience> actionParser;
-
-    private ExecutableActionList<? super Audience> enabledActions;
-    private ExecutableActionList<? super Audience> disabledActions;
+public final class AlertsArgument extends ReportToggleArgument {
 
     public AlertsArgument(
-            @NotNull CommandBuilderFactory builderFactory,
-            @NotNull ActionParser<Audience> actionParser
+            final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull ActionParser<Audience> actionParser
     ) {
-        this.alertsChannel = ReactChannels.ALERTS;
-
-        this.builderFactory = builderFactory;
-        this.actionParser = actionParser;
-
-        this.reload();
-    }
-
-    @Override
-    public @NotNull Command.Builder<CommandSender> build() {
-        return Objects.requireNonNull(builderFactory)
-                .create()
-                .literal("alerts")
-                .permission(Permissions.ALERTS)
-                .handler(context -> {
-
-                    final CommandSender sender = context.sender();
-
-                    if (!this.alertsChannel.remove(sender)) {
-
-                        this.alertsChannel.subscribe(sender);
-
-                        if (this.enabledActions != null) this.enabledActions.run(sender);
-
-                    } else {
-
-                        if (this.disabledActions != null) this.disabledActions.run(sender);
-
-                    }
-                });
-    }
-
-    public void reload() {
-        this.onReload(React.INSTANCE.configs().actions());
-    }
-
-    @Override
-    public void onReload(@NotNull ActionsConfig config) {
-        this.enabledActions = this.actionParser.parseAll(config.alerts().onEnable());
-        this.disabledActions = this.actionParser.parseAll(config.alerts().onDisable());
+        super(builderFactory, actionParser, ReactChannels.ALERTS, Permissions.ALERTS, ActionsConfig::alerts, "alerts");
     }
 
 }

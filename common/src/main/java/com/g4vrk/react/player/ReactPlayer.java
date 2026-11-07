@@ -1,8 +1,6 @@
 package com.g4vrk.react.player;
 
 import com.g4vrk.react.React;
-import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
-import com.g4vrk.react.api.channel.print.impl.VerbosePrinter;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.check.Check;
@@ -36,8 +34,6 @@ public final class ReactPlayer implements RCPPlayer {
     public final CombatActivity combatActivity;
     public final RotationData rotationData = new RotationData(MAX_ROTATION_WINDOW);
 
-    public final AlertPrinter alertPrinter;
-    public final VerbosePrinter verbosePrinter;
     public final CheckManager checkManager;
 
     public final InferenceHistory inferenceHistory;
@@ -54,8 +50,6 @@ public final class ReactPlayer implements RCPPlayer {
         this.uniqueId = uniqueId;
         this.name = name;
         this.bukkitPlayer = bukkitPlayer;
-        this.alertPrinter = React.INSTANCE.alertPrinter();
-        this.verbosePrinter = React.INSTANCE.verbosePrinter();
         this.checkManager = new CheckManager(this);
         this.inferenceHistory = new InferenceHistory(
                 React.INSTANCE.storageManager().historyRetention(),

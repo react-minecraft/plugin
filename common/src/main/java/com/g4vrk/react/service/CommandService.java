@@ -11,7 +11,7 @@ import com.g4vrk.react.command.argument.impl.RCPArgumentRouter;
 import com.g4vrk.react.command.argument.impl.RCPListArgument;
 import com.g4vrk.react.command.argument.impl.RebootArgument;
 import com.g4vrk.react.command.argument.impl.ReloadArgument;
-import com.g4vrk.react.command.argument.impl.VerboseArgument;
+import com.g4vrk.react.command.argument.impl.MonitorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
@@ -71,11 +71,11 @@ public final class CommandService {
     ) {
         final HelpActions help = new HelpActions(parser, actions);
         final AlertsArgument alerts = new AlertsArgument(builderFactory, parser);
-        final VerboseArgument verbose = new VerboseArgument(builderFactory, parser);
+        final MonitorArgument monitor = new MonitorArgument(builderFactory, parser);
         final ReloadArgument reload = new ReloadArgument(builderFactory, scheduler, parser);
         final RebootArgument reboot = new RebootArgument(builderFactory, parser, actions);
         final RCPListArgument rcps = new RCPListArgument(builderFactory, parser, actions, host, updater);
-        this.observers = List.of(help, alerts, verbose, reload, reboot, rcps);
+        this.observers = List.of(help, alerts, monitor, reload, reboot, rcps);
 
         manager.command(builderFactory.create().handler(context -> help.root(context.sender())));
         manager.exceptionController()
@@ -86,7 +86,7 @@ public final class CommandService {
 
         for (final LocalArgument argument : List.of(
                 alerts,
-                verbose,
+                monitor,
                 reload,
                 reboot,
                 new HistoryArgument(builderFactory, historyPrinter, playerRegistry),

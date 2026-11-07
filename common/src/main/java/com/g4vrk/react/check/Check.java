@@ -2,13 +2,14 @@ package com.g4vrk.react.check;
 
 import com.g4vrk.react.Permissions;
 import com.g4vrk.react.React;
+import com.g4vrk.react.api.channel.CheckReport;
+import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.api.event.PlayerCheckFailEvent;
 import com.g4vrk.react.check.decay.DecayStrategy;
 import com.g4vrk.react.check.info.CheckInfo;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.punish.PunishmentManager;
 import lombok.Getter;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class Check extends AbstractCheck {
@@ -67,39 +68,46 @@ public abstract class Check extends AbstractCheck {
     protected final void failAndAlert(
             final double amount
     ) {
-        this.failAndAlert(amount, Component.empty());
+        this.failAndAlert(amount, "");
     }
 
+    /**
+     * @param details shown in {@code {details}}, MiniMessage or {@code &} codes
+     */
     protected final void failAndAlert(
             final double amount,
-            final @NotNull Component verbose
+            final @NotNull String details
     ) {
         this.fail(amount);
-        this.alert(verbose);
+        this.alert(details);
     }
 
-    protected final void failAndVerbose(
+    protected final void failAndMonitor(
             final double amount,
-            final @NotNull Component verbose
+            final @NotNull String details
     ) {
         this.fail(amount);
-        this.verbose(verbose);
+        this.monitor(details);
     }
 
     protected final void alert() {
-        this.alert(Component.empty());
+        this.alert("");
     }
 
     protected final void alert(
-            final @NotNull Component verbose
+            final @NotNull String details
     ) {
-        this.player.alertPrinter.print(player, getName(), violations, verbose);
+        ReactChannels.ALERTS.publish(this.report(details));
     }
 
-    protected final void verbose(
-            final @NotNull Component verbose
+    protected final void monitor(
+            final @NotNull String details
     ) {
-        this.player.verbosePrinter.print(player, getName(), violations, verbose);
+        ReactChannels.MONITOR.publish(this.report(details));
+    }
+
+    public final @NotNull CheckReport report(final @NotNull String details) {
+        return new CheckReport(player.getUniqueId(), player.getName(), getName(), violations, details);
     }
 
     protected final synchronized void reward() {

@@ -8,14 +8,12 @@ import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.channel.print.impl.AlertPrinter;
+import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +32,6 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
     private final Logger logger;
     private final Server server;
     private final Scheduler scheduler;
-    private final AlertPrinter alertPrinter;
 
     private final ActionRegistry<Context> actionRegistry = new SimpleActionRegistry<>(true);
     private final ActionParser<Context> actionParser = new SimpleActionParser<>(this.actionRegistry);
@@ -44,13 +41,11 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
     public PunishmentManager(
             final @NotNull Logger logger,
             final @NotNull Server server,
-            final @NotNull Scheduler scheduler,
-            final @NotNull AlertPrinter alertPrinter
+            final @NotNull Scheduler scheduler
     ) {
         this.logger = logger;
         this.server = server;
         this.scheduler = scheduler;
-        this.alertPrinter = alertPrinter;
 
         this.registerDefaultActions();
         this.reload();
@@ -64,12 +59,7 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
                     ? "VL " + ctx.vl()
                     : args;
 
-            this.alertPrinter.print(
-                    ctx.check().getPlayer(),
-                    ctx.check().getName(),
-                    ctx.check().getViolations(),
-                    Component.text(text).color(NamedTextColor.RED)
-            );
+            ReactChannels.ALERTS.publish(ctx.check().report("<red>" + text + "</red>"));
 
         }, "alert");
 

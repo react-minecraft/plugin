@@ -70,7 +70,7 @@ public class ConnectionListener implements Listener {
             playerRegistry.removePlayer(uniqueId);
 
             ReactChannels.ALERTS.remove(bukkitPlayer);
-            ReactChannels.VERBOSE.remove(bukkitPlayer);
+            ReactChannels.MONITOR.remove(bukkitPlayer);
 
             onQuit.accept(bukkitPlayer);
 

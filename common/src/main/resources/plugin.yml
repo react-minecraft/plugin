@@ -47,7 +47,7 @@ permissions:
       react.command.rcps: true
       react.command.history: true
       react.alerts: true
-      react.verbose: true
+      react.monitor: true
   react.command.reload:
     default: op
   react.command.reboot:
@@ -58,8 +58,16 @@ permissions:
     default: op
   react.command.history:
     default: op
-  react.verbose:
+  react.monitor:
     default: op
+  react.verbose:
+    default: false
+    children:
+      react.monitor: true
+  react.verbose.enable_on_join:
+    default: false
+    children:
+      react.monitor.enable_on_join: true
 
 libraries:
   - org.spongepowered:configurate-yaml:4.2.0

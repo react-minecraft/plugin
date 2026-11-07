@@ -17,8 +17,8 @@ public class Permissions {
     public @NotNull String ALERTS = PERMISSION_PREFIX + "alerts";
     public @NotNull String ALERTS_ENABLE_ON_JOIN = ALERTS + ".enable_on_join";
 
-    public @NotNull String VERBOSE = PERMISSION_PREFIX + "verbose";
-    public @NotNull String VERBOSE_ENABLE_ON_JOIN = VERBOSE + ".enable_on_join";
+    public @NotNull String MONITOR = PERMISSION_PREFIX + "monitor";
+    public @NotNull String MONITOR_ENABLE_ON_JOIN = MONITOR + ".enable_on_join";
 
     public @NotNull String BASE_BYPASS = PERMISSION_PREFIX + "bypass";
 

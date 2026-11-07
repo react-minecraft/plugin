@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 /**
- * Everything React listens to: rotation packets, combat, joins and quits, the alert and verbose
+ * Everything React listens to: rotation packets, combat, joins and quits, the alert and monitor
  * channels players join automatically, and the PlaceholderAPI expansion.
  */
 public final class ListenerService {
@@ -61,8 +61,8 @@ public final class ListenerService {
 
         final PermissionChannelBinder alerts =
                 new PermissionChannelBinder(Permissions.ALERTS_ENABLE_ON_JOIN, ReactChannels.ALERTS, false);
-        final PermissionChannelBinder verbose =
-                new PermissionChannelBinder(Permissions.VERBOSE_ENABLE_ON_JOIN, ReactChannels.VERBOSE, false);
+        final PermissionChannelBinder monitor =
+                new PermissionChannelBinder(Permissions.MONITOR_ENABLE_ON_JOIN, ReactChannels.MONITOR, false);
 
         final ConnectionListener connection = new ConnectionListener(
                 playerRegistry,
@@ -70,7 +70,7 @@ public final class ListenerService {
                 storage,
                 joined -> {
                     alerts.accept(joined);
-                    verbose.accept(joined);
+                    monitor.accept(joined);
                 },
                 quit -> host.quit(quit.getUniqueId())
         );
@@ -129,7 +129,7 @@ public final class ListenerService {
 
         try {
             ReactChannels.ALERTS.clear();
-            ReactChannels.VERBOSE.clear();
+            ReactChannels.MONITOR.clear();
         } catch (final Exception ex) {
             logger.error("Could not clear channel recipients", ex);
         }

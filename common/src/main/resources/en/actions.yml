@@ -20,10 +20,20 @@
 # Alert-related actions
 alerts:
 
+  # Actions run for every alert. {player} - the player, {check} - the check,
+  # {violations} or {vl} - violations, {details} - details from the check
+  alert:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#eb2544>{player}</color> <white>провалил <color:#eb2544>{check}</color> <dark_gray>(x{vl}) <gray>{details}</gray>"
+
   # Actions performed when alerts are enabled
   on-enable:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Actions run when alerts are enabled only for some players. {players} - their names
+  on-enable-players:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts for <color:#eb2544>{players}</color> <color:#11ff11>enabled ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions performed when alerts are disabled
@@ -32,16 +42,25 @@ alerts:
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
-# Verbose-related actions
-verbose:
+# /react monitor (or /react verbose) - monitoring of every analysis
+monitor:
 
-  # Actions performed when verbose are enabled
+  # Actions run for every analysis, placeholders as in alerts.alert
+  message:
+    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <dark_gray>Аналитика: <color:#747474>{player}</color> <dark_gray>-></dark_gray> <color:#747474>{check}</color> <dark_gray>{details}</dark_gray>"
+
+  # Actions performed when monitoring is enabled
   on-enable:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
-  # Actions performed when verbose are disabled
+  # Actions run when only some players are monitored. {players} - their names
+  on-enable-players:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Monitoring <color:#eb2544>{players}</color> <color:#11ff11>enabled ✔"
+    - "[sound] entity.player.levelup;1.0;1.0"
+
+  # Actions performed when monitoring is disabled
   on-disable:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
@@ -106,8 +125,8 @@ help:
   # /react with no arguments
   root:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Commands:"
-    - "[msg] <color:#eb2544>/react alerts</color> <gray>- alerts"
-    - "[msg] <color:#eb2544>/react verbose</color> <gray>- analysis monitor"
+    - "[msg] <color:#eb2544>/react alerts [players]</color> <gray>- alerts, optionally for some players"
+    - "[msg] <color:#eb2544>/react monitor [players]</color> <gray>- analysis monitor, optionally for some players"
     - "[msg] <color:#eb2544>/react history <player></color> <gray>- check history"
     - "[msg] <color:#eb2544>/react reload</color> <gray>- reload configs"
     - "[msg] <color:#eb2544>/react reboot</color> <gray>- restart the plugin"
@@ -141,4 +160,4 @@ texts:
   checked-ago: "checked {minutes} min ago"
 
 # Не меняйте / Do not change
-config-version: 1
+config-version: 2

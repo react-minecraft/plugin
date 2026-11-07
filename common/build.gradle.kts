@@ -49,4 +49,11 @@ dependencies {
     implementation(libs.actions)
     implementation(libs.schedula.common)
 
+    testImplementation(libs.paper.api)
+    testImplementation(libs.configurate.yaml)
+
+}
+
+sourceSets.test {
+    resources.srcDir("src/main/resources")
 }

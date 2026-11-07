@@ -5,11 +5,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import java.time.Duration;
 
 @ConfigSerializable
-public record MainConfig(Format alerts, Format verbose, Player player) {
-
-    @ConfigSerializable
-    public record Format(String format) {
-    }
+public record MainConfig(Player player) {
 
     @ConfigSerializable
     public record Player(boolean checkBedrockPlayers, Combat combat) {

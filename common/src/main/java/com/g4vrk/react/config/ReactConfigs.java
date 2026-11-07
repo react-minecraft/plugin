@@ -10,9 +10,13 @@ import com.g4vrk.react.storage.config.DatabaseType;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurateException;
+import org.spongepowered.configurate.BasicConfigurationNode;
 import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,6 +30,15 @@ public final class ReactConfigs {
             .step(root -> {
                 root.removeChild("buffer");
                 root.removeChild("combat-ticks");
+            })
+            .build();
+
+    private static final ConfigMigrations MAIN_MIGRATIONS = ConfigMigrations.builder()
+            .step(root -> {
+            })
+            .step(root -> {
+                root.removeChild("alerts");
+                root.removeChild("verbose");
             })
             .build();
 
@@ -57,12 +70,55 @@ public final class ReactConfigs {
         this.language = language;
         this.logger = logger;
 
-        this.mainFile = file(MainConfig.class, "main-config.yml").build();
-        this.actionsFile = file(ActionsConfig.class, "actions.yml").build();
+        this.mainFile = file(MainConfig.class, "main-config.yml").migrations(MAIN_MIGRATIONS).build();
+        this.actionsFile = file(ActionsConfig.class, "actions.yml").migrations(actionsMigrations()).build();
         this.historyFile = file(HistoryConfig.class, "history.yml").build();
         this.punishmentsFile = file(ConfigurationNode.class, "punishments.yml").keepMissing().build();
         this.databaseFile = file(ConfigurationNode.class, "database.yml").build();
         this.aimAIFile = file(AimAIConfig.class, "checks/aim-ai.yml").migrations(AIM_AI_MIGRATIONS).build();
+    }
+
+    /**
+     * Version 2 moved the alert and monitor formats from {@code main-config.yml} into action
+     * lists here and renamed {@code verbose} to {@code monitor}. The formats are read from the
+     * main file before its own migration drops them, so {@link #load()} loads this file first.
+     */
+    private @NotNull ConfigMigrations actionsMigrations() {
+        return ConfigMigrations.builder()
+                .step(root -> {
+                })
+                .step(root -> {
+                    final ConfigurationNode verbose = root.node("verbose");
+                    if (!verbose.virtual()) {
+                        root.node("monitor").from(verbose);
+                        root.removeChild("verbose");
+                    }
+
+                    final ConfigurationNode legacy = legacyMain();
+                    moveFormat(legacy.node("alerts", "format"), root.node("alerts", "alert"));
+                    moveFormat(legacy.node("verbose", "format"), root.node("monitor", "message"));
+                })
+                .build();
+    }
+
+    private @NotNull ConfigurationNode legacyMain() {
+        final Path path = directory.resolve("main-config.yml");
+        try {
+            return YamlConfigurationLoader.builder().path(path).build().load();
+        } catch (final ConfigurateException ex) {
+            logger.warn("Could not read the old alert formats from {}", path.getFileName(), ex);
+            return BasicConfigurationNode.root();
+        }
+    }
+
+    private static void moveFormat(
+            final @NotNull ConfigurationNode format,
+            final @NotNull ConfigurationNode actions
+    ) throws SerializationException {
+        final String text = format.getString();
+        if (text != null) {
+            actions.setList(String.class, List.of("[msg] " + text.replace("{verbose}", "{details}")));
+        }
     }
 
     private <T> ConfigFile.@NotNull Builder<T> file(final @NotNull Class<T> type, final @NotNull String name) {
@@ -76,8 +132,8 @@ public final class ReactConfigs {
      * Reads every file. Nothing is replaced unless all of them load.
      */
     public void load() throws ConfigurateException {
-        final MainConfig main = mainFile.load();
         final ActionsConfig actions = actionsFile.load();
+        final MainConfig main = mainFile.load();
         final HistoryConfig history = historyFile.load();
         final ConfigurationNode punishments = punishmentsFile.loadNode();
         final ConfigurationNode database = databaseFile.loadNode();

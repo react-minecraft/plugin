@@ -6,8 +6,8 @@ import java.util.List;
 
 @ConfigSerializable
 public record ActionsConfig(
-        Toggle alerts,
-        Toggle verbose,
+        Alerts alerts,
+        Monitor monitor,
         Reload reload,
         Reboot reboot,
         Rcps rcps,
@@ -15,8 +15,36 @@ public record ActionsConfig(
         Texts texts
 ) {
 
+    /**
+     * The actions of {@code /react alerts} and {@code /react monitor}. {@code onEnablePlayers} runs
+     * when only some players are followed and gets their names in {@code {players}}.
+     */
+    public interface ReportToggle {
+
+        List<String> onEnable();
+
+        List<String> onEnablePlayers();
+
+        List<String> onDisable();
+
+    }
+
     @ConfigSerializable
-    public record Toggle(List<String> onEnable, List<String> onDisable) {
+    public record Alerts(
+            List<String> alert,
+            List<String> onEnable,
+            List<String> onEnablePlayers,
+            List<String> onDisable
+    ) implements ReportToggle {
+    }
+
+    @ConfigSerializable
+    public record Monitor(
+            List<String> message,
+            List<String> onEnable,
+            List<String> onEnablePlayers,
+            List<String> onDisable
+    ) implements ReportToggle {
     }
 
     @ConfigSerializable

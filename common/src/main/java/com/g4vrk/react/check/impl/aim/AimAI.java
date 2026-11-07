@@ -17,7 +17,6 @@ import com.g4vrk.react.history.entry.InferenceHistoryEntry;
 import com.g4vrk.react.player.ReactPlayer;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.util.ProbabilityFormatter;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -79,9 +78,8 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
         final double probability = result.probability();
 
-        final Component verbose = Component.text(
-                ProbabilityFormatter.format(probability) + " (" + result.displayName() + ")"
-        ).color(colorResolver.resolve(probability));
+        final String details = "<color:" + colorResolver.resolve(probability).asHexString() + ">"
+                + ProbabilityFormatter.format(probability) + " (" + result.displayName() + ")" + "</color>";
 
         final double threshold = result.hasThreshold() ? result.threshold() : alertThreshold;
         final boolean flagged = result.hasThreshold() ? probability >= threshold : probability > threshold;
@@ -94,7 +92,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
             if (debug) {
                 debugHandler.debug("Flagged (" + result.displayName() + "): " + probability + " > " + threshold);
             }
-            failAndAlert(1, verbose);
+            failAndAlert(1, details);
         } else {
             if (debug) {
                 debugHandler.debug("Reward (" + result.displayName() + "): " + probability + " <= " + threshold);
@@ -102,7 +100,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
             reward();
         }
 
-        verbose(verbose);
+        monitor(details);
 
         final InferenceHistoryEntry entry = new InferenceHistoryEntry(this, probability);
 

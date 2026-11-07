@@ -2,10 +2,12 @@ package com.g4vrk.react.api.rcp.internal.runtime;
 
 import com.g4vrk.react.api.internal.runtime.impl.LifecycleRuntimeImpl;
 import com.g4vrk.react.api.rcp.RCPLifecycle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletionStage;
 
+@ApiStatus.Internal
 public final class RCPRuntime {
 
     private static final String THREAD_NAME = "React-RCP-Runtime";

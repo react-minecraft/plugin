@@ -4,6 +4,7 @@ import com.g4vrk.react.api.rcp.RCPLifecycle;
 import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.exception.InvalidRCPException;
 import com.g4vrk.react.api.rcp.provider.RCPProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@ApiStatus.Internal
 public class JavaRCPClassLoader extends URLClassLoader {
 
     private final RCPLifecycle lifecycle;

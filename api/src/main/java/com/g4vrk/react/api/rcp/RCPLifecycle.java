@@ -1,5 +1,8 @@
 package com.g4vrk.react.api.rcp;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.AvailableSince("2.0")
 public interface RCPLifecycle {
 
     void onEnable() throws Exception;

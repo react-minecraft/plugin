@@ -3,10 +3,12 @@ package com.g4vrk.react.api.addon.internal.runtime;
 import com.g4vrk.react.api.addon.JavaAddon;
 import com.g4vrk.react.api.internal.runtime.LifecycleRuntime;
 import com.g4vrk.react.api.internal.runtime.impl.LifecycleRuntimeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CompletionStage;
 
+@ApiStatus.Internal
 public final class AddonRuntime {
 
     private static final String THREAD_NAME = "React-Addon-Runtime";

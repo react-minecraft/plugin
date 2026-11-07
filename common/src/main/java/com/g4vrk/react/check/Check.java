@@ -7,24 +7,31 @@ import com.g4vrk.react.api.channel.ReactChannels;
 import com.g4vrk.react.api.event.PlayerCheckFailEvent;
 import com.g4vrk.react.check.decay.DecayStrategy;
 import com.g4vrk.react.check.info.CheckInfo;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.punish.PunishmentManager;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class Check extends AbstractCheck {
+@Accessors(fluent = true)
+public abstract class Check implements com.g4vrk.react.api.check.Check {
 
     @Getter
-    protected final ReactPlayer player;
+    protected final TrackedPlayerImpl player;
+
+    @Getter
+    private final String name;
+    @Getter
+    private final String id;
+    @Getter
+    private final boolean experimental;
 
     @Getter
     private volatile double violations;
 
     protected Check(
-            @NotNull ReactPlayer player
+            final @NotNull TrackedPlayerImpl player
     ) {
-        super();
-
         final CheckInfo info = this.getClass().getAnnotation(CheckInfo.class);
 
         if (info == null) {
@@ -33,17 +40,18 @@ public abstract class Check extends AbstractCheck {
             );
         }
 
-        super.setName(info.name());
-        super.setConfigId(info.configId());
-        super.setExperimental(info.experimental());
+        this.name = info.name();
+        this.id = info.configId();
+        this.experimental = info.experimental();
 
         this.player = player;
     }
 
-    public final boolean shouldCheck() {
-        return player.isDataReady() && !Permissions.hasBypassForCheck(
+    @Override
+    public final boolean active() {
+        return player.dataReady() && !Permissions.hasBypassForCheck(
                 player.bukkitPlayer,
-                getConfigId()
+                id()
         );
     }
 
@@ -72,7 +80,10 @@ public abstract class Check extends AbstractCheck {
     }
 
     /**
-     * @param details shown in {@code {details}}, MiniMessage or {@code &} codes
+     * Raises the violation level and publishes an alert.
+     *
+     * @param amount  how much to add
+     * @param details shown in {@code <details>}, MiniMessage or {@code &} codes
      */
     protected final void failAndAlert(
             final double amount,
@@ -107,7 +118,7 @@ public abstract class Check extends AbstractCheck {
     }
 
     public final @NotNull CheckReport report(final @NotNull String details) {
-        return new CheckReport(player.getUniqueId(), player.getName(), getName(), violations, details);
+        return new CheckReport(player.uniqueId(), player.name(), name(), violations, details);
     }
 
     protected final synchronized void reward() {
@@ -130,6 +141,12 @@ public abstract class Check extends AbstractCheck {
         this.violations += storedViolations;
     }
 
+    @Override
+    public final void addViolations(final double amount) {
+        this.fail(amount);
+    }
+
+    @Override
     public final synchronized void resetViolations() {
         violations = 0D;
         this.persistViolations();
@@ -142,8 +159,8 @@ public abstract class Check extends AbstractCheck {
     private void persistViolations() {
         if (React.INSTANCE.storageManager() != null) {
             React.INSTANCE.storageManager().saveViolation(
-                    player.getUniqueId(),
-                    getConfigId(),
+                    player.uniqueId(),
+                    id(),
                     violations
             );
         }

@@ -8,6 +8,7 @@ import com.g4vrk.react.api.rcp.internal.JavaRCPClassLoader;
 import com.g4vrk.react.api.rcp.internal.descriptor.RCPDescriptor;
 import com.g4vrk.react.api.rcp.internal.environment.RCPEnvironmentFactory;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class JarRCPLoader implements Loader<RCPLifecycle, Path>, AutoCloseable {
 
     private final File directory;

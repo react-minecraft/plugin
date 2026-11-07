@@ -4,6 +4,7 @@ import com.g4vrk.react.api.internal.runtime.LifecycleRuntime;
 import com.g4vrk.react.api.repository.PathRepository;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public abstract class AbstractRuntimeManager<T> implements AutoCloseable {
 
     private final Object lock = new Object();

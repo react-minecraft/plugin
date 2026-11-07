@@ -65,7 +65,7 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
 
         this.actionRegistry.register((ctx, args) -> this.logger.info(
                 "[Punishment] {} reached VL {} on {}",
-                ctx.check().getPlayer().getName(), ctx.vl(), ctx.check().getName()
+                ctx.check().player().name(), ctx.vl(), ctx.check().name()
         ), "log");
 
         this.actionRegistry.register((ctx, args) -> ctx.check().resetViolations(),
@@ -248,7 +248,7 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
             return;
         }
 
-        final List<Rule> rules = this.rulesByCheck.get(check.getName().toLowerCase(Locale.ROOT));
+        final List<Rule> rules = this.rulesByCheck.get(check.name().toLowerCase(Locale.ROOT));
 
         if (rules == null) {
             return;
@@ -296,8 +296,8 @@ public final class PunishmentManager implements ReloadObserver<ConfigurationNode
             final int vl
     ) {
 
-        final String playerName = check.getPlayer().getName();
-        final String checkName = check.getName();
+        final String playerName = check.player().name();
+        final String checkName = check.name();
 
         final Context context = new Context(check, vl);
 

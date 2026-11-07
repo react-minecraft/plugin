@@ -3,7 +3,7 @@ package com.g4vrk.react.player.factory;
 import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.util.platform.PlayerPlatformUtil;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public final class PlayerFactory implements ReloadObserver<MainConfig> {
 
     }
 
-    public @Nullable ReactPlayer create(
+    public @Nullable TrackedPlayerImpl create(
             final @NotNull UUID uniqueId,
             final @NotNull String name,
             final @NotNull Player bukkitPlayer
@@ -30,7 +30,7 @@ public final class PlayerFactory implements ReloadObserver<MainConfig> {
             return null;
         }
 
-        return new ReactPlayer(uniqueId, name, bukkitPlayer);
+        return new TrackedPlayerImpl(uniqueId, name, bukkitPlayer);
     }
 
     public void reload() {

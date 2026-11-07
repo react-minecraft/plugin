@@ -2,6 +2,7 @@ package com.g4vrk.react.api.addon.internal;
 
 import com.g4vrk.react.api.addon.JavaAddon;
 import com.g4vrk.react.api.addon.exception.InvalidAddonException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+@ApiStatus.Internal
 public class JavaAddonClassLoader extends URLClassLoader {
 
     private final JavaAddon javaAddon;

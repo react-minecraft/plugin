@@ -2,6 +2,7 @@ package com.g4vrk.react.api.channel.impl;
 
 import com.g4vrk.react.api.channel.CheckReport;
 import net.kyori.adventure.audience.Audience;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * How a report reaches the recipient is up to the {@link Delivery} the plugin installs; React
  * runs the actions from {@code actions.yml}.</p>
  */
+@ApiStatus.Internal
 public final class ReportChannel extends AudienceChannel<CheckReport> {
 
     private final Map<Audience, Set<UUID>> targets = new ConcurrentHashMap<>();

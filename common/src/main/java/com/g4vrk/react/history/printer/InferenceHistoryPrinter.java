@@ -8,7 +8,7 @@ import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.color.resolver.ValueColorResolver;
 import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +46,11 @@ public class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
         printEntries = Math.max(1, format.printEntries());
     }
 
-    public void print(@NotNull Audience receiver, @NotNull ReactPlayer player) {
+    public void print(@NotNull Audience receiver, @NotNull TrackedPlayerImpl player) {
         print(receiver, player, 1);
     }
 
-    public void print(@NotNull Audience receiver, @NotNull ReactPlayer player, int page) {
+    public void print(@NotNull Audience receiver, @NotNull TrackedPlayerImpl player, int page) {
         final InferenceHistoryEntry[] history = player.inferenceHistory.entries();
         final int totalPages = Math.max(1, (int) Math.ceil((double) history.length / printEntries));
         page = Math.max(1, Math.min(page, totalPages));
@@ -71,10 +71,10 @@ public class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
     }
 
     private @NotNull Function<String, String> commonProcessor(
-            @NotNull ReactPlayer player, int size, int page, int totalPages, double average
+            @NotNull TrackedPlayerImpl player, int size, int page, int totalPages, double average
     ) {
         return text -> text
-                .replace("{player}", player.getName())
+                .replace("{player}", player.name())
                 .replace("{size}", String.valueOf(size))
                 .replace("{page:previous}", String.valueOf(Math.max(1, page - 1)))
                 .replace("{page:current}", String.valueOf(page))
@@ -94,7 +94,7 @@ public class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
             String text = common.apply(line);
             if (entry != null) {
                 text = text.replace("{probability}", ProbabilityFormatter.format(entry.getProbability()))
-                        .replace("{check}", entry.getCheck().getName());
+                        .replace("{check}", entry.getCheck().name());
             }
             Component component = serializer.apply(text);
             component = replaceColored(component, "{avg-probability:colored}", average);

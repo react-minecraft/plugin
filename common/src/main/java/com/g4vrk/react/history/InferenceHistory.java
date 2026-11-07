@@ -145,7 +145,7 @@ public final class InferenceHistory {
         private static @NotNull EntryIdentity of(final @NotNull InferenceHistoryEntry entry) {
             return new EntryIdentity(
                     entry.getTimestamp(),
-                    entry.getCheck().getConfigId(),
+                    entry.getCheck().id(),
                     Double.doubleToLongBits(entry.getProbability())
             );
         }

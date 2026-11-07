@@ -1,7 +1,7 @@
 package com.g4vrk.react.player;
 
 import com.g4vrk.react.React;
-import com.g4vrk.react.api.rcp.player.RCPPlayer;
+import com.g4vrk.react.api.player.TrackedPlayer;
 import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.manager.CheckManager;
@@ -10,9 +10,9 @@ import com.g4vrk.react.history.entry.InferenceHistoryEntry;
 import com.g4vrk.react.statistic.InferenceStatistic;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StoredInference;
-import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,13 +20,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.g4vrk.react.player.model.rotation.RotationData;
 import com.g4vrk.react.check.impl.aim.AimAI;
 
-public final class ReactPlayer implements RCPPlayer {
+public final class TrackedPlayerImpl implements TrackedPlayer {
 
     private static final int MAX_ROTATION_WINDOW = 40;
 
-    @Getter
     private final UUID uniqueId;
-    @Getter
     private final String name;
 
     public final Player bukkitPlayer;
@@ -42,10 +40,10 @@ public final class ReactPlayer implements RCPPlayer {
     private final AtomicBoolean dataReady = new AtomicBoolean();
     private final long sessionStartedAt = System.currentTimeMillis();
 
-    public ReactPlayer(
-            @NotNull UUID uniqueId,
-            @NotNull String name,
-            @NotNull Player bukkitPlayer
+    public TrackedPlayerImpl(
+            final @NotNull UUID uniqueId,
+            final @NotNull String name,
+            final @NotNull Player bukkitPlayer
     ) {
         this.uniqueId = uniqueId;
         this.name = name;
@@ -57,7 +55,7 @@ public final class ReactPlayer implements RCPPlayer {
                         uniqueId,
                         new StoredInference(
                                 entry.getTimestamp(),
-                                entry.getCheck().getConfigId(),
+                                entry.getCheck().id(),
                                 entry.getProbability()
                         )
                 )
@@ -95,7 +93,17 @@ public final class ReactPlayer implements RCPPlayer {
     @Override
     public boolean checked() {
         final AimAI aim = checkManager.getCheck(AimAI.class);
-        return aim != null && aim.shouldCheck();
+        return aim != null && aim.active();
+    }
+
+    @Override
+    public @NotNull List<Check> checks() {
+        return checkManager.checks();
+    }
+
+    @Override
+    public @Nullable Check check(final @NotNull String id) {
+        return checkManager.getCheck(id);
     }
 
     @Override
@@ -111,7 +119,7 @@ public final class ReactPlayer implements RCPPlayer {
         }
     }
 
-    public boolean isDataReady() {
+    public boolean dataReady() {
         return dataReady.get();
     }
 

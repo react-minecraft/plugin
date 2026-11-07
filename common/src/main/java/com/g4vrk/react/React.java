@@ -1,5 +1,7 @@
 package com.g4vrk.react;
 
+import com.g4vrk.react.api.text.TextFormatter;
+import com.g4vrk.react.text.MiniTextFormatter;
 import com.g4vrk.functionalActions.defaults.DefaultActions;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
@@ -11,7 +13,7 @@ import com.g4vrk.react.channel.ReportActions;
 import com.g4vrk.react.config.ReactConfigs;
 import com.g4vrk.react.config.lang.Language;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.punish.PunishmentManager;
@@ -53,6 +55,7 @@ public class React {
 
     private final Logger logger = LoggerFactory.getLogger("React");
     private final Serializers serializers = LegacySerializers.INSTANCE;
+    private final TextFormatter text = new MiniTextFormatter(serializers);
 
     private Plugin plugin;
     private SchedulaAPI schedulaAPI;
@@ -171,7 +174,7 @@ public class React {
         alertActions.actions(configs.actions().alerts().alert());
         monitorActions.actions(configs.actions().monitor().message());
 
-        for (final ReactPlayer player : playerRegistry.all()) {
+        for (final TrackedPlayerImpl player : playerRegistry.values()) {
             player.checkManager.reload();
         }
 
@@ -191,7 +194,7 @@ public class React {
         try {
             if (storageManager != null) {
                 logger.info("Flushing and closing database storage...");
-                storageManager.close(playerRegistry == null ? Set.of() : playerRegistry.all());
+                storageManager.close(playerRegistry == null ? Set.of() : playerRegistry.values());
                 storageManager = null;
             }
         } catch (final Exception ex) {

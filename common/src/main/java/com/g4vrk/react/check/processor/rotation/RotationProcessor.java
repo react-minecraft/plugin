@@ -2,7 +2,7 @@ package com.g4vrk.react.check.processor.rotation;
 
 import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.api.rcp.player.Rotation;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.model.rotation.RotationData;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ public final class RotationProcessor {
     private final RotationFactory rotationFactory;
 
     public void process(
-            final @NotNull ReactPlayer player,
+            final @NotNull TrackedPlayerImpl player,
             final float yaw,
             final float pitch
     ) {

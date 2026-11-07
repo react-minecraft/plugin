@@ -1,11 +1,14 @@
 package com.g4vrk.react.api.rcp.player;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * One head rotation of a player, as the plugin recorded it from a movement packet.
  *
  * <p>{@code y} is the pitch and {@code x} the yaw. The deltas, jerks and GCD errors are
  * measured against the previous rotation of the same player.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public record Rotation(
         float y,
         float x,

@@ -1,11 +1,14 @@
 package com.g4vrk.react.api.rcp.player;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
 /**
  * Player-shaped combat targets, without linking newer Bukkit entity classes.
  */
+@ApiStatus.AvailableSince("2.0")
 public final class CombatTargets {
     private CombatTargets() {}
 

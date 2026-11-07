@@ -9,7 +9,7 @@ import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.RCPPlayers;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.impl.aim.AimAI;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import com.github.retrooper.packetevents.PacketEvents;
@@ -92,7 +92,7 @@ public final class HostedEnvironment implements RCPEnvironment {
     @Override
     public void fire(final @NotNull RCPPlayer player, final @NotNull InferenceResult result) {
         Objects.requireNonNull(result, "result");
-        if (released || !(player instanceof ReactPlayer reactPlayer)) {
+        if (released || !(player instanceof TrackedPlayerImpl reactPlayer)) {
             return;
         }
         host.scheduler().scheduleEntity(reactPlayer.bukkitPlayer, () -> {

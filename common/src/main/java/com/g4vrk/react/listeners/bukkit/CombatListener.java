@@ -4,7 +4,7 @@ import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.player.CombatActivity;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -46,7 +46,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
 
         if (!(event.getDamager() instanceof Player damager) || !CombatTargets.isSupported(event.getEntity())) return;
 
-        final ReactPlayer localDamager = playerRegistry.getPlayer(damager.getUniqueId());
+        final TrackedPlayerImpl localDamager = playerRegistry.get(damager.getUniqueId());
 
         activate(localDamager);
     }
@@ -54,7 +54,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     /**
      * Also used for packet attacks on invulnerable training mannequins.
      */
-    public void activate(ReactPlayer localDamager) {
+    public void activate(TrackedPlayerImpl localDamager) {
 
         final CombatActivity damagerCombatActivity = localDamager != null ? localDamager.combatActivity : null;
 

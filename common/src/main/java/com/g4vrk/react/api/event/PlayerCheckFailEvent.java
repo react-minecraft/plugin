@@ -1,7 +1,7 @@
 package com.g4vrk.react.api.event;
 
 import com.g4vrk.react.check.Check;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
@@ -10,18 +10,18 @@ public final class PlayerCheckFailEvent extends Event {
 
     private static final HandlerList HANDLERS = new HandlerList();
 
-    private final ReactPlayer player;
+    private final TrackedPlayerImpl player;
     private final Check check;
 
     public PlayerCheckFailEvent(
-            @NotNull ReactPlayer player,
+            @NotNull TrackedPlayerImpl player,
             @NotNull Check check
     ) {
         this.player = player;
         this.check = check;
     }
 
-    public @NotNull ReactPlayer player() {
+    public @NotNull TrackedPlayerImpl player() {
         return player;
     }
 

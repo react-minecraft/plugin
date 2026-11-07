@@ -1,6 +1,7 @@
 package com.g4vrk.react.api.rcp.player;
 
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -10,6 +11,7 @@ import java.util.UUID;
  *
  * <p>Every method is safe to call from any thread.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public interface RCPPlayer {
 
     @NotNull UUID uniqueId();

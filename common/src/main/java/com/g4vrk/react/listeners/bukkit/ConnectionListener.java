@@ -2,7 +2,7 @@ package com.g4vrk.react.listeners.bukkit;
 
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.ReactChannels;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.storage.StorageManager;
@@ -62,12 +62,12 @@ public class ConnectionListener implements Listener {
             final Player bukkitPlayer = event.getPlayer();
             final UUID uniqueId = bukkitPlayer.getUniqueId();
 
-            final ReactPlayer player = playerRegistry.getPlayer(uniqueId);
+            final TrackedPlayerImpl player = playerRegistry.get(uniqueId);
             if (player != null) {
                 storageManager.saveSnapshot(player);
             }
 
-            playerRegistry.removePlayer(uniqueId);
+            playerRegistry.unregister(uniqueId);
 
             ReactChannels.ALERTS.remove(bukkitPlayer);
             ReactChannels.MONITOR.remove(bukkitPlayer);
@@ -90,7 +90,7 @@ public class ConnectionListener implements Listener {
     }
 
     private void clearTransientState(Player bukkitPlayer) {
-        ReactPlayer player = playerRegistry.getPlayer(bukkitPlayer.getUniqueId());
+        TrackedPlayerImpl player = playerRegistry.get(bukkitPlayer.getUniqueId());
         if (player != null) {
             player.clearTransientState();
         }
@@ -98,19 +98,19 @@ public class ConnectionListener implements Listener {
 
     public void registerPlayer(final @NotNull Player bukkitPlayer) {
         final UUID uniqueId = bukkitPlayer.getUniqueId();
-        final ReactPlayer entity = playerFactory.create(uniqueId, bukkitPlayer.getName(), bukkitPlayer);
+        final TrackedPlayerImpl entity = playerFactory.create(uniqueId, bukkitPlayer.getName(), bukkitPlayer);
 
         if (entity != null) {
-            playerRegistry.addPlayer(uniqueId, entity);
+            playerRegistry.register(uniqueId, entity);
             storageManager.loadPlayer(uniqueId).whenComplete((data, failure) -> {
                 try {
-                    if (playerRegistry.getPlayer(uniqueId) != entity) {
+                    if (playerRegistry.get(uniqueId) != entity) {
                         return;
                     }
                     if (failure == null) {
                         entity.applyStorageData(data == null ? PlayerStorageData.EMPTY : data);
                     } else {
-                        logger.debug("Could not load stored data for {}; checks will continue in fail-open mode", entity.getName(), failure);
+                        logger.debug("Could not load stored data for {}; checks will continue in fail-open mode", entity.name(), failure);
                         retryHydration(entity);
                     }
                 } finally {
@@ -122,10 +122,10 @@ public class ConnectionListener implements Listener {
         }
     }
 
-    private void retryHydration(final @NotNull ReactPlayer entity) {
-        storageManager.loadPlayerWhenAvailable(entity.getUniqueId())
+    private void retryHydration(final @NotNull TrackedPlayerImpl entity) {
+        storageManager.loadPlayerWhenAvailable(entity.uniqueId())
                 .whenComplete((data, failure) -> {
-                    if (playerRegistry.getPlayer(entity.getUniqueId()) != entity) {
+                    if (playerRegistry.get(entity.uniqueId()) != entity) {
                         return;
                     }
                     if (failure != null) {

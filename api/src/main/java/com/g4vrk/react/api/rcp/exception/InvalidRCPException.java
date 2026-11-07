@@ -1,7 +1,9 @@
 package com.g4vrk.react.api.rcp.exception;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.AvailableSince("2.0")
 public class InvalidRCPException extends RuntimeException {
 
     public InvalidRCPException() {

@@ -5,6 +5,7 @@ import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import com.g4vrk.react.api.Descriptor;
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.util.Collections;
 
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public class AddonDescriptor implements Descriptor<AddonMetadata, Path> {
 
     @Override

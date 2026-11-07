@@ -1,48 +1,50 @@
 package com.g4vrk.react.player.registry;
 
-import com.g4vrk.react.player.ReactPlayer;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.g4vrk.react.api.player.TrackedPlayer;
+import com.g4vrk.react.api.player.TrackedPlayerRegistry;
+import com.g4vrk.react.player.TrackedPlayerImpl;
+import com.g4vrk.react.registry.MapRegistry;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-public final class PlayerRegistry {
+@Accessors(fluent = true)
+public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
 
-    private final Map<UUID, ReactPlayer> players = new ConcurrentHashMap<>();
+    @Getter
+    private final TrackedPlayerRegistry view = new View();
 
-    public void addPlayer(
-            final @NotNull UUID uuid,
-            final @NotNull ReactPlayer entity
-    ) {
-        final ReactPlayer previous = players.put(uuid, entity);
+    @Override
+    public @Nullable TrackedPlayerImpl register(final @NotNull UUID key, final @NotNull TrackedPlayerImpl value) {
+        final TrackedPlayerImpl previous = super.register(key, value);
         if (previous != null) {
             previous.clearTransientState();
         }
+        return previous;
     }
 
-    public void removePlayer(
-            final @NotNull UUID uuid
-    ) {
-        final ReactPlayer removed = players.remove(uuid);
+    @Override
+    public @Nullable TrackedPlayerImpl unregister(final @NotNull UUID key) {
+        final TrackedPlayerImpl removed = super.unregister(key);
         if (removed != null) {
             removed.clearTransientState();
         }
+        return removed;
     }
 
-    public @Nullable ReactPlayer getPlayer(
-            final @NotNull UUID uuid
-    ) {
-
-        return players.get(uuid);
-
+    @Override
+    public void clear() {
+        entries.values().forEach(TrackedPlayerImpl::clearTransientState);
+        super.clear();
     }
 
-    public @Nullable ReactPlayer getByEntityId(final int entityId) {
-        for (final ReactPlayer player : players.values()) {
+    public @Nullable TrackedPlayerImpl byEntityId(final int entityId) {
+        for (final TrackedPlayerImpl player : entries.values()) {
             if (player.bukkitPlayer.getEntityId() == entityId) {
                 return player;
             }
@@ -50,12 +52,28 @@ public final class PlayerRegistry {
         return null;
     }
 
-    public void clear() {
-        players.values().forEach(ReactPlayer::clearTransientState);
-        players.clear();
+    private final class View implements TrackedPlayerRegistry {
+
+        @Override
+        public @Nullable TrackedPlayer get(final @NotNull UUID key) {
+            return PlayerRegistry.this.get(key);
+        }
+
+        @Override
+        public @NotNull Collection<TrackedPlayer> values() {
+            return List.copyOf(entries.values());
+        }
+
+        @Override
+        public int size() {
+            return PlayerRegistry.this.size();
+        }
+
+        @Override
+        public @Nullable TrackedPlayer byEntityId(final int entityId) {
+            return PlayerRegistry.this.byEntityId(entityId);
+        }
+
     }
 
-    public @NotNull Set<ReactPlayer> all() {
-        return new ObjectOpenHashSet<>(players.values());
-    }
 }

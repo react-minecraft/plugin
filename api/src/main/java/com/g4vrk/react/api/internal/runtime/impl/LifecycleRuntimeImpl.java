@@ -2,6 +2,7 @@ package com.g4vrk.react.api.internal.runtime.impl;
 
 import com.g4vrk.react.api.internal.runtime.LifecycleRuntime;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public final class LifecycleRuntimeImpl<T> implements LifecycleRuntime<T> {
 
     @FunctionalInterface

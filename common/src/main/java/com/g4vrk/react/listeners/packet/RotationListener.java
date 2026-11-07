@@ -1,7 +1,7 @@
 package com.g4vrk.react.listeners.packet;
 
 import com.g4vrk.react.check.processor.rotation.RotationProcessor;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
@@ -32,7 +32,7 @@ public final class RotationListener extends PacketListenerAbstract {
 
         if (!movePacket.hasRotationChanged()) return;
 
-        final ReactPlayer player = this.playerRegistry.getPlayer(event.getUser().getUUID());
+        final TrackedPlayerImpl player = this.playerRegistry.get(event.getUser().getUUID());
 
         if (player == null) return;
 

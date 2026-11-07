@@ -1,5 +1,7 @@
 package com.g4vrk.react.api.rcp;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Version of the contract between the plugin and its RCPs.
  *
@@ -7,6 +9,7 @@ package com.g4vrk.react.api.rcp;
  * {@code api-version}. The plugin loads only RCPs with exactly its own version, and raises
  * it whenever a change would break RCPs built before.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public final class RCPAPI {
 
     public static final int VERSION = 1;

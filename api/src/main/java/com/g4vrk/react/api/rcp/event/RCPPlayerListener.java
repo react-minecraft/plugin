@@ -2,6 +2,7 @@ package com.g4vrk.react.api.rcp.event;
 
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.Rotation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -13,6 +14,7 @@ import java.util.UUID;
  * rotations, so an implementation must not block and must move to the server thread
  * itself before it touches the world.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public interface RCPPlayerListener {
 
     /**

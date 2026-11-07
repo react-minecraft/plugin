@@ -8,6 +8,7 @@ import com.g4vrk.react.api.internal.runtime.LifecycleRuntime;
 import com.g4vrk.react.api.internal.runtime.impl.LifecycleRuntimeImpl;
 import com.g4vrk.react.api.repository.impl.JarRepository;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class AddonManager extends AbstractRuntimeManager<JavaAddon> {
 
     private static final String COMPONENT_TYPE = "addon";

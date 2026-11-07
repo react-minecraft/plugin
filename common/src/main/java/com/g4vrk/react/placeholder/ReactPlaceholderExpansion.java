@@ -5,7 +5,7 @@ import com.g4vrk.react.util.ProbabilityFormatter;
 import com.g4vrk.react.color.resolver.ValueColorResolver;
 import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.statistic.InferenceStatistic;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
@@ -81,8 +81,8 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
             return null;
         }
 
-        final ReactPlayer player =
-                registry.getPlayer(offlinePlayer.getUniqueId());
+        final TrackedPlayerImpl player =
+                registry.get(offlinePlayer.getUniqueId());
 
         if (player == null) {
             return null;
@@ -137,7 +137,7 @@ public class ReactPlaceholderExpansion extends PlaceholderExpansion {
                             ProbabilityFormatter.format(probability);
                 }
 
-                case "check" -> entry.getCheck().getName();
+                case "check" -> entry.getCheck().name();
 
                 default -> null;
             };

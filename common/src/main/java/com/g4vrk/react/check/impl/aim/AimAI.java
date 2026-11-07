@@ -14,7 +14,7 @@ import com.g4vrk.react.check.info.CheckInfo;
 import com.g4vrk.react.color.resolver.ValueColorResolver;
 import com.g4vrk.react.color.resolver.impl.ProbabilityColorResolver;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.util.ProbabilityFormatter;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
     private DecayStrategy decayStrategy;
 
-    public AimAI(@NotNull ReactPlayer player) {
+    public AimAI(@NotNull TrackedPlayerImpl player) {
         super(player);
 
         this.debugHandler = new DebugHandler(this);
@@ -65,14 +65,14 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
     public void onRotation(final @NotNull Rotation rotation) {
         final RCPHost host = React.INSTANCE.rcpHost();
-        if (host != null && shouldCheck()) {
+        if (host != null && active()) {
             host.rotation(player, rotation);
         }
     }
 
     public void onResult(final @NotNull InferenceResult result) {
 
-        if (!player.bukkitPlayer.isOnline() || !shouldCheck()) {
+        if (!player.bukkitPlayer.isOnline() || !active()) {
             return;
         }
 

@@ -8,6 +8,7 @@ import com.g4vrk.react.api.rcp.internal.descriptor.RCPDescriptor;
 import com.g4vrk.react.api.rcp.internal.environment.RCPEnvironmentFactory;
 import com.g4vrk.react.api.rcp.internal.loader.JarRCPLoader;
 import com.g4vrk.react.api.repository.impl.JarRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class RCPManager extends AbstractRuntimeManager<RCPLifecycle> {
 
     private static final String COMPONENT_TYPE = "RCP";

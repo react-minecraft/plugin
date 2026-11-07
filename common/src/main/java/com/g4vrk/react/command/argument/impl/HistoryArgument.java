@@ -3,7 +3,7 @@ package com.g4vrk.react.command.argument.impl;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -44,18 +44,18 @@ public final class HistoryArgument extends LocalArgument {
                     final SinglePlayerSelector selector = context.getOrDefault("player", null);
                     final int page = context.getOrDefault("page", 1);
 
-                    final ReactPlayer reactPlayer;
+                    final TrackedPlayerImpl reactPlayer;
 
                     if (selector == null) {
 
                         if (!(sender instanceof Player player)) return;
 
-                        reactPlayer = this.playerRegistry.getPlayer(player.getUniqueId());
+                        reactPlayer = this.playerRegistry.get(player.getUniqueId());
 
                     } else {
 
                         final Player target = selector.single();
-                        reactPlayer = this.playerRegistry.getPlayer(target.getUniqueId());
+                        reactPlayer = this.playerRegistry.get(target.getUniqueId());
 
                     }
 

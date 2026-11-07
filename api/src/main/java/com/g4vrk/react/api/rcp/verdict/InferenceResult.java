@@ -1,5 +1,6 @@
 package com.g4vrk.react.api.rcp.verdict;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -15,6 +16,7 @@ import java.util.Objects;
  * @param enforcement false when the result is only observed: it is shown and stored,
  *                    but never flags or rewards the player
  */
+@ApiStatus.AvailableSince("2.0")
 public record InferenceResult(
         @NotNull String modelId,
         @NotNull String displayName,

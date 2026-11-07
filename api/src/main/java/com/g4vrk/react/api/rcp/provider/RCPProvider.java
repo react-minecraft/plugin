@@ -2,10 +2,12 @@ package com.g4vrk.react.api.rcp.provider;
 
 import com.g4vrk.react.api.rcp.RCPLifecycle;
 import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+@ApiStatus.AvailableSince("2.0")
 public abstract class RCPProvider implements RCPLifecycle {
 
     private final RCPEnvironment singletonEnvironment;

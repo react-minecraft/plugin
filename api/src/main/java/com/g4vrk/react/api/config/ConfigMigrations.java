@@ -1,5 +1,6 @@
 package com.g4vrk.react.api.config;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -15,6 +16,7 @@ import java.util.List;
  * version {@code 0} into {@code 1}, the second {@code 1} into {@code 2}, and so on, so a new
  * layout only needs one more {@link Builder#step} call.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public final class ConfigMigrations {
 
     public static final String VERSION_KEY = "config-version";

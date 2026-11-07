@@ -8,6 +8,7 @@ import com.g4vrk.react.api.rcp.player.RCPPlayers;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import java.nio.file.Path;
  * when the RCP is disabled, so an RCP never unregisters them itself. Registration may
  * happen on any thread: the plugin moves it to the server thread when it has to.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public interface RCPEnvironment {
 
     /**

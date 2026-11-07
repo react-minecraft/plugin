@@ -8,7 +8,7 @@ import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.RCPPlayers;
 import com.g4vrk.react.api.rcp.player.Rotation;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import org.bukkit.plugin.Plugin;
@@ -70,24 +70,24 @@ public final class RCPHost implements RCPEnvironmentFactory, RCPPlayers {
 
     @Override
     public @Nullable RCPPlayer get(final @NotNull UUID uniqueId) {
-        return playerRegistry.getPlayer(uniqueId);
+        return playerRegistry.get(uniqueId);
     }
 
     @Override
     public @Nullable RCPPlayer byEntityId(final int entityId) {
-        return playerRegistry.getByEntityId(entityId);
+        return playerRegistry.byEntityId(entityId);
     }
 
     @Override
     public @NotNull Collection<? extends RCPPlayer> online() {
-        return playerRegistry.all();
+        return playerRegistry.values();
     }
 
-    public void rotation(final @NotNull ReactPlayer player, final @NotNull Rotation rotation) {
+    public void rotation(final @NotNull TrackedPlayerImpl player, final @NotNull Rotation rotation) {
         dispatch(listener -> listener.onRotation(player, rotation));
     }
 
-    public void reload(final @NotNull ReactPlayer player) {
+    public void reload(final @NotNull TrackedPlayerImpl player) {
         dispatch(listener -> listener.onReload(player));
     }
 

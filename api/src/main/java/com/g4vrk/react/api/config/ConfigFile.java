@@ -1,6 +1,7 @@
 package com.g4vrk.react.api.config;
 
 import com.g4vrk.react.api.config.serializer.DurationSerializer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.CommentedConfigurationNode;
@@ -39,6 +40,7 @@ import java.util.regex.Pattern;
  *
  * @param <T> the mapped type
  */
+@ApiStatus.AvailableSince("2.0")
 public final class ConfigFile<T> {
 
     private static final int INDENT = 2;

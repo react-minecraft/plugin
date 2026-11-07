@@ -5,7 +5,7 @@ import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.impl.aim.AimAI;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -22,7 +22,7 @@ public final class CheckManager {
     private final List<Check> checksValues;
 
     public CheckManager(
-            @NotNull ReactPlayer player
+            @NotNull TrackedPlayerImpl player
     ) {
 
         this.checks = new ImmutableClassToInstanceMap.Builder<Check>()
@@ -47,7 +47,7 @@ public final class CheckManager {
 
     public @Nullable Check getCheck(final @NotNull String configId) {
         for (final Check check : checksValues) {
-            if (check.getConfigId().equalsIgnoreCase(configId)) {
+            if (check.id().equalsIgnoreCase(configId)) {
                 return check;
             }
         }
@@ -58,7 +58,7 @@ public final class CheckManager {
         final ReactConfigs configs = React.INSTANCE.configs();
         for (final Check check : checksValues) {
             if (check instanceof final ReloadObserver<?> observer) {
-                reload(observer, configs.check(check.getConfigId()));
+                reload(observer, configs.check(check.id()));
             }
         }
     }

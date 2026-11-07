@@ -1,7 +1,7 @@
 package com.g4vrk.react.storage;
 
 import com.g4vrk.react.check.Check;
-import com.g4vrk.react.player.ReactPlayer;
+import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.storage.backend.StorageBackend;
 import com.g4vrk.react.storage.backend.StorageBackendFactory;
 import com.g4vrk.react.storage.config.DatabaseSettings;
@@ -161,12 +161,12 @@ public final class StorageManager {
         enqueue(new StorageMutation.Inference(playerUuid, UUID.randomUUID(), inference), false);
     }
 
-    public void saveSnapshot(final @NotNull ReactPlayer player) {
+    public void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
         for (final Check check : player.checkManager.checks()) {
             enqueue(new StorageMutation.Violation(
-                    player.getUniqueId(),
-                    check.getConfigId(),
-                    check.getViolations(),
+                    player.uniqueId(),
+                    check.id(),
+                    check.violations(),
                     System.currentTimeMillis()
             ), true);
         }
@@ -196,7 +196,7 @@ public final class StorageManager {
         return available.get() ? CompletableFuture.completedFuture(null) : availabilitySignal;
     }
 
-    public void close(final @NotNull Collection<ReactPlayer> players) {
+    public void close(final @NotNull Collection<TrackedPlayerImpl> players) {
         if (!closing.compareAndSet(false, true)) {
             return;
         }

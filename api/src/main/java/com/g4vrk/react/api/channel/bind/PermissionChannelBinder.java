@@ -3,10 +3,12 @@ package com.g4vrk.react.api.channel.bind;
 import com.g4vrk.react.api.channel.impl.AudienceChannel;
 import net.kyori.adventure.audience.Audience;
 import org.bukkit.permissions.Permissible;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+@ApiStatus.AvailableSince("2.0")
 public class PermissionChannelBinder implements Consumer<Audience> {
 
     private final String permission;

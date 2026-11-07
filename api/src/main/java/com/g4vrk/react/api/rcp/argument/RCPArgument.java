@@ -1,6 +1,7 @@
 package com.g4vrk.react.api.rcp.argument;
 
 import org.bukkit.command.CommandSender;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
  * <p>The name is given at registration: {@code environment.registerArgument("link", argument)}.
  * The plugin checks {@code react.command.<name>} and runs {@link #execute} on the server thread.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 public interface RCPArgument {
 
     String PERMISSION_PREFIX = "react.command.";

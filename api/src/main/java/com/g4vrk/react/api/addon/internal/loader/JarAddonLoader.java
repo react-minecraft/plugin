@@ -5,6 +5,7 @@ import com.g4vrk.react.api.addon.JavaAddon;
 import com.g4vrk.react.api.addon.internal.JavaAddonClassLoader;
 import com.g4vrk.react.api.addon.internal.descriptor.AddonDescriptor;
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -15,6 +16,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class JarAddonLoader implements Loader<JavaAddon, Path> {
 
     private final File directory;

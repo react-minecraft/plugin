@@ -1,5 +1,6 @@
 package com.g4vrk.react.api;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -7,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @param <C> the settings it reads
  */
+@ApiStatus.AvailableSince("2.0")
 public interface ReloadObserver<C> {
 
     void onReload(@NotNull C config);

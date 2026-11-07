@@ -3,6 +3,7 @@ package com.g4vrk.react.api.repository.impl;
 import com.g4vrk.react.api.repository.PathRepository;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class JarRepository implements PathRepository {
 
     private static final String JAR_FILE_FORMAT = ".jar";

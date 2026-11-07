@@ -6,6 +6,7 @@ import com.g4vrk.react.api.Descriptor;
 import com.g4vrk.react.api.rcp.RCPAPI;
 import com.g4vrk.react.api.rcp.exception.InvalidRCPException;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public final class RCPDescriptor implements Descriptor<RCPMetadata, Path> {
 
     @Override

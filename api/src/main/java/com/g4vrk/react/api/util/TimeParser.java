@@ -1,5 +1,6 @@
 package com.g4vrk.react.api.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
@@ -12,6 +13,7 @@ import java.util.regex.Pattern;
  * Reads the short durations used in configs: a whole number followed by
  * {@code ms}, {@code s}, {@code m}, {@code h} or {@code d}, for example {@code 250ms} or {@code 30d}.
  */
+@ApiStatus.AvailableSince("2.0")
 public final class TimeParser {
 
     private static final Pattern PATTERN = Pattern.compile("^(\\d+)(ms|[smhd])$");

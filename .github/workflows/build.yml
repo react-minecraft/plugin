@@ -63,7 +63,7 @@ jobs:
         cp $JARS dist/
         echo "version=$version" >> "$GITHUB_OUTPUT"
         echo "build=$build" >> "$GITHUB_OUTPUT"
-        echo "api=$(grep -oP 'int VERSION = \K[0-9]+' api/src/main/java/com/g4vrk/react/api/rcp/RCPApi.java)" >> "$GITHUB_OUTPUT"
+        echo "api=$(grep -oP 'int VERSION = \K[0-9]+' api/src/main/java/com/g4vrk/react/api/rcp/RCPAPI.java)" >> "$GITHUB_OUTPUT"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v7

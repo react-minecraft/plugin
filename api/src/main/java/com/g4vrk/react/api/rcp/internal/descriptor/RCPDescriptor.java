@@ -3,7 +3,7 @@ package com.g4vrk.react.api.rcp.internal.descriptor;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 import com.g4vrk.react.api.Descriptor;
-import com.g4vrk.react.api.rcp.RCPApi;
+import com.g4vrk.react.api.rcp.RCPAPI;
 import com.g4vrk.react.api.rcp.exception.InvalidRCPException;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +25,9 @@ public final class RCPDescriptor implements Descriptor<RCPMetadata, Path> {
         final String mainClass = requireNonNull(config.node("mainClass").getString(), "Main class cannot be null!");
         final int apiVersion = config.node("api-version").getInt(0);
 
-        if (apiVersion != RCPApi.VERSION) {
+        if (apiVersion != RCPAPI.VERSION) {
             throw new InvalidRCPException(
-                    "RCP '" + name + "' is built for api-version " + apiVersion + ", this plugin provides " + RCPApi.VERSION
+                    "RCP '" + name + "' is built for api-version " + apiVersion + ", this plugin provides " + RCPAPI.VERSION
             );
         }
 

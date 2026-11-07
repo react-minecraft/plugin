@@ -1,7 +1,7 @@
 package com.g4vrk.react.rcp.update;
 
 import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.rcp.RCPApi;
+import com.g4vrk.react.api.rcp.RCPAPI;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -54,7 +54,7 @@ public final class RCPUpdater {
     private static final String CHECKSUMS = "checksums.txt";
     private static final String SIGNATURE = CHECKSUMS + ".sig";
 
-    private static final String REVOKED_URL = RCPApi.API_URL + "/api/v1/rcp/revoked";
+    private static final String REVOKED_URL = RCPAPI.API_URL + "/api/v1/rcp/revoked";
 
     private static final String PUBLIC_KEY = "MCowBQYDK2VwAyEAQ1cusiIHlnREUXw/ubE9IqSkXBxYPmZYNnxn58Jpo8g=";
 
@@ -217,9 +217,9 @@ public final class RCPUpdater {
 
     private static @NotNull Map.Entry<String, String> usableJar(final @NotNull Checksums checksums)
             throws VerificationException {
-        if (checksums.apiVersion() != RCPApi.VERSION) {
+        if (checksums.apiVersion() != RCPAPI.VERSION) {
             throw new VerificationException("the build needs api-version " + checksums.apiVersion()
-                    + ", this plugin provides " + RCPApi.VERSION + ", update the plugin");
+                    + ", this plugin provides " + RCPAPI.VERSION + ", update the plugin");
         }
         final Map.Entry<String, String> jar = checksums.jar(JAR_PREFIX);
         if (jar == null) {

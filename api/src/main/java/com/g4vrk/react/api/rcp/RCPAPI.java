@@ -7,7 +7,7 @@ package com.g4vrk.react.api.rcp;
  * {@code api-version}. The plugin loads only RCPs with exactly its own version, and raises
  * it whenever a change would break RCPs built before.</p>
  */
-public final class RCPApi {
+public final class RCPAPI {
 
     public static final int VERSION = 1;
 
@@ -17,7 +17,7 @@ public final class RCPApi {
      */
     public static final String API_URL = System.getProperty("react.api.url", "https://api.react-ac.space");
 
-    private RCPApi() {
+    private RCPAPI() {
     }
 
 }

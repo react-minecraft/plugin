@@ -1,6 +1,7 @@
 package com.g4vrk.react.api.extension;
 
-import com.g4vrk.react.api.placeholder.PlaceholderRegistry;
+import com.g4vrk.react.api.extension.command.CommandRegistrar;
+import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import org.bukkit.plugin.Plugin;
@@ -13,7 +14,7 @@ import java.nio.file.Path;
 /**
  * What the plugin gives every RCP and addon.
  *
- * <p>Arguments, listeners and placeholders registered here belong to the extension: the
+ * <p>Commands, listeners and placeholders registered here belong to the extension: the
  * plugin removes all of them when the extension is disabled or rebooted, so an extension
  * never has to unregister them itself.</p>
  */
@@ -58,11 +59,11 @@ public interface ExtensionEnvironment {
     @NotNull Scheduler scheduler();
 
     /**
-     * The {@code /react <name>} arguments of this extension.
+     * The Cloud command tree, where the extension registers its commands.
      *
-     * @return the argument registry
+     * @return the command registrar
      */
-    @NotNull ArgumentRegistry arguments();
+    @NotNull CommandRegistrar commands();
 
     /**
      * React events, Bukkit listeners and PacketEvents listeners of this extension.

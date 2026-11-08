@@ -189,7 +189,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     }
 
     private void list(final @NotNull CommandSender sender) {
-        final List<TrackedPlayerImpl> holders = playerRegistry.values().stream()
+        final List<TrackedPlayerImpl> holders = playerRegistry.stream()
                 .filter(player -> !player.bypasses().isEmpty())
                 .toList();
         if (holders.isEmpty()) {

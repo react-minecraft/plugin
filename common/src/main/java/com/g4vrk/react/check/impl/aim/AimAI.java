@@ -4,7 +4,7 @@ import com.g4vrk.react.config.model.AimAIConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.event.check.InferenceResultEvent;
-import com.g4vrk.react.api.rcp.player.Rotation;
+import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.decay.DecayStrategy;
@@ -52,10 +52,10 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         return this.decayStrategy;
     }
 
-    public void onRotation(final @NotNull Rotation rotation) {
+    public void onRotation(final float @NotNull [] sample) {
         final RCPHost host = React.INSTANCE.rcpHost();
         if (host != null && active()) {
-            host.rotation(player, rotation);
+            host.rotation(player, sample);
         }
     }
 

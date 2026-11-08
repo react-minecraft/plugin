@@ -4,7 +4,7 @@ import com.g4vrk.react.api.extension.ExtensionEnvironment;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
-import com.g4vrk.react.api.rcp.player.RCPPlayers;
+import com.g4vrk.react.api.rcp.player.registry.RCPPlayerRegistry;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public interface RCPEnvironment extends ExtensionEnvironment {
      *
      * @return the players
      */
-    @NotNull RCPPlayers players();
+    @NotNull RCPPlayerRegistry players();
 
     /**
      * Hands a result to the plugin's check, which alerts, punishes, stores history and

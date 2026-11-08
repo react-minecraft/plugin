@@ -2,15 +2,14 @@ package com.g4vrk.react.rcp;
 
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
-import com.g4vrk.react.api.rcp.player.RCPPlayers;
-import com.g4vrk.react.api.rcp.player.Rotation;
+import com.g4vrk.react.api.rcp.player.registry.RCPPlayerRegistry;
 import com.g4vrk.react.extension.HostedRCPEnvironment;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
+import com.g4vrk.react.registry.view.RegistryView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -19,41 +18,47 @@ import java.util.function.Consumer;
 /**
  * The plugin's side of every loaded RCP: passes player events to their listeners and keeps
  * their statuses.
+ *
+ * <p>The rotation path runs on netty threads for every movement packet, so it walks the
+ * listeners directly instead of allocating a callback per event.</p>
  */
-public final class RCPHost implements RCPPlayers {
+public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerImpl> implements RCPPlayerRegistry {
 
-    private final PlayerRegistry playerRegistry;
+    private final PlayerRegistry players;
     private final List<HostedRCPEnvironment> environments = new CopyOnWriteArrayList<>();
 
     public RCPHost(final @NotNull PlayerRegistry playerRegistry) {
-        this.playerRegistry = playerRegistry;
+        super(playerRegistry);
+        this.players = playerRegistry;
     }
 
     public void attach(final @NotNull HostedRCPEnvironment environment) {
-        environments.add(environment);
+        this.environments.add(environment);
     }
 
     public void detach(final @NotNull HostedRCPEnvironment environment) {
-        environments.remove(environment);
-    }
-
-    @Override
-    public @Nullable RCPPlayer get(final @NotNull UUID uniqueId) {
-        return playerRegistry.get(uniqueId);
+        this.environments.remove(environment);
     }
 
     @Override
     public @Nullable RCPPlayer byEntityId(final int entityId) {
-        return playerRegistry.byEntityId(entityId);
+        return this.players.byEntityId(entityId);
     }
 
-    @Override
-    public @NotNull Collection<? extends RCPPlayer> online() {
-        return playerRegistry.values();
-    }
+    public void rotation(final @NotNull TrackedPlayerImpl player, final float @NotNull [] sample) {
+        final List<HostedRCPEnvironment> attached = this.environments;
 
-    public void rotation(final @NotNull TrackedPlayerImpl player, final @NotNull Rotation rotation) {
-        dispatch(listener -> listener.onRotation(player, rotation));
+        for (int i = 0; i < attached.size(); i++) {
+            final HostedRCPEnvironment environment = attached.get(i);
+
+            for (final RCPPlayerListener listener : environment.playerListeners()) {
+                try {
+                    listener.onRotation(player, sample);
+                } catch (final Throwable failure) {
+                    environment.logger().warn("A player listener of RCP '{}' failed", environment.name(), failure);
+                }
+            }
+        }
     }
 
     public void reload(final @NotNull TrackedPlayerImpl player) {
@@ -69,7 +74,7 @@ public final class RCPHost implements RCPPlayers {
     }
 
     private void dispatch(final @NotNull Consumer<RCPPlayerListener> event) {
-        for (final HostedRCPEnvironment environment : environments) {
+        for (final HostedRCPEnvironment environment : this.environments) {
             for (final RCPPlayerListener listener : environment.playerListeners()) {
                 try {
                     event.accept(listener);
@@ -81,11 +86,11 @@ public final class RCPHost implements RCPPlayers {
     }
 
     public @NotNull List<HostedRCPEnvironment> environments() {
-        return List.copyOf(environments);
+        return List.copyOf(this.environments);
     }
 
     public @Nullable String status() {
-        for (final HostedRCPEnvironment environment : environments) {
+        for (final HostedRCPEnvironment environment : this.environments) {
             final String status = environment.currentStatus();
             if (status != null) {
                 return status;

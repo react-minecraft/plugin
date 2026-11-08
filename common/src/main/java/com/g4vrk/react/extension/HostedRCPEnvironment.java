@@ -4,7 +4,7 @@ import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
-import com.g4vrk.react.api.rcp.player.RCPPlayers;
+import com.g4vrk.react.api.rcp.player.registry.RCPPlayerRegistry;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.player.TrackedPlayerImpl;
@@ -48,7 +48,7 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
     }
 
     @Override
-    public @NotNull RCPPlayers players() {
+    public @NotNull RCPPlayerRegistry players() {
         return host;
     }
 

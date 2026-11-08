@@ -4,7 +4,7 @@ import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.Permissions;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.channel.ReactChannels;
+import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.api.event.EventBus;
 import com.g4vrk.react.api.event.plugin.UpdateDownloadedEvent;
 import com.g4vrk.react.config.model.ActionsConfig;
@@ -56,7 +56,7 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
         if (!notify.getAsBoolean()) {
             return;
         }
-        for (final Audience recipient : ReactChannels.ALERTS.recipients()) {
+        for (final Audience recipient : BuiltinChannels.ALERTS.recipients()) {
             send(recipient, event);
         }
     }

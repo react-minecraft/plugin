@@ -17,19 +17,19 @@ import java.util.List;
  * layout only needs one more {@link Builder#step} call.</p>
  */
 @ApiStatus.AvailableSince("2.0")
-public final class ConfigMigrations {
+public final class ConfigMigrationChain {
 
     public static final String VERSION_KEY = "config-version";
 
     public static final int LEGACY_VERSION = 0;
 
-    private static final ConfigMigrations NONE = builder().step(root -> {
+    private static final ConfigMigrationChain NONE = builder().step(root -> {
     }).build();
 
     private final List<ConfigMigration> steps;
     private final int latest;
 
-    private ConfigMigrations(final @NotNull List<ConfigMigration> steps, final int latest) {
+    private ConfigMigrationChain(final @NotNull List<ConfigMigration> steps, final int latest) {
         this.steps = steps;
         this.latest = latest;
     }
@@ -38,7 +38,7 @@ public final class ConfigMigrations {
      * A chain for a file whose layout has not changed since versions were introduced.
      * Its only step stamps version {@code 1} on legacy files.
      */
-    public static @NotNull ConfigMigrations none() {
+    public static @NotNull ConfigMigrationChain none() {
         return NONE;
     }
 
@@ -92,11 +92,11 @@ public final class ConfigMigrations {
             return this;
         }
 
-        public @NotNull ConfigMigrations build() {
+        public @NotNull ConfigMigrationChain build() {
             if (steps.isEmpty()) {
                 throw new IllegalStateException("A migration chain needs at least the step to version 1");
             }
-            return new ConfigMigrations(List.copyOf(steps), steps.size());
+            return new ConfigMigrationChain(List.copyOf(steps), steps.size());
         }
 
     }

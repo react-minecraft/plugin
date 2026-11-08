@@ -9,8 +9,8 @@ import org.bukkit.entity.Player;
  * Player-shaped combat targets, without linking newer Bukkit entity classes.
  */
 @ApiStatus.AvailableSince("2.0")
-public final class CombatTargets {
-    private CombatTargets() {}
+public final class CombatTarget {
+    private CombatTarget() {}
 
     public static boolean isSupported(final Entity entity) {
         return entity instanceof Player || isMannequin(entity);

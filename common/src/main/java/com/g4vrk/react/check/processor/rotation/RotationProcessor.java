@@ -1,16 +1,18 @@
 package com.g4vrk.react.check.processor.rotation;
 
+import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.check.impl.aim.AimAI;
-import com.g4vrk.react.api.rcp.player.Rotation;
 import com.g4vrk.react.player.TrackedPlayerImpl;
-import com.g4vrk.react.player.model.rotation.RotationData;
-import lombok.RequiredArgsConstructor;
+import com.g4vrk.react.player.rotation.RotationData;
 import org.jetbrains.annotations.NotNull;
 
-@RequiredArgsConstructor
+/**
+ * Records one movement packet as a rotation and hands the new sample to the aim check.
+ *
+ * <p>Nothing here allocates: the sample is written into the player's flat history and reaches
+ * the check as the {@link RotationData} it lives in.</p>
+ */
 public final class RotationProcessor {
-
-    private final RotationFactory rotationFactory;
 
     public void process(
             final @NotNull TrackedPlayerImpl player,
@@ -20,12 +22,12 @@ public final class RotationProcessor {
 
         final RotationData rotationData = player.rotationData;
 
-        final Rotation current;
+        rotationData.push(yaw, pitch);
 
-        synchronized (rotationData) {
-            current = this.rotationFactory.create(yaw, pitch, rotationData.current());
+        final float[] current = rotationData.current();
 
-            rotationData.push(current);
+        if (current == null) {
+            return;
         }
 
         final AimAI check = player.checkManager.getCheck(AimAI.class);

@@ -1,7 +1,7 @@
 package com.g4vrk.react.config;
 
 import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.config.ConfigMigrations;
+import com.g4vrk.react.api.config.ConfigMigrationChain;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.config.model.AimAIConfig;
 import com.g4vrk.react.config.model.CheckConfig;
@@ -33,7 +33,7 @@ public final class ReactConfigs {
             "<click:run_command:'/react history \\{player} \\{page:(previous|next)}'>(.*?)</click>"
     );
 
-    private static final ConfigMigrations AIM_AI_MIGRATIONS = ConfigMigrations.builder()
+    private static final ConfigMigrationChain AIM_AI_MIGRATIONS = ConfigMigrationChain.builder()
             .step(root -> {
                 root.removeChild("buffer");
                 root.removeChild("combat-ticks");
@@ -45,7 +45,7 @@ public final class ReactConfigs {
             })
             .build();
 
-    private static final ConfigMigrations HISTORY_MIGRATIONS = ConfigMigrations.builder()
+    private static final ConfigMigrationChain HISTORY_MIGRATIONS = ConfigMigrationChain.builder()
             .step(root -> {
             })
             .step(root -> {
@@ -66,7 +66,7 @@ public final class ReactConfigs {
             })
             .build();
 
-    private static final ConfigMigrations PUNISHMENTS_MIGRATIONS = ConfigMigrations.builder()
+    private static final ConfigMigrationChain PUNISHMENTS_MIGRATIONS = ConfigMigrationChain.builder()
             .step(root -> {
             })
             .step(root -> BracePlaceholders.migrate(root, Map.of()))
@@ -89,7 +89,7 @@ public final class ReactConfigs {
             {"collect", "collect-addon", "false"}
     };
 
-    private static final ConfigMigrations MAIN_MIGRATIONS = ConfigMigrations.builder()
+    private static final ConfigMigrationChain MAIN_MIGRATIONS = ConfigMigrationChain.builder()
             .step(root -> {
             })
             .step(root -> {
@@ -150,8 +150,8 @@ public final class ReactConfigs {
      * lists here and renamed {@code verbose} to {@code monitor}. The formats are read from the
      * main file before its own migration drops them, so {@link #load()} loads this file first.
      */
-    private @NotNull ConfigMigrations actionsMigrations() {
-        return ConfigMigrations.builder()
+    private @NotNull ConfigMigrationChain actionsMigrations() {
+        return ConfigMigrationChain.builder()
                 .step(root -> {
                 })
                 .step(root -> {

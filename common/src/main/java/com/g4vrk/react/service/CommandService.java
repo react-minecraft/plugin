@@ -11,7 +11,6 @@ import com.g4vrk.react.command.argument.impl.AlertsArgument;
 import com.g4vrk.react.command.argument.impl.BypassArgument;
 import com.g4vrk.react.command.argument.impl.DebugArgument;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
-import com.g4vrk.react.command.argument.impl.RCPArgumentRouter;
 import com.g4vrk.react.command.argument.impl.RCPListArgument;
 import com.g4vrk.react.command.argument.impl.RebootArgument;
 import com.g4vrk.react.command.argument.impl.ReloadArgument;
@@ -20,7 +19,6 @@ import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
 import com.g4vrk.react.player.registry.PlayerRegistry;
-import com.g4vrk.react.extension.ArgumentTable;
 import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.update.UpdateService;
@@ -76,7 +74,6 @@ public final class CommandService {
             final @NotNull InferenceHistoryPrinter historyPrinter,
             final @NotNull PlayerRegistry playerRegistry,
             final @NotNull RCPHost host,
-            final @NotNull ArgumentTable arguments,
             final @NotNull ExtensionManager extensions,
             final @NotNull UpdateService updates
     ) {
@@ -105,8 +102,7 @@ public final class CommandService {
                 reload,
                 reboot,
                 new HistoryArgument(builderFactory, historyPrinter, playerRegistry),
-                rcps,
-                new RCPArgumentRouter(builderFactory, arguments, help))) {
+                rcps)) {
             argument.builds().forEach(manager::command);
         }
     }

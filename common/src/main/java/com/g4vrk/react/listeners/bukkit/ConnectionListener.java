@@ -1,7 +1,7 @@
 package com.g4vrk.react.listeners.bukkit;
 
 import com.g4vrk.react.React;
-import com.g4vrk.react.api.channel.ReactChannels;
+import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
@@ -69,9 +69,9 @@ public class ConnectionListener implements Listener {
 
             playerRegistry.unregister(uniqueId);
 
-            ReactChannels.ALERTS.remove(bukkitPlayer);
-            ReactChannels.MONITOR.remove(bukkitPlayer);
-            ReactChannels.DEBUG.remove(bukkitPlayer);
+            BuiltinChannels.ALERTS.remove(bukkitPlayer);
+            BuiltinChannels.MONITOR.remove(bukkitPlayer);
+            BuiltinChannels.DEBUG.remove(bukkitPlayer);
 
             onQuit.accept(bukkitPlayer);
 

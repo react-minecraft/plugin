@@ -1,8 +1,8 @@
 package com.g4vrk.react.api.extension;
 
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
-import com.g4vrk.react.api.player.TrackedPlayerRegistry;
-import com.g4vrk.react.api.punish.Punishments;
+import com.g4vrk.react.api.player.registry.TrackedPlayerRegistry;
+import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +32,6 @@ public interface AddonEnvironment extends ExtensionEnvironment {
      *
      * @return the punishment rules
      */
-    @NotNull Punishments punishments();
+    @NotNull PunishmentRegistry punishments();
 
 }

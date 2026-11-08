@@ -1,13 +1,15 @@
 package com.g4vrk.react.extension;
 
-import com.g4vrk.react.api.punish.Punishments;
+import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
 import com.g4vrk.react.api.event.EventBus;
-import com.g4vrk.react.api.placeholder.PlaceholderRegistry;
+import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
+import org.incendo.cloud.CommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,7 @@ import java.nio.file.Path;
  * @param events       the React event bus
  * @param placeholders the shared placeholder registry
  * @param text         the MiniMessage formatter
- * @param arguments    the table of extension subcommands
+ * @param commands     the Cloud command tree of the plugin
  * @param players      the tracked players
  * @param rcpHost      where RCP environments attach
  * @param punishments  the rules of punishments.yml
@@ -37,10 +39,10 @@ public record ExtensionContext(
         @NotNull EventBus events,
         @NotNull PlaceholderRegistry placeholders,
         @NotNull TextFormatter text,
-        @NotNull ArgumentTable arguments,
+        @NotNull CommandManager<CommandSender> commands,
         @NotNull PlayerRegistry players,
         @NotNull RCPHost rcpHost,
-        @NotNull Punishments punishments
+        @NotNull PunishmentRegistry punishments
 ) {
 
     /**

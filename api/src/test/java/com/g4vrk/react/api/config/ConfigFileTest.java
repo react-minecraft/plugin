@@ -26,7 +26,7 @@ class ConfigFileTest {
             limit: 5
             """;
 
-    private static final ConfigMigrations RENAME = ConfigMigrations.builder()
+    private static final ConfigMigrationChain RENAME = ConfigMigrationChain.builder()
             .step(root -> {
             })
             .step(root -> {
@@ -38,7 +38,7 @@ class ConfigFileTest {
     @TempDir
     Path directory;
 
-    private ConfigFile<Object> file(final Path path, final ConfigMigrations migrations) {
+    private ConfigFile<Object> file(final Path path, final ConfigMigrationChain migrations) {
         return ConfigFile.builder(Object.class)
                 .path(path)
                 .defaults(() -> new ByteArrayInputStream(DEFAULTS.getBytes(StandardCharsets.UTF_8)))
@@ -80,7 +80,7 @@ class ConfigFileTest {
         final String owner = "# owner comment\nname: owner\nlimit: 3\n";
         Files.writeString(path, owner);
 
-        file(path, ConfigMigrations.none()).loadNode();
+        file(path, ConfigMigrationChain.none()).loadNode();
 
         assertEquals(owner + "\nconfig-version: 1\n", Files.readString(path));
         assertFalse(Files.exists(directory.resolve("config.yml.v0.bak")));

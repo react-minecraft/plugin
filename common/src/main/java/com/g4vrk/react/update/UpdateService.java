@@ -1,7 +1,7 @@
 package com.g4vrk.react.update;
 
 import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.config.ConfigMigrations;
+import com.g4vrk.react.api.config.ConfigMigrationChain;
 import com.g4vrk.react.api.event.plugin.UpdateDownloadedEvent;
 import com.g4vrk.react.api.extension.GitHubSource;
 import com.g4vrk.react.api.rcp.RCPAPI;
@@ -297,8 +297,8 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     /**
      * Version 2 moved {@code auto-update} and {@code channel} to {@code update/rcp/React.yml}.
      */
-    private @NotNull ConfigMigrations rcpMigrations(final @NotNull Path rcpFolder) {
-        return ConfigMigrations.builder()
+    private @NotNull ConfigMigrationChain rcpMigrations(final @NotNull Path rcpFolder) {
+        return ConfigMigrationChain.builder()
                 .step(root -> {
                 })
                 .step(root -> {

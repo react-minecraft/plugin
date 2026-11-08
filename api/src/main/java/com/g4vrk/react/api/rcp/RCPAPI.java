@@ -15,9 +15,12 @@ public final class RCPAPI {
     /**
      * The {@code api-version} that RCPs and addons must name.
      *
-     * <p>Version 2 gave both kinds the shared {@code ExtensionEnvironment}.</p>
+     * <p>Version 2 gave both kinds the shared {@code ExtensionEnvironment}. Version 3 split the
+     * registries into their own packages, moved extension commands onto the Cloud command tree
+     * ({@code environment.commands()}), replaced the {@code Rotation} record with the flat
+     * {@code RotationSample} layout, and turned {@code Punishments} into a {@code Registry}.</p>
      */
-    public static final int VERSION = 2;
+    public static final int VERSION = 3;
 
     /**
      * Base address of the React backend, overridable with the {@code react.api.url}

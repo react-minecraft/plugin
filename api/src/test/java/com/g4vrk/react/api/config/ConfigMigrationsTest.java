@@ -16,7 +16,7 @@ class ConfigMigrationsTest {
     @Test
     void legacyFileRunsEveryStepInOrder() throws SerializationException {
         final List<Integer> ran = new ArrayList<>();
-        final ConfigMigrations chain = ConfigMigrations.builder()
+        final ConfigMigrationChain chain = ConfigMigrationChain.builder()
                 .step(root -> ran.add(1))
                 .step(root -> {
                     ran.add(2);
@@ -31,44 +31,44 @@ class ConfigMigrationsTest {
         assertEquals(List.of(1, 2), ran);
         assertEquals("value", root.node("renamed").getString());
         assertEquals(true, root.node("old").virtual());
-        assertEquals(2, ConfigMigrations.version(root));
+        assertEquals(2, ConfigMigrationChain.version(root));
     }
 
     @Test
     void stepsAlreadySeenAreSkipped() throws SerializationException {
         final List<Integer> ran = new ArrayList<>();
-        final ConfigMigrations chain = ConfigMigrations.builder()
+        final ConfigMigrationChain chain = ConfigMigrationChain.builder()
                 .step(root -> ran.add(1))
                 .step(root -> ran.add(2))
                 .step(root -> ran.add(3))
                 .build();
         final ConfigurationNode root = BasicConfigurationNode.root();
-        root.node(ConfigMigrations.VERSION_KEY).set(1);
+        root.node(ConfigMigrationChain.VERSION_KEY).set(1);
 
         assertEquals(1, chain.apply(root));
         assertEquals(List.of(2, 3), ran);
-        assertEquals(3, ConfigMigrations.version(root));
+        assertEquals(3, ConfigMigrationChain.version(root));
     }
 
     @Test
     void currentFileIsLeftAlone() throws SerializationException {
         final ConfigurationNode root = BasicConfigurationNode.root();
-        root.node(ConfigMigrations.VERSION_KEY).set(1);
+        root.node(ConfigMigrationChain.VERSION_KEY).set(1);
 
-        assertEquals(-1, ConfigMigrations.none().apply(root));
+        assertEquals(-1, ConfigMigrationChain.none().apply(root));
     }
 
     @Test
     void newerFileIsRejected() throws SerializationException {
         final ConfigurationNode root = BasicConfigurationNode.root();
-        root.node(ConfigMigrations.VERSION_KEY).set(5);
+        root.node(ConfigMigrationChain.VERSION_KEY).set(5);
 
-        assertThrows(SerializationException.class, () -> ConfigMigrations.none().apply(root));
+        assertThrows(SerializationException.class, () -> ConfigMigrationChain.none().apply(root));
     }
 
     @Test
     void emptyChainIsRefused() {
-        assertThrows(IllegalStateException.class, () -> ConfigMigrations.builder().build());
+        assertThrows(IllegalStateException.class, () -> ConfigMigrationChain.builder().build());
     }
 
 }

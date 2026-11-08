@@ -2,9 +2,8 @@ package com.g4vrk.react.service;
 
 import com.g4vrk.react.React;
 import com.g4vrk.react.Permissions;
-import com.g4vrk.react.api.channel.ReactChannels;
+import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
-import com.g4vrk.react.check.processor.rotation.RotationFactory;
 import com.g4vrk.react.check.processor.rotation.RotationProcessor;
 import com.g4vrk.react.config.ReactConfigs;
 import com.g4vrk.react.listeners.bukkit.CombatListener;
@@ -54,7 +53,7 @@ public final class ListenerService {
     ) {
         logger.info("Registering packet listeners...");
         this.packetListeners = new PacketListenerCommon[]{
-                new RotationListener(playerRegistry, new RotationProcessor(new RotationFactory()))
+                new RotationListener(playerRegistry, new RotationProcessor())
         };
         PacketEvents.getAPI().getEventManager().registerListeners(packetListeners);
 
@@ -64,9 +63,9 @@ public final class ListenerService {
         pluginManager.registerEvents(combat, plugin);
 
         final PermissionChannelBinder alerts =
-                new PermissionChannelBinder(Permissions.ALERTS_ENABLE_ON_JOIN, ReactChannels.ALERTS, false);
+                new PermissionChannelBinder(Permissions.ALERTS_ENABLE_ON_JOIN, BuiltinChannels.ALERTS, false);
         final PermissionChannelBinder monitor =
-                new PermissionChannelBinder(Permissions.MONITOR_ENABLE_ON_JOIN, ReactChannels.MONITOR, false);
+                new PermissionChannelBinder(Permissions.MONITOR_ENABLE_ON_JOIN, BuiltinChannels.MONITOR, false);
 
         final ConnectionListener connection = new ConnectionListener(
                 playerRegistry,
@@ -134,9 +133,9 @@ public final class ListenerService {
         }
 
         try {
-            ReactChannels.ALERTS.clear();
-            ReactChannels.MONITOR.clear();
-            ReactChannels.DEBUG.clear();
+            BuiltinChannels.ALERTS.clear();
+            BuiltinChannels.MONITOR.clear();
+            BuiltinChannels.DEBUG.clear();
         } catch (final Exception ex) {
             logger.error("Could not clear channel recipients", ex);
         }

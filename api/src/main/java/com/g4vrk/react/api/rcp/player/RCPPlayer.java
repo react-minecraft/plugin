@@ -37,8 +37,10 @@ public interface RCPPlayer {
     boolean checked();
 
     /**
-     * The player's recent rotations, oldest first. The array is a copy.
+     * The player's recent rotations, oldest first, as a flat copy of
+     * {@link RotationSample#STRIDE} floats per rotation. Use the accessors of
+     * {@link RotationSample} to read it.
      */
-    @NotNull Rotation @NotNull [] rotations();
+    float @NotNull [] rotations();
 
 }

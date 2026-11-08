@@ -1,15 +1,21 @@
-package com.g4vrk.react.registry;
+package com.g4vrk.react.api.registry.write;
 
 import com.g4vrk.react.api.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A {@link Registry} the plugin can change.
+ * A {@link Registry} that can be changed.
+ *
+ * <p>Extensions get one of these for the data they contribute to the plugin. Anything registered
+ * here belongs to the extension and is removed when the extension is disabled.</p>
  *
  * @param <K> key type
  * @param <V> value type
  */
+@ApiStatus.NonExtendable
+@ApiStatus.AvailableSince("2.0")
 public interface WritableRegistry<K, V> extends Registry<K, V> {
 
     /**
@@ -17,9 +23,8 @@ public interface WritableRegistry<K, V> extends Registry<K, V> {
      *
      * @param key   the key
      * @param value the value
-     * @return the replaced value, or {@code null} when the key was free
      */
-    @Nullable V register(final @NotNull K key, final @NotNull V value);
+    void register(final @NotNull K key, final @NotNull V value);
 
     /**
      * Removes the value under a key.
@@ -28,10 +33,5 @@ public interface WritableRegistry<K, V> extends Registry<K, V> {
      * @return the removed value, or {@code null} when nothing was registered
      */
     @Nullable V unregister(final @NotNull K key);
-
-    /**
-     * Removes every value.
-     */
-    void clear();
 
 }

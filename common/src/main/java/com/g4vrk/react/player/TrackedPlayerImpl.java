@@ -3,7 +3,7 @@ package com.g4vrk.react.player;
 import com.g4vrk.react.api.player.HistoryEntry;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.player.TrackedPlayer;
-import com.g4vrk.react.api.rcp.player.Rotation;
+import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.manager.CheckManager;
 import com.g4vrk.react.history.InferenceHistory;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.g4vrk.react.player.model.rotation.RotationData;
+import com.g4vrk.react.player.rotation.RotationData;
 import com.g4vrk.react.check.impl.aim.AimAI;
 
 public final class TrackedPlayerImpl implements TrackedPlayer {
@@ -120,8 +120,8 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     }
 
     @Override
-    public @NotNull Rotation @NotNull [] rotations() {
-        return rotationData.snapshotHistory();
+    public float @NotNull [] rotations() {
+        return rotationData.history();
     }
 
     public void clearTransientState() {

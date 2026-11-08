@@ -1,6 +1,6 @@
 package com.g4vrk.react.text;
 
-import com.g4vrk.react.api.placeholder.PlaceholderRegistry;
+import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.player.TrackedPlayer;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.text.Serializers;

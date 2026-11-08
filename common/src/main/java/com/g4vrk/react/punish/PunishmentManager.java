@@ -4,10 +4,10 @@ import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.channel.ReactChannels;
+import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.api.event.check.CheckPunishEvent;
 import com.g4vrk.react.api.punish.PunishmentRule;
-import com.g4vrk.react.api.punish.Punishments;
+import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
@@ -16,15 +16,20 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.kyori.adventure.audience.Audience;
 import org.bukkit.Server;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurationNode;
 
+import java.util.AbstractMap;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * Runs the rules of {@code punishments.yml} when a check's violations grow.
@@ -35,7 +40,7 @@ import java.util.function.UnaryOperator;
  * {@code [alert]}, {@code [log]}, {@code [reset-vl]} and {@code [console]} are handled here.
  * A cancelled {@link CheckPunishEvent} skips a rule.</p>
  */
-public final class PunishmentManager implements Punishments, ReloadObserver<ConfigurationNode> {
+public final class PunishmentManager implements PunishmentRegistry, ReloadObserver<ConfigurationNode> {
 
     private static final char PERIOD_SEPARATOR = ';';
 
@@ -44,7 +49,7 @@ public final class PunishmentManager implements Punishments, ReloadObserver<Conf
     private final Scheduler scheduler;
     private final ActionParser<Audience> parser;
 
-    private volatile Map<String, List<Rule>> rules = Map.of();
+    private volatile Map<String, RuleSet> rules = Map.of();
 
     public PunishmentManager(
             final @NotNull Logger logger,
@@ -80,7 +85,11 @@ public final class PunishmentManager implements Punishments, ReloadObserver<Conf
                 parsed.computeIfAbsent(check.toLowerCase(Locale.ROOT), key -> new ObjectArrayList<>()).addAll(groupRules);
             }
         }
-        this.rules = parsed;
+        final Map<String, RuleSet> converted = new Object2ObjectOpenHashMap<>(parsed.size());
+        for (final Map.Entry<String, List<Rule>> entry : parsed.entrySet()) {
+            converted.put(entry.getKey(), RuleSet.of(entry.getValue()));
+        }
+        this.rules = converted;
     }
 
     private void readRules(
@@ -144,21 +153,57 @@ public final class PunishmentManager implements Punishments, ReloadObserver<Conf
     }
 
     @Override
-    public @NotNull Set<String> checks() {
+    public @Nullable List<PunishmentRule> get(final @NotNull String check) {
+        final RuleSet set = this.rules.get(check);
+        return set == null ? null : set.api();
+    }
+
+    @Override
+    public @Nullable String getKey(final @NotNull List<PunishmentRule> value) {
+        for (final Map.Entry<String, RuleSet> entry : this.rules.entrySet()) {
+            if (entry.getValue().api() == value) {
+                return entry.getKey();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public @NotNull Set<String> keySet() {
         return Collections.unmodifiableSet(this.rules.keySet());
     }
 
     @Override
-    public @NotNull List<PunishmentRule> rules(final @NotNull String check) {
-        final List<Rule> checkRules = this.rules.get(check.toLowerCase(Locale.ROOT));
-        if (checkRules == null) {
-            return List.of();
+    public @NotNull Set<Map.Entry<String, List<PunishmentRule>>> entrySet() {
+        final Set<Map.Entry<String, List<PunishmentRule>>> out = new LinkedHashSet<>(this.rules.size() * 2);
+
+        for (final Map.Entry<String, RuleSet> entry : this.rules.entrySet()) {
+            out.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue().api()));
         }
-        final List<PunishmentRule> out = new ObjectArrayList<>(checkRules.size());
-        for (final Rule rule : checkRules) {
-            out.add(new PunishmentRule(rule.start(), rule.period(), rule.lines()));
+
+        return Collections.unmodifiableSet(out);
+    }
+
+    @Override
+    public @NotNull Stream<List<PunishmentRule>> stream() {
+        return this.rules.values().stream().map(RuleSet::api);
+    }
+
+    @Override
+    public int size() {
+        return this.rules.size();
+    }
+
+    @Override
+    public @NotNull Iterator<List<PunishmentRule>> iterator() {
+        final List<List<PunishmentRule>> out = new ObjectArrayList<>(this.rules.size());
+
+        for (final RuleSet set : this.rules.values()) {
+            out.add(set.api());
         }
-        return Collections.unmodifiableList(out);
+
+        return out.iterator();
     }
 
     public void handleFail(
@@ -169,11 +214,11 @@ public final class PunishmentManager implements Punishments, ReloadObserver<Conf
         if (newViolations <= oldViolations) {
             return;
         }
-        final List<Rule> checkRules = this.rules.get(check.id().toLowerCase(Locale.ROOT));
-        if (checkRules == null) {
+        final RuleSet set = this.rules.get(check.id().toLowerCase(Locale.ROOT));
+        if (set == null) {
             return;
         }
-        for (final Rule rule : checkRules) {
+        for (final Rule rule : set.rules()) {
             final int vl = rule.trigger(oldViolations, newViolations);
             if (vl != -1 && !React.INSTANCE.events().post(new CheckPunishEvent(check, vl, rule.lines())).cancelled()) {
                 execute(check, rule, vl);
@@ -206,7 +251,7 @@ public final class PunishmentManager implements Punishments, ReloadObserver<Conf
             final @NotNull String level
     ) {
         switch (tag(line)) {
-            case "alert" -> ReactChannels.ALERTS.publish(check.report(args.isEmpty() ? "VL " + level : args));
+            case "alert" -> BuiltinChannels.ALERTS.publish(check.report(args.isEmpty() ? "VL " + level : args));
             case "log" -> logger.info("[Punishment] {} reached VL {} on {}", check.player().name(), level, check.name());
             case "reset-vl", "reset" -> check.resetViolations();
             default -> {
@@ -215,6 +260,24 @@ public final class PunishmentManager implements Punishments, ReloadObserver<Conf
                 }
             }
         }
+    }
+
+    private record RuleSet(
+            Rule @NotNull [] rules,
+            @NotNull List<PunishmentRule> api
+    ) {
+
+        private static @NotNull RuleSet of(final @NotNull List<Rule> rules) {
+            final Rule[] array = rules.toArray(new Rule[0]);
+            final List<PunishmentRule> api = new ObjectArrayList<>(array.length);
+
+            for (final Rule rule : array) {
+                api.add(new PunishmentRule(rule.start(), rule.period(), rule.lines()));
+            }
+
+            return new RuleSet(array, Collections.unmodifiableList(api));
+        }
+
     }
 
     private record Rule(

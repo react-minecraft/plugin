@@ -1,7 +1,7 @@
 package com.g4vrk.react.api.rcp.event;
 
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
-import com.g4vrk.react.api.rcp.player.Rotation;
+import com.g4vrk.react.api.rcp.player.RotationSample;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,8 +19,15 @@ public interface RCPPlayerListener {
 
     /**
      * Called after every rotation the plugin recorded for a player it checks.
+     *
+     * <p>{@code sample} is a flat array of {@link RotationSample#STRIDE} floats, laid out as
+     * {@link RotationSample} documents. The plugin reuses the array for the next rotation, so
+     * copy it when the values must outlive the call.</p>
+     *
+     * @param player the player
+     * @param sample the rotation
      */
-    default void onRotation(final @NotNull RCPPlayer player, final @NotNull Rotation rotation) {
+    default void onRotation(final @NotNull RCPPlayer player, final float @NotNull [] sample) {
     }
 
     /**

@@ -56,6 +56,7 @@ mongodb = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" 
 sqlite = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
 
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }
+cloud-core = { module = "org.incendo:cloud-core", version.ref = "cloud-paper" }
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-paper" }
 
 textserializer-legacy = { module = "com.github.g4vrk.TextSerializer:legacy", version.ref = "textserializer" }

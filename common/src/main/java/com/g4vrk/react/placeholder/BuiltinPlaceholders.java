@@ -1,7 +1,7 @@
 package com.g4vrk.react.placeholder;
 
 import com.g4vrk.react.api.check.Check;
-import com.g4vrk.react.api.placeholder.PlaceholderRegistry;
+import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.color.ProbabilityColor;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.util.ProbabilityFormatter;

@@ -24,7 +24,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     private final Plugin plugin;
     private final TextFormatter text;
     private final ScopedScheduler scheduler;
-    private final ArgumentTable.Scope arguments;
+    private final ScopedCommands commands;
     private final ScopedListeners listeners;
     private final ScopedPlaceholders placeholders;
 
@@ -41,7 +41,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
         this.plugin = context.plugin();
         this.text = context.text();
         this.scheduler = new ScopedScheduler(context.scheduler());
-        this.arguments = context.arguments().scope(descriptor.name());
+        this.commands = new ScopedCommands(context.commands(), logger, descriptor.name());
         this.listeners = new ScopedListeners(plugin, context.events(), logger);
         this.placeholders = new ScopedPlaceholders(context.placeholders());
     }
@@ -81,8 +81,8 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     }
 
     @Override
-    public @NotNull ArgumentTable.Scope arguments() {
-        return arguments;
+    public @NotNull ScopedCommands commands() {
+        return commands;
     }
 
     @Override
@@ -115,7 +115,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     @Override
     public void close() {
-        closeQuietly(arguments);
+        closeQuietly(commands);
         closeQuietly(listeners);
         closeQuietly(placeholders);
         closeQuietly(scheduler);

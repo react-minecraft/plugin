@@ -46,7 +46,7 @@ public final class ConfigFile<T> {
     private static final int INDENT = 2;
 
     private static final Pattern VERSION_LINE = Pattern.compile(
-            "^" + Pattern.quote(ConfigMigrations.VERSION_KEY) + ":.*$", Pattern.MULTILINE
+            "^" + Pattern.quote(ConfigMigrationChain.VERSION_KEY) + ":.*$", Pattern.MULTILINE
     );
 
     private static final ConfigurationOptions OPTIONS = ConfigurationOptions.defaults()
@@ -59,7 +59,7 @@ public final class ConfigFile<T> {
     private final Path path;
     private final Class<T> type;
     private final Supplier<InputStream> defaults;
-    private final ConfigMigrations migrations;
+    private final ConfigMigrationChain migrations;
     private final boolean fillMissing;
     private final Logger logger;
 
@@ -132,7 +132,7 @@ public final class ConfigFile<T> {
             final @NotNull CommentedConfigurationNode before,
             final int previous
     ) throws IOException {
-        before.node(ConfigMigrations.VERSION_KEY).set(migrated.node(ConfigMigrations.VERSION_KEY).raw());
+        before.node(ConfigMigrationChain.VERSION_KEY).set(migrated.node(ConfigMigrationChain.VERSION_KEY).raw());
 
         if (before.equals(migrated)) {
             stampVersion(migrations.latest());
@@ -148,7 +148,7 @@ public final class ConfigFile<T> {
 
     private void stampVersion(final int version) throws IOException {
         final String text = Files.readString(path, StandardCharsets.UTF_8);
-        final String line = ConfigMigrations.VERSION_KEY + ": " + version;
+        final String line = ConfigMigrationChain.VERSION_KEY + ": " + version;
         final Matcher matcher = VERSION_LINE.matcher(text);
 
         final String updated;
@@ -194,7 +194,7 @@ public final class ConfigFile<T> {
         private final Class<T> type;
         private Path path;
         private Supplier<InputStream> defaults;
-        private ConfigMigrations migrations = ConfigMigrations.none();
+        private ConfigMigrationChain migrations = ConfigMigrationChain.none();
         private boolean fillMissing = true;
         private Logger logger;
 
@@ -226,7 +226,7 @@ public final class ConfigFile<T> {
             return defaults(() -> loader.getResourceAsStream(resource));
         }
 
-        public @NotNull Builder<T> migrations(final @NotNull ConfigMigrations migrations) {
+        public @NotNull Builder<T> migrations(final @NotNull ConfigMigrationChain migrations) {
             this.migrations = migrations;
             return this;
         }

@@ -11,7 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import com.g4vrk.react.api.rcp.player.CombatTargets;
+import com.g4vrk.react.api.rcp.player.CombatTarget;
 import org.jetbrains.annotations.NotNull;
 
 public class CombatListener implements Listener, ReloadObserver<MainConfig> {
@@ -44,7 +44,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final EntityDamageByEntityEvent event) {
 
-        if (!(event.getDamager() instanceof Player damager) || !CombatTargets.isSupported(event.getEntity())) return;
+        if (!(event.getDamager() instanceof Player damager) || !CombatTarget.isSupported(event.getEntity())) return;
 
         final TrackedPlayerImpl localDamager = playerRegistry.get(damager.getUniqueId());
 

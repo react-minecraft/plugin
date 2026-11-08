@@ -12,7 +12,7 @@ import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
 import com.g4vrk.react.api.ReactAPI;
-import com.g4vrk.react.api.channel.ReactChannels;
+import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.channel.DebugActions;
 import com.g4vrk.react.channel.ReportActions;
 import com.g4vrk.react.config.ReactConfigs;
@@ -24,7 +24,7 @@ import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.punish.PunishmentManager;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.reboot.PluginReboot;
-import com.g4vrk.react.extension.ArgumentTable;
+
 import com.g4vrk.react.extension.ExtensionContext;
 import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.update.UpdateNotifier;
@@ -89,7 +89,6 @@ public class React {
     private PunishmentManager punishmentManager;
     private InferenceHistoryPrinter inferenceHistoryPrinter;
 
-    private ArgumentTable arguments;
     private UpdateNotifier updateNotifier;
     private UpdateService updates;
     private ExtensionManager extensions;
@@ -98,7 +97,7 @@ public class React {
     private ListenerService listeners;
 
     public void initialize(final @NotNull Plugin plugin, final @NotNull ReactAPI api) {
-        if (placeholders.keys().isEmpty()) {
+        if (placeholders.keySet().isEmpty()) {
             BuiltinPlaceholders.register(placeholders);
         }
 
@@ -144,7 +143,7 @@ public class React {
         this.playerRegistry = new PlayerRegistry();
         this.scheduler = schedulaAPI.createScheduler();
         this.rcpHost = new RCPHost(playerRegistry);
-        this.arguments = new ArgumentTable();
+        this.commands = new CommandService(plugin, logger);
 
         this.updateNotifier = new UpdateNotifier(events, actionParser, configs.actions(),
                 () -> updates != null && updates.notifies(), () -> updates == null ? List.of() : updates.pending());
@@ -152,20 +151,19 @@ public class React {
                 () -> configs.main(), updateNotifier);
         this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser);
         this.extensions = new ExtensionManager(new ExtensionContext(plugin, dataFolder.toPath(), logger, scheduler,
-                events, placeholders, text, arguments, playerRegistry, rcpHost, punishmentManager), updates);
+                events, placeholders, text, commands.manager(), playerRegistry, rcpHost, punishmentManager), updates);
 
         this.alertActions = new ReportActions(actionParser, configs.actions().alerts().alert());
         this.monitorActions = new ReportActions(actionParser, configs.actions().monitor().message());
-        ReactChannels.ALERTS.delivery(alertActions);
-        ReactChannels.MONITOR.delivery(monitorActions);
+        BuiltinChannels.ALERTS.delivery(alertActions);
+        BuiltinChannels.MONITOR.delivery(monitorActions);
         this.debugActions = new DebugActions(actionParser, configs.checks());
-        ReactChannels.DEBUG.delivery(debugActions);
+        BuiltinChannels.DEBUG.delivery(debugActions);
         this.inferenceHistoryPrinter = new InferenceHistoryPrinter(text);
 
         logger.info("Registering commands...");
-        this.commands = new CommandService(plugin, logger);
         commands.register(actionParser, configs.actions(), scheduler, inferenceHistoryPrinter,
-                playerRegistry, rcpHost, arguments, extensions, updates);
+                playerRegistry, rcpHost, extensions, updates);
 
         this.listeners = new ListenerService(plugin, logger);
         listeners.register(configs, playerRegistry, playerFactory, storageManager, rcpHost, updateNotifier::join);
@@ -201,7 +199,7 @@ public class React {
         debugActions.checks(configs.checks());
         updateNotifier.onReload(configs.actions());
 
-        for (final TrackedPlayerImpl player : playerRegistry.values()) {
+        for (final TrackedPlayerImpl player : playerRegistry) {
             player.checkManager.reload();
         }
 
@@ -225,7 +223,7 @@ public class React {
         try {
             if (storageManager != null) {
                 logger.info("Flushing and closing database storage...");
-                storageManager.close(playerRegistry == null ? Set.of() : playerRegistry.values());
+                storageManager.close(playerRegistry == null ? Set.of() : playerRegistry.stream().toList());
                 storageManager = null;
             }
         } catch (final Exception ex) {

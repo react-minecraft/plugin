@@ -3,6 +3,7 @@ package com.g4vrk.react.api.placeholder.registry;
 import com.g4vrk.react.api.placeholder.PlaceholderResolver;
 import com.g4vrk.react.api.player.TrackedPlayer;
 import com.g4vrk.react.api.registry.write.WritableRegistry;
+import com.g4vrk.react.api.text.TagMapper;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -41,10 +42,21 @@ public interface PlaceholderRegistry extends WritableRegistry<String, Placeholde
     /**
      * Builds a MiniMessage resolver for all {@code <react_key:query>} tags.
      *
+     * <p>This is the direct path and needs a MiniMessage in the server. Use {@link #mapper(TrackedPlayer)}
+     * for a resolver that works on every server version.</p>
+     *
      * @param player the player the text is formatted for
      * @return a resolver to pass to MiniMessage or {@link com.g4vrk.react.api.text.TextFormatter}
      */
     @NotNull TagResolver tags(final @NotNull TrackedPlayer player);
+
+    /**
+     * Builds a mapper for all {@code <react_key:query>} tags.
+     *
+     * @param player the player the text is formatted for
+     * @return a mapper that answers the placeholders of this registry and nothing else
+     */
+    @NotNull TagMapper mapper(final @NotNull TrackedPlayer player);
 
     /**
      * Replaces {@code %key%}, {@code %key_query%}, <code>{key}</code> and <code>{key:query}</code>

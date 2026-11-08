@@ -45,7 +45,7 @@ dependencies {
 
     compileOnly(libs.cloud.paper)
 
-    implementation(libs.textserializer.native)
+    implementation(libs.textserializer.legacy)
     implementation(libs.actions)
     implementation(libs.schedula.common)
 

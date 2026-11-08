@@ -1,7 +1,7 @@
 package com.g4vrk.react.text;
 
 import com.g4vrk.react.placeholder.SimplePlaceholderRegistry;
-import com.g4vrk.text.NativeSerializerRegistry;
+import com.g4vrk.text.LegacySerializerRegistry;
 import org.slf4j.helpers.NOPLogger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MiniTextFormatterTest {
 
     private final MiniTextFormatter formatter = new MiniTextFormatter(
-            NativeSerializerRegistry.INSTANCE,
+            LegacySerializerRegistry.INSTANCE,
             new SimplePlaceholderRegistry(NOPLogger.NOP_LOGGER)
     );
 

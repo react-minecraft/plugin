@@ -3,6 +3,7 @@ package com.g4vrk.react.placeholder;
 import com.g4vrk.react.api.placeholder.PlaceholderResolver;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.player.TrackedPlayer;
+import com.g4vrk.react.api.text.TagMapper;
 import net.kyori.adventure.text.minimessage.Context;
 import net.kyori.adventure.text.minimessage.ParsingException;
 import net.kyori.adventure.text.minimessage.tag.Tag;
@@ -120,6 +121,11 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
     }
 
     @Override
+    public @NotNull TagMapper mapper(final @NotNull TrackedPlayer player) {
+        return new Mapped(player);
+    }
+
+    @Override
     public @NotNull String apply(final @NotNull String text, final @NotNull TrackedPlayer player) {
         if (!Placeholders.mentions(text)) {
             return text;
@@ -154,6 +160,35 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
         }
 
         return true;
+    }
+
+    /**
+     * The mapper of one player: the same placeholders, answered as strings so they work with
+     * either flavour of the text library.
+     */
+    private final class Mapped implements TagMapper {
+
+        private final TrackedPlayer player;
+
+        private Mapped(final @NotNull TrackedPlayer player) {
+            this.player = player;
+        }
+
+        @Override
+        public @Nullable String map(final @NotNull String name, final @NotNull String args) {
+            if (!name.startsWith(PREFIX)) {
+                return null;
+            }
+
+            return SimplePlaceholderRegistry.this.resolve(this.player, name.substring(PREFIX.length()), args);
+        }
+
+        @Override
+        public boolean has(final @NotNull String name) {
+            return name.startsWith(PREFIX)
+                    && SimplePlaceholderRegistry.this.resolvers.containsKey(name.substring(PREFIX.length()));
+        }
+
     }
 
     /**

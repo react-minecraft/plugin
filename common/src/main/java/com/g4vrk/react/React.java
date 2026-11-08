@@ -36,7 +36,7 @@ import com.g4vrk.react.storage.config.DatabaseSettingsFactory;
 import com.g4vrk.react.util.PluginUtil;
 import com.g4vrk.schedula.api.SchedulaAPI;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
-import com.g4vrk.text.NativeSerializerRegistry;
+import com.g4vrk.text.LegacySerializerRegistry;
 import com.g4vrk.text.SerializerRegistry;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -66,7 +66,7 @@ public class React {
     private static final String[] SPECIAL_THANKS_TO = new String[]{"jvm-argument", "g4vrk"};
 
     private final Logger logger = LoggerFactory.getLogger("React");
-    private final SerializerRegistry serializers = NativeSerializerRegistry.INSTANCE;
+    private final SerializerRegistry serializers = LegacySerializerRegistry.INSTANCE;
     private final SimplePlaceholderRegistry placeholders = new SimplePlaceholderRegistry(logger);
     private final TextFormatter text = new MiniTextFormatter(serializers, placeholders);
     private final SimpleEventBus events = new SimpleEventBus(logger);

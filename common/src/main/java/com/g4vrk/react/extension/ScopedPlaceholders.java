@@ -3,6 +3,7 @@ package com.g4vrk.react.extension;
 import com.g4vrk.react.api.placeholder.PlaceholderResolver;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.player.TrackedPlayer;
+import com.g4vrk.react.api.text.TagMapper;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,11 @@ public final class ScopedPlaceholders implements PlaceholderRegistry, AutoClosea
     @Override
     public @NotNull TagResolver tags(final @NotNull TrackedPlayer player) {
         return this.delegate.tags(player);
+    }
+
+    @Override
+    public @NotNull TagMapper mapper(final @NotNull TrackedPlayer player) {
+        return this.delegate.mapper(player);
     }
 
     @Override

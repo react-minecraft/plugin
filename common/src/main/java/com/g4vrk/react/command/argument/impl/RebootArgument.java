@@ -9,7 +9,7 @@ import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.reboot.PluginReboot;
-import com.g4vrk.text.NativeSerializerRegistry;
+import com.g4vrk.text.LegacySerializerRegistry;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -123,7 +123,7 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
 
     private static String legacy(final String text) {
         return LegacyComponentSerializer.legacySection()
-                .serialize(NativeSerializerRegistry.INSTANCE.universalSerializer().serialize(text));
+                .serialize(LegacySerializerRegistry.INSTANCE.universalSerializer().serialize(text));
     }
 
 }

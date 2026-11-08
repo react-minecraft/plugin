@@ -4,7 +4,6 @@ import com.g4vrk.react.config.model.AimAIConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.event.check.InferenceResultEvent;
-import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.decay.DecayStrategy;

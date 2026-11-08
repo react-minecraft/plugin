@@ -27,7 +27,6 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
     private final Logger logger;
     private final String owner;
     private final Set<String> roots = ConcurrentHashMap.newKeySet();
-    private final Set<String> pluginRoots;
     private final Set<String> reported = ConcurrentHashMap.newKeySet();
 
     public ScopedCommands(
@@ -38,7 +37,6 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
         this.manager = manager;
         this.logger = logger;
         this.owner = owner;
-        this.pluginRoots = Set.copyOf(manager.rootCommands());
     }
 
     @Override
@@ -49,7 +47,9 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
 
     @Override
     public void register(final @NotNull String label, final @NotNull Command.Builder<CommandSender> command) {
-        if (!this.pluginRoots.contains(label) && this.roots.add(label) && this.reported.add(label)) {
+        // The roots of the plugin exist by the time an extension enables, so a label it finds here
+        // belongs to the plugin: removing it later would take /react down with the extension.
+        if (!this.manager.rootCommands().contains(label) && this.roots.add(label) && this.reported.add(label)) {
             this.logger.info("Extension '{}' registers the command /{}", this.owner, label);
         }
 

@@ -6,7 +6,7 @@ import com.g4vrk.react.api.event.plugin.ReloadEvent;
 import com.g4vrk.react.placeholder.BuiltinPlaceholders;
 import com.g4vrk.react.placeholder.SimplePlaceholderRegistry;
 import com.g4vrk.react.text.MiniTextFormatter;
-import com.g4vrk.functionalActions.defaults.DefaultActions;
+import com.g4vrk.functionalActions.defaults.DefaultActionSet;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
@@ -36,8 +36,8 @@ import com.g4vrk.react.storage.config.DatabaseSettingsFactory;
 import com.g4vrk.react.util.PluginUtil;
 import com.g4vrk.schedula.api.SchedulaAPI;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
-import com.g4vrk.text.LegacySerializers;
-import com.g4vrk.text.Serializers;
+import com.g4vrk.text.NativeSerializerRegistry;
+import com.g4vrk.text.SerializerRegistry;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -66,7 +66,7 @@ public class React {
     private static final String[] SPECIAL_THANKS_TO = new String[]{"jvm-argument", "g4vrk"};
 
     private final Logger logger = LoggerFactory.getLogger("React");
-    private final Serializers serializers = LegacySerializers.INSTANCE;
+    private final SerializerRegistry serializers = NativeSerializerRegistry.INSTANCE;
     private final SimplePlaceholderRegistry placeholders = new SimplePlaceholderRegistry(logger);
     private final TextFormatter text = new MiniTextFormatter(serializers, placeholders);
     private final SimpleEventBus events = new SimpleEventBus(logger);
@@ -131,7 +131,7 @@ public class React {
         this.loadConfigs();
 
         final ActionRegistry<Audience> actionRegistry = new SimpleActionRegistry<>(true);
-        DefaultActions.Adventure.registerDefaults(actionRegistry, serializers.universalSerializer()::serialize, ";");
+        DefaultActionSet.Adventure.registerDefaults(actionRegistry, text -> serializers.universalSerializer().serialize(text), ";");
         this.actionParser = new SimpleActionParser<>(actionRegistry);
 
         logger.info("Creating Data management modules...");

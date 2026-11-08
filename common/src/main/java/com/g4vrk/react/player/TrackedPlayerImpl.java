@@ -3,7 +3,6 @@ package com.g4vrk.react.player;
 import com.g4vrk.react.api.player.HistoryEntry;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.player.TrackedPlayer;
-import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.manager.CheckManager;
 import com.g4vrk.react.history.InferenceHistory;

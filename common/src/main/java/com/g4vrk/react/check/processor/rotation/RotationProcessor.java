@@ -1,6 +1,5 @@
 package com.g4vrk.react.check.processor.rotation;
 
-import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.rotation.RotationData;

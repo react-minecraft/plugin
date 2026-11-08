@@ -3,7 +3,6 @@ package com.g4vrk.react.api.rcp.player.registry;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;

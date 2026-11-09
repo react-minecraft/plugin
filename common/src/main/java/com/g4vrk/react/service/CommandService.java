@@ -24,10 +24,8 @@ import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.update.UpdateService;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
-import org.incendo.cloud.brigadier.BrigadierSetting;
 import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
 import org.incendo.cloud.exception.InvalidCommandSenderException;
 import org.incendo.cloud.exception.InvalidSyntaxException;
@@ -35,6 +33,7 @@ import org.incendo.cloud.exception.NoPermissionException;
 import org.incendo.cloud.exception.NoSuchCommandException;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.paper.LegacyPaperCommandManager;
+import org.incendo.cloud.setting.ManagerSetting;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -57,6 +56,8 @@ public final class CommandService {
     public CommandService(final @NotNull Plugin plugin, final @NotNull Logger logger) {
         this.logger = logger;
         this.manager = LegacyPaperCommandManager.createNative(plugin, ExecutionCoordinator.simpleCoordinator());
+        // Addons and RCPs register and delete their commands after the server has started.
+        this.manager.settings().set(ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);
         this.builderFactory = new CommandBuilderFactory(
                 manager,
                 "react",
@@ -114,21 +115,10 @@ public final class CommandService {
     }
 
     private void registerCompletions() {
-        // Paper hands Brigadier commands over in its COMMANDS lifecycle event, which only fires while the
-        // server starts. A React enabled later (/react reboot) registers through the Bukkit command map.
-        final boolean enabledAtStartup = Bukkit.getCurrentTick() == 0;
-        if (!enabledAtStartup) {
-            logger.info("Enabled on a running server: registering commands without native Brigadier");
-        }
-        if (enabledAtStartup && manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
-            try {
-                logger.info("Registering Native Brigadier support in commandManager...");
-                manager.registerBrigadier();
-                manager.brigadierManager().settings().set(BrigadierSetting.FORCE_EXECUTABLE, true);
-            } catch (final Throwable th) {
-                logger.error("Failed to register Brigadier native completions. Falling back to standard completions.", th);
-            }
-        } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
+        // Paper hands Brigadier commands over only once, in its COMMANDS lifecycle event at startup.
+        // Addons and RCPs add commands later (and again on every /react reboot), so the commands go
+        // through the Bukkit command map, which takes registrations at any time.
+        if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
             logger.info("Registering Asynchronous completions in commandManager...");
             manager.registerAsynchronousCompletions();
         }

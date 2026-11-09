@@ -19,7 +19,7 @@ public final class InferenceStatistic {
 
     private final InferenceHistory history;
 
-    private final double[] accumulator = new double[3];
+    private final double[] accumulator = new double[4];
     private final DoubleConsumer collector = this::accept;
 
     private long cachedRevision = Long.MIN_VALUE;
@@ -64,13 +64,14 @@ public final class InferenceStatistic {
         this.accumulator[0] = 0.0D;
         this.accumulator[1] = Double.NEGATIVE_INFINITY;
         this.accumulator[2] = Double.POSITIVE_INFINITY;
+        this.accumulator[3] = 0.0D;
 
         this.history.forEachProbability(this.collector);
 
         final Result result = this.accumulator[1] == Double.NEGATIVE_INFINITY
                 ? Result.EMPTY
                 : new Result(
-                        this.accumulator[0] / Math.max(1, this.history.size()),
+                        this.accumulator[0] / this.accumulator[3],
                         this.accumulator[1],
                         this.accumulator[2]
                 );
@@ -83,6 +84,7 @@ public final class InferenceStatistic {
 
     private void accept(final double probability) {
         this.accumulator[0] += probability;
+        this.accumulator[3]++;
 
         if (probability > this.accumulator[1]) {
             this.accumulator[1] = probability;

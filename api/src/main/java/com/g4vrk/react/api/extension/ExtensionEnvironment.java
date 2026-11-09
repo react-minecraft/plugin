@@ -1,9 +1,11 @@
 package com.g4vrk.react.api.extension;
 
+import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.extension.command.CommandRegistrar;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
+import net.kyori.adventure.audience.Audience;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +87,14 @@ public interface ExtensionEnvironment {
      * @return the text formatter
      */
     @NotNull TextFormatter text();
+
+    /**
+     * The parser of action lines ({@code [message] ...}, {@code [sound] ...}) the plugin uses,
+     * with every built-in action registered.
+     *
+     * @return the action parser
+     */
+    @NotNull ActionParser<Audience> actions();
 
     /**
      * Files in {@link #directory()} with defaults bundled in the extension jar.

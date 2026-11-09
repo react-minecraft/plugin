@@ -4,10 +4,7 @@ import com.g4vrk.react.api.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -17,7 +14,7 @@ import java.util.stream.Stream;
  *
  * <p>An implementation that keeps {@code TrackedPlayerImpl} can hand addons a
  * {@code Registry<UUID, TrackedPlayer>} by extending this class and overriding nothing but the
- * methods that are its own. Nothing is copied until a caller asks for a collection.</p>
+ * methods that are its own. Nothing is ever copied.</p>
  *
  * @param <K> key type
  * @param <T> value type this view answers
@@ -53,20 +50,16 @@ public abstract class RegistryView<K, T, V extends T> implements Registry<K, T> 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public @NotNull Set<Map.Entry<K, T>> entrySet() {
-        final Set<Map.Entry<K, V>> source = this.delegate.entrySet();
-        final Set<Map.Entry<K, T>> out = new LinkedHashSet<>(source.size() * 2);
-
-        for (final Map.Entry<K, V> entry : source) {
-            out.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue()));
-        }
-
-        return Collections.unmodifiableSet(out);
+        // Registries hand out read-only entries, so widening the value type is safe.
+        return (Set<Map.Entry<K, T>>) (Set<?>) this.delegate.entrySet();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public @NotNull Stream<T> stream() {
-        return this.delegate.stream().map(value -> value);
+        return (Stream<T>) this.delegate.stream();
     }
 
     @Override

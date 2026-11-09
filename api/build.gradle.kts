@@ -10,6 +10,7 @@ dependencies {
 
     compileOnly(libs.schedula.common)
     compileOnly(libs.configurate.yaml)
+    compileOnly(libs.actions)
 
     testImplementation(libs.paper.api)
     testImplementation(libs.cloud.core)

@@ -1,10 +1,12 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.extension.ConfigFactory;
 import com.g4vrk.react.api.extension.ExtensionEnvironment;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
+import net.kyori.adventure.audience.Audience;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -23,6 +25,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     private final Logger logger;
     private final Plugin plugin;
     private final TextFormatter text;
+    private final ActionParser<Audience> actions;
     private final ScopedScheduler scheduler;
     private final ScopedCommands commands;
     private final ScopedListeners listeners;
@@ -40,6 +43,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
         this.logger = context.logger(descriptor.name());
         this.plugin = context.plugin();
         this.text = context.text();
+        this.actions = context.actions();
         this.scheduler = new ScopedScheduler(context.scheduler());
         this.commands = new ScopedCommands(context.commands(), logger, descriptor.name());
         this.listeners = new ScopedListeners(plugin, context.events(), logger);
@@ -98,6 +102,11 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     @Override
     public @NotNull TextFormatter text() {
         return text;
+    }
+
+    @Override
+    public @NotNull ActionParser<Audience> actions() {
+        return actions;
     }
 
     @Override

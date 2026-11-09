@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  * parsers, suggestions, Brigadier integration and exception handling:</p>
  *
  * <pre>{@code
- * environment.commands().register("link", environment.commands()
- *         .command("link")
+ * environment.commands().register("react", environment.commands()
+ *         .command("react")
  *         .literal("link")
  *         .required("player", PlayerParser.playerParser())
  *         .handler(context -> {
@@ -25,10 +25,8 @@ import org.jetbrains.annotations.NotNull;
  * <p>Every command built by {@link #command(String, String...)} requires
  * {@code react.command.<label>} until the extension sets another permission itself.</p>
  *
- * <p>A root command the extension creates is removed when the extension is disabled. A command
- * added under an existing root, such as {@code /react}, stays in the tree, because Cloud cannot
- * remove a single node of it; give such a command its own root when it has to vanish on
- * disable.</p>
+ * <p>Commands are removed when the extension is disabled, including commands added under an
+ * existing root such as {@code /react}. Commands owned by the plugin or other extensions remain.</p>
  */
 @ApiStatus.NonExtendable
 @ApiStatus.AvailableSince("2.0")
@@ -52,10 +50,10 @@ public interface CommandRegistrar {
     void register(final @NotNull String label, final @NotNull Command.Builder<CommandSender> command);
 
     /**
-     * Removes every command under a root the extension created.
+     * Removes this extension's commands under a root, leaving other owners' commands intact.
      *
      * @param label the root
-     * @return {@code true} when the root belonged to the extension and was removed
+     * @return {@code true} when this extension had commands under the root and they were removed
      */
     boolean unregister(final @NotNull String label);
 

@@ -1,5 +1,6 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
 import com.g4vrk.react.api.event.EventBus;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
@@ -7,6 +8,7 @@ import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
+import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.CommandManager;
@@ -39,6 +41,7 @@ public record ExtensionContext(
         @NotNull EventBus events,
         @NotNull PlaceholderRegistry placeholders,
         @NotNull TextFormatter text,
+        @NotNull ActionParser<Audience> actions,
         @NotNull CommandManager<CommandSender> commands,
         @NotNull PlayerRegistry players,
         @NotNull RCPHost rcpHost,

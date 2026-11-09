@@ -5,6 +5,7 @@ import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.BuiltinChannels;
+import com.g4vrk.react.api.event.EventBus;
 import com.g4vrk.react.api.event.check.CheckPunishEvent;
 import com.g4vrk.react.api.punish.PunishmentRule;
 import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
@@ -20,10 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurationNode;
 
-import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -48,15 +47,19 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
     private final Server server;
     private final Scheduler scheduler;
     private final ActionParser<Audience> parser;
+    private final EventBus events;
 
     private volatile Map<String, RuleSet> rules = Map.of();
+    private volatile Map<String, List<PunishmentRule>> view = Map.of();
 
     public PunishmentManager(
             final @NotNull Logger logger,
             final @NotNull Server server,
             final @NotNull Scheduler scheduler,
-            final @NotNull ActionParser<Audience> parser
+            final @NotNull ActionParser<Audience> parser,
+            final @NotNull EventBus events
     ) {
+        this.events = events;
         this.logger = logger;
         this.server = server;
         this.scheduler = scheduler;
@@ -86,10 +89,14 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             }
         }
         final Map<String, RuleSet> converted = new Object2ObjectOpenHashMap<>(parsed.size());
+        final Map<String, List<PunishmentRule>> api = new Object2ObjectOpenHashMap<>(parsed.size());
         for (final Map.Entry<String, List<Rule>> entry : parsed.entrySet()) {
-            converted.put(entry.getKey(), RuleSet.of(entry.getValue()));
+            final RuleSet set = RuleSet.of(entry.getValue());
+            converted.put(entry.getKey(), set);
+            api.put(entry.getKey(), set.api());
         }
         this.rules = converted;
+        this.view = Collections.unmodifiableMap(api);
     }
 
     private void readRules(
@@ -154,56 +161,42 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
 
     @Override
     public @Nullable List<PunishmentRule> get(final @NotNull String check) {
-        final RuleSet set = this.rules.get(check);
-        return set == null ? null : set.api();
+        return this.view.get(check);
     }
 
     @Override
     public @Nullable String getKey(final @NotNull List<PunishmentRule> value) {
-        for (final Map.Entry<String, RuleSet> entry : this.rules.entrySet()) {
-            if (entry.getValue().api() == value) {
+        for (final Map.Entry<String, List<PunishmentRule>> entry : this.view.entrySet()) {
+            if (entry.getValue() == value) {
                 return entry.getKey();
             }
         }
-
         return null;
     }
 
     @Override
     public @NotNull Set<String> keySet() {
-        return Collections.unmodifiableSet(this.rules.keySet());
+        return this.view.keySet();
     }
 
     @Override
     public @NotNull Set<Map.Entry<String, List<PunishmentRule>>> entrySet() {
-        final Set<Map.Entry<String, List<PunishmentRule>>> out = new LinkedHashSet<>(this.rules.size() * 2);
-
-        for (final Map.Entry<String, RuleSet> entry : this.rules.entrySet()) {
-            out.add(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), entry.getValue().api()));
-        }
-
-        return Collections.unmodifiableSet(out);
+        return this.view.entrySet();
     }
 
     @Override
     public @NotNull Stream<List<PunishmentRule>> stream() {
-        return this.rules.values().stream().map(RuleSet::api);
+        return this.view.values().stream();
     }
 
     @Override
     public int size() {
-        return this.rules.size();
+        return this.view.size();
     }
 
     @Override
     public @NotNull Iterator<List<PunishmentRule>> iterator() {
-        final List<List<PunishmentRule>> out = new ObjectArrayList<>(this.rules.size());
-
-        for (final RuleSet set : this.rules.values()) {
-            out.add(set.api());
-        }
-
-        return out.iterator();
+        return this.view.values().iterator();
     }
 
     public void handleFail(
@@ -220,7 +213,7 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
         }
         for (final Rule rule : set.rules()) {
             final int vl = rule.trigger(oldViolations, newViolations);
-            if (vl != -1 && !React.INSTANCE.events().post(new CheckPunishEvent(check, vl, rule.lines())).cancelled()) {
+            if (vl != -1 && !events.post(new CheckPunishEvent(check, vl, rule.lines())).cancelled()) {
                 execute(check, rule, vl);
             }
         }

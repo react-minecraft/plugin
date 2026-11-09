@@ -30,9 +30,6 @@ official-addons:
   punish:
     repository: react-minecraft/punish-addon
     download-next-start: true
-  collect:
-    repository: react-minecraft/collect-addon
-    download-next-start: false
 
 # Не меняйте / Do not change
-config-version: 3
+config-version: 4

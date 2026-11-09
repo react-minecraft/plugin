@@ -149,9 +149,9 @@ public class React {
                 () -> updates != null && updates.notifies(), () -> updates == null ? List.of() : updates.pending());
         this.updates = new UpdateService(dataFolder.toPath(), languageName, logger, pluginSource(),
                 () -> configs.main(), updateNotifier);
-        this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser);
+        this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser, events);
         this.extensions = new ExtensionManager(new ExtensionContext(plugin, dataFolder.toPath(), logger, scheduler,
-                events, placeholders, text, commands.manager(), playerRegistry, rcpHost, punishmentManager), updates);
+                events, placeholders, text, actionParser, commands.manager(), playerRegistry, rcpHost, punishmentManager), updates);
 
         this.alertActions = new ReportActions(actionParser, configs.actions().alerts().alert());
         this.monitorActions = new ReportActions(actionParser, configs.actions().monitor().message());

@@ -4,8 +4,8 @@ import com.g4vrk.react.api.registry.write.WritableRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,9 +14,8 @@ import java.util.stream.Stream;
 /**
  * Thread-safe {@link WritableRegistry} backed by one concurrent map.
  *
- * <p>Lookups, {@link #keySet()} and {@link #entrySet()} copy nothing on the read path;
- * {@link #stream()} is weakly consistent, and {@link #iterator()} walks a snapshot because the
- * {@link Iterable} contract has no way to report a concurrent change.</p>
+ * <p>Reads copy nothing: {@link #keySet()}, {@link #entrySet()}, {@link #stream()} and
+ * {@link #iterator()} are unmodifiable, weakly consistent views of the map.</p>
  *
  * @param <K> key type
  * @param <V> value type
@@ -24,6 +23,7 @@ import java.util.stream.Stream;
 public class MapRegistry<K, V> implements WritableRegistry<K, V> {
 
     protected final Map<K, V> entries = new ConcurrentHashMap<>();
+    private final Map<K, V> readOnly = Collections.unmodifiableMap(this.entries);
 
     @Override
     public @Nullable V get(final @NotNull K key) {
@@ -43,12 +43,12 @@ public class MapRegistry<K, V> implements WritableRegistry<K, V> {
 
     @Override
     public @NotNull Set<K> keySet() {
-        return Set.copyOf(this.entries.keySet());
+        return this.readOnly.keySet();
     }
 
     @Override
     public @NotNull Set<Map.Entry<K, V>> entrySet() {
-        return Set.copyOf(this.entries.entrySet());
+        return this.readOnly.entrySet();
     }
 
     @Override
@@ -80,7 +80,7 @@ public class MapRegistry<K, V> implements WritableRegistry<K, V> {
 
     @Override
     public @NotNull Iterator<V> iterator() {
-        return List.copyOf(this.entries.values()).iterator();
+        return this.readOnly.values().iterator();
     }
 
 }

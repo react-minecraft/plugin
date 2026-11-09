@@ -1,4 +1,4 @@
-package com.g4vrk.react.resource;
+package com.g4vrk.react.api.resource;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

@@ -17,7 +17,6 @@ import com.g4vrk.react.Permissions;
 import com.g4vrk.react.api.event.player.PlayerBypassEvent;
 import com.g4vrk.react.storage.constant.StorageConstants;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -51,6 +50,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     private final AtomicBoolean dataReady = new AtomicBoolean();
     private final Map<String, Long> bypasses = new ConcurrentHashMap<>();
     private final long sessionStartedAt = System.currentTimeMillis();
+    private volatile HistorySnapshot historySnapshot;
 
     public TrackedPlayerImpl(
             final @NotNull UUID uniqueId,
@@ -149,12 +149,24 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     @Override
     public @NotNull List<HistoryEntry> history() {
-        final InferenceHistoryEntry[] entries = inferenceHistory.entries();
-        final List<HistoryEntry> out = new ObjectArrayList<>(entries.length);
-        for (final InferenceHistoryEntry entry : entries) {
-            out.add(new HistoryEntry(entry.getTimestamp(), entry.getCheck().id(), entry.getProbability()));
+        final long revision = inferenceHistory.revision();
+        final HistorySnapshot snapshot = this.historySnapshot;
+        if (snapshot != null && snapshot.revision() == revision) {
+            return snapshot.entries();
         }
-        return Collections.unmodifiableList(out);
+        final InferenceHistoryEntry[] entries = inferenceHistory.entries();
+        final HistoryEntry[] out = new HistoryEntry[entries.length];
+        for (int i = 0; i < entries.length; i++) {
+            final InferenceHistoryEntry entry = entries[i];
+            out[i] = new HistoryEntry(entry.getTimestamp(), entry.getCheck().id(), entry.getProbability());
+        }
+        final List<HistoryEntry> list = List.of(out);
+        this.historySnapshot = new HistorySnapshot(revision, list);
+        return list;
+    }
+
+    /** The last {@link #history()} answer, reused until the history changes. */
+    private record HistorySnapshot(long revision, @NotNull List<HistoryEntry> entries) {
     }
 
     @Override

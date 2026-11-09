@@ -8,26 +8,20 @@ import org.incendo.cloud.description.Description;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
-/**
- * The commands of one extension, registered on the plugin's own Cloud manager.
- *
- * <p>Roots the extension creates are remembered so {@link #close()} can remove them again; a
- * command added under the plugin's existing roots is left alone, since deleting the root would
- * delete the plugin's own tree with it.</p>
- */
+/** Commands owned by one extension on the plugin's shared Cloud manager. */
 public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
 
     private static final String PERMISSION_PREFIX = "react.command.";
-
     private final CommandManager<CommandSender> manager;
     private final Logger logger;
     private final String owner;
-    private final Set<String> roots = ConcurrentHashMap.newKeySet();
-    private final Set<String> reported = ConcurrentHashMap.newKeySet();
+    private final Map<String, List<Command<CommandSender>>> commands = new LinkedHashMap<>();
+    private boolean closed;
 
     public ScopedCommands(
             final @NotNull CommandManager<CommandSender> manager,
@@ -46,39 +40,56 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
     }
 
     @Override
-    public void register(final @NotNull String label, final @NotNull Command.Builder<CommandSender> command) {
-        // The roots of the plugin exist by the time an extension enables, so a label it finds here
-        // belongs to the plugin: removing it later would take /react down with the extension.
-        if (!this.manager.rootCommands().contains(label) && this.roots.add(label) && this.reported.add(label)) {
-            this.logger.info("Extension '{}' registers the command /{}", this.owner, label);
+    public void register(final @NotNull String label, final @NotNull Command.Builder<CommandSender> builder) {
+        final Command<CommandSender> command = builder.build();
+        if (!label.equals(command.rootComponent().name())) {
+            throw new IllegalArgumentException("Command label must match its Cloud root");
         }
-
-        this.manager.command(command);
+        synchronized (this.manager) {
+            if (this.closed) {
+                throw new IllegalStateException("Command scope is closed: " + this.owner);
+            }
+            this.manager.command(command);
+            this.commands.computeIfAbsent(label, ignored -> new ArrayList<>()).add(command);
+        }
     }
 
     @Override
     public boolean unregister(final @NotNull String label) {
-        if (!this.roots.remove(label)) {
-            return false;
-        }
-
-        try {
-            this.manager.deleteRootCommand(label);
-            return true;
-        } catch (final Throwable failure) {
-            this.logger.warn("Could not remove /{} of extension '{}'", label, this.owner, failure);
-            return false;
+        synchronized (this.manager) {
+            final List<Command<CommandSender>> owned = this.commands.get(label);
+            if (owned == null) {
+                return false;
+            }
+            // Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
+            // original Command objects of the plugin and other extensions, including their aliases.
+            final List<Command<CommandSender>> original = this.manager.commands().stream()
+                    .filter(command -> command.rootComponent().name().equals(label))
+                    .toList();
+            final List<Command<CommandSender>> retained = original.stream()
+                    .filter(command -> owned.stream().noneMatch(candidate -> candidate == command))
+                    .toList();
+            try {
+                this.manager.deleteRootCommand(label);
+                for (final Command<CommandSender> command : retained) {
+                    this.manager.command(command);
+                }
+                this.commands.remove(label);
+                return true;
+            } catch (final RuntimeException failure) {
+                this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);
+                throw failure;
+            }
         }
     }
 
     @Override
     public void close() {
-        for (final String root : List.copyOf(this.roots)) {
-            unregister(root);
+        synchronized (this.manager) {
+            this.closed = true;
+            for (final String root : List.copyOf(this.commands.keySet())) {
+                unregister(root);
+            }
         }
-
-        this.roots.clear();
-        this.reported.clear();
     }
-
 }

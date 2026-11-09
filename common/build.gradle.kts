@@ -51,6 +51,7 @@ dependencies {
 
     testImplementation(libs.paper.api)
     testImplementation(libs.configurate.yaml)
+    testImplementation(libs.cloud.core)
 
 }
 

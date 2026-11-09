@@ -85,8 +85,7 @@ public final class ReactConfigs {
     private static final String[][] OFFICIAL_ADDONS = {
             {"hologram", "hologram-addon", "true"},
             {"menu", "menu-addon", "true"},
-            {"punish", "punish-addon", "true"},
-            {"collect", "collect-addon", "false"}
+            {"punish", "punish-addon", "true"}
     };
 
     private static final ConfigMigrationChain MAIN_MIGRATIONS = ConfigMigrationChain.builder()
@@ -106,6 +105,8 @@ public final class ReactConfigs {
                     addons.node(addon[0], "download-next-start").set(Boolean.parseBoolean(addon[2]));
                 }
             })
+            // collect-addon is private and no longer an official addon.
+            .step(root -> root.node("official-addons").removeChild("collect"))
             .build();
 
     private final Path directory;

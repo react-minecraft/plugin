@@ -91,10 +91,14 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     public @NotNull Command.Builder<CommandSender> build() {
         return root()
                 .required("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
-                .optional("duration", ArgumentParser.firstOf(DurationParser.durationParser(), StringParser.stringParser()),
+                .optional(
+                        "duration",
+                        ArgumentParser.firstOf(DurationParser.durationParser(), StringParser.stringParser()),
                         SuggestionProvider.blocking((context, input) -> Stream.concat(
                                 Stream.of(FOREVER, "10m", "1h", "1d"),
-                                checkIds().stream()).map(Suggestion::suggestion).toList()))
+                                checkIds().stream()
+                        ).map(Suggestion::suggestion).toList())
+                )
                 .optional("check", StringParser.stringParser(), checkSuggestions())
                 .handler(context -> {
                     final MultiplePlayerSelector selector = context.get("players");
@@ -158,10 +162,13 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         final String joined = String.join(", ", names);
         final String checkName = checkName(check);
         final String time = duration == null ? forever : format(duration);
-        granted.run(sender, text -> text
-                .replace("<players>", joined)
-                .replace("<check>", checkName)
-                .replace("<duration>", time));
+        granted.run(
+                sender,
+                text -> text
+                        .replace("<players>", joined)
+                        .replace("<check>", checkName)
+                        .replace("<duration>", time)
+        );
     }
 
     private void remove(
@@ -183,9 +190,12 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         }
         final String joined = String.join(", ", names);
         final String checkName = checkName(check);
-        removed.run(sender, text -> text
-                .replace("<players>", joined)
-                .replace("<check>", checkName));
+        removed.run(
+                sender,
+                text -> text
+                        .replace("<players>", joined)
+                        .replace("<check>", checkName)
+        );
     }
 
     private void list(final @NotNull CommandSender sender) {
@@ -203,10 +213,13 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             for (final Map.Entry<String, Instant> entry : player.bypasses().entrySet()) {
                 final String checkName = entry.getKey().equals(StorageConstants.ALL_CHECKS) ? allChecks : entry.getKey();
                 final String left = entry.getValue() == null ? forever : format(Duration.between(now, entry.getValue()));
-                listEntry.run(sender, text -> text
-                        .replace("<player>", player.name())
-                        .replace("<check>", checkName)
-                        .replace("<duration>", left));
+                listEntry.run(
+                        sender,
+                        text -> text
+                                .replace("<player>", player.name())
+                                .replace("<check>", checkName)
+                                .replace("<duration>", left)
+                );
             }
         }
     }

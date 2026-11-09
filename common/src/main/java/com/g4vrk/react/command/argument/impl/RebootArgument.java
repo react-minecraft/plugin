@@ -72,8 +72,12 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
         return builderFactory.create()
                 .literal("reboot")
                 .permission("react.command.reboot")
-                .optional("target", StringParser.stringParser(), SuggestionProvider.blocking((context, input) ->
-                        extensions.targets().stream().map(Suggestion::suggestion).toList()))
+                .optional(
+                        "target",
+                        StringParser.stringParser(),
+                        SuggestionProvider.blocking((context, input) ->
+                                extensions.targets().stream().map(Suggestion::suggestion).toList())
+                )
                 .handler(context -> {
                     final CommandSender sender = context.sender();
                     final String target = context.getOrDefault("target", null);
@@ -91,9 +95,12 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                         cancelled.run(sender, text -> text.replace("<reason>", reason));
                         return;
                     }
-                    starting.run(sender, text -> text
-                            .replace("<jar>", reboot.jar().getName())
-                            .replace("<version>", reboot.newVersion()));
+                    starting.run(
+                            sender,
+                            text -> text
+                                    .replace("<jar>", reboot.jar().getName())
+                                    .replace("<version>", reboot.newVersion())
+                    );
                     // Run outside the command dispatch: disabling React tears down this command manager.
                     Bukkit.getScheduler().runTask(plugin, reboot);
                 });
@@ -110,10 +117,13 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                 extensionsUnknown.run(sender, text -> text.replace("<target>", target));
                 return;
             }
-            extensionsDone.run(sender, text -> text
-                    .replace("<loaded>", names(result.loaded()))
-                    .replace("<unloaded>", names(result.unloaded()))
-                    .replace("<failed>", names(result.failed())));
+            extensionsDone.run(
+                    sender,
+                    text -> text
+                            .replace("<loaded>", names(result.loaded()))
+                            .replace("<unloaded>", names(result.unloaded()))
+                            .replace("<failed>", names(result.failed()))
+            );
         });
     }
 

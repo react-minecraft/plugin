@@ -103,11 +103,17 @@ public final class MongoStorageBackend implements StorageBackend {
                 final Document isLatest = new Document("$gte", List.of(violation.updatedAt(), currentTimestamp));
                 final Document fields = new Document(FIELD_PLAYER_UUID, violation.playerUuid().toString())
                         .append(FIELD_CHECK, violation.check())
-                        .append(FIELD_VIOLATIONS, new Document("$cond", List.of(
-                                isLatest,
-                                violation.violations(),
-                                new Document("$ifNull", List.of('$' + FIELD_VIOLATIONS, 0.0D))
-                        )))
+                        .append(
+                                FIELD_VIOLATIONS,
+                                new Document(
+                                        "$cond",
+                                        List.of(
+                                                        isLatest,
+                                                        violation.violations(),
+                                                        new Document("$ifNull", List.of('$' + FIELD_VIOLATIONS, 0.0D))
+                                                )
+                                )
+                        )
                         .append(FIELD_UPDATED_AT, new Document("$max", List.of(currentTimestamp, violation.updatedAt())));
                 violationWrites.add(new UpdateOneModel<>(
                         eq(FIELD_ID, id),

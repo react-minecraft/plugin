@@ -21,8 +21,11 @@ class ReactConfigsMigrationTest {
     void movesLegacyFormatsIntoActions(@TempDir final Path directory) throws Exception {
         copy("legacy/main-config.yml", directory.resolve("main-config.yml"));
         copy("legacy/actions.yml", directory.resolve("actions.yml"));
-        Files.writeString(directory.resolve("main-config.yml"), Files.readString(directory.resolve("main-config.yml"))
-                .replace("<white>провалил", "<white>custom"));
+        Files.writeString(
+                directory.resolve("main-config.yml"),
+                Files.readString(directory.resolve("main-config.yml"))
+                        .replace("<white>провалил", "<white>custom")
+        );
 
         final ReactConfigs configs = new ReactConfigs(directory, "ru", NOPLogger.NOP_LOGGER);
         configs.load();

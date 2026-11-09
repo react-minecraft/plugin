@@ -135,8 +135,11 @@ public class React {
         this.actionParser = new SimpleActionParser<>(actionRegistry);
 
         logger.info("Creating Data management modules...");
-        this.storageManager = new StorageManager(logger, new DatabaseSettingsFactory()
-                .create(configs.database(), configs.databaseType(), dataFolder));
+        this.storageManager = new StorageManager(
+                logger,
+                new DatabaseSettingsFactory()
+                        .create(configs.database(), configs.databaseType(), dataFolder)
+        );
         storageManager.start();
 
         this.playerFactory = new PlayerFactory();
@@ -145,13 +148,39 @@ public class React {
         this.rcpHost = new RCPHost(playerRegistry);
         this.commands = new CommandService(plugin, logger);
 
-        this.updateNotifier = new UpdateNotifier(events, actionParser, configs.actions(),
-                () -> updates != null && updates.notifies(), () -> updates == null ? List.of() : updates.pending());
-        this.updates = new UpdateService(dataFolder.toPath(), languageName, logger, pluginSource(),
-                () -> configs.main(), updateNotifier);
+        this.updateNotifier = new UpdateNotifier(
+                events,
+                actionParser,
+                configs.actions(),
+                () -> updates != null && updates.notifies(),
+                () -> updates == null ? List.of() : updates.pending()
+        );
+        this.updates = new UpdateService(
+                dataFolder.toPath(),
+                languageName,
+                logger,
+                pluginSource(),
+                () -> configs.main(),
+                updateNotifier
+        );
         this.punishmentManager = new PunishmentManager(logger, plugin.getServer(), scheduler, actionParser, events);
-        this.extensions = new ExtensionManager(new ExtensionContext(plugin, dataFolder.toPath(), logger, scheduler,
-                events, placeholders, text, actionParser, commands.manager(), playerRegistry, rcpHost, punishmentManager), updates);
+        this.extensions = new ExtensionManager(
+                new ExtensionContext(
+                        plugin,
+                        dataFolder.toPath(),
+                        logger,
+                        scheduler,
+                        events,
+                        placeholders,
+                        text,
+                        actionParser,
+                        commands.manager(),
+                        playerRegistry,
+                        rcpHost,
+                        punishmentManager
+                ),
+                updates
+        );
 
         this.alertActions = new ReportActions(actionParser, configs.actions().alerts().alert());
         this.monitorActions = new ReportActions(actionParser, configs.actions().monitor().message());
@@ -162,8 +191,16 @@ public class React {
         this.inferenceHistoryPrinter = new InferenceHistoryPrinter(text);
 
         logger.info("Registering commands...");
-        commands.register(actionParser, configs.actions(), scheduler, inferenceHistoryPrinter,
-                playerRegistry, rcpHost, extensions, updates);
+        commands.register(
+                actionParser,
+                configs.actions(),
+                scheduler,
+                inferenceHistoryPrinter,
+                playerRegistry,
+                rcpHost,
+                extensions,
+                updates
+        );
 
         this.listeners = new ListenerService(plugin, logger);
         listeners.register(configs, playerRegistry, playerFactory, storageManager, rcpHost, updateNotifier::join);

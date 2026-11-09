@@ -19,6 +19,7 @@ import java.util.UUID;
  */
 @ApiStatus.AvailableSince("2.0")
 public final class ModelFrameEvent extends Event {
+
     private final String model;
     private final UUID playerId;
     private final List<String> columns;
@@ -28,16 +29,20 @@ public final class ModelFrameEvent extends Event {
     /**
      * Creates a frame. An immutable {@code columns} list ({@link List#of}) is kept as is, not copied.
      *
-     * @param model stable model identifier, not its display name
+     * @param model    stable model identifier, not its display name
      * @param playerId player whose input produced the frame
-     * @param columns ordered dataset feature names, excluding the label
+     * @param columns  ordered dataset feature names, excluding the label
      * @param features values in the same order as columns; the event takes the array over,
      *                 so the producer must not change it afterwards
      * @param inCombat whether the producer's combat window is active
      */
-    public ModelFrameEvent(final @NotNull String model, final @NotNull UUID playerId,
-                           final @NotNull List<String> columns, final @NotNull float[] features,
-                           final boolean inCombat) {
+    public ModelFrameEvent(
+            final @NotNull String model,
+            final @NotNull UUID playerId,
+            final @NotNull List<String> columns,
+            final float @NotNull [] features,
+            final boolean inCombat
+    ) {
         this.model = Objects.requireNonNull(model, "model");
         this.playerId = Objects.requireNonNull(playerId, "playerId");
         this.columns = List.copyOf(columns);
@@ -48,17 +53,41 @@ public final class ModelFrameEvent extends Event {
         this.inCombat = inCombat;
     }
 
-    /** @return stable model identifier */
-    public @NotNull String model() { return this.model; }
+    /**
+     * Gives the stable model identifier.
+     *
+     * @return the model id, for example {@code vector}
+     */
+    public @NotNull String model() {
+        return this.model;
+    }
 
-    /** @return player UUID */
-    public @NotNull UUID playerId() { return this.playerId; }
+    /**
+     * Gives the player whose input produced the frame.
+     *
+     * @return the player UUID
+     */
+    public @NotNull UUID playerId() {
+        return this.playerId;
+    }
 
-    /** @return immutable ordered feature names */
-    public @NotNull List<String> columns() { return this.columns; }
+    /**
+     * Gives the feature names in dataset order.
+     *
+     * @return the immutable column names
+     */
+    public @NotNull List<String> columns() {
+        return this.columns;
+    }
 
-    /** @return independent copy of the dataset values */
-    public @NotNull float[] features() { return this.features.clone(); }
+    /**
+     * Gives the number of values, {@code columns().size()}.
+     *
+     * @return the value count
+     */
+    public int size() {
+        return this.features.length;
+    }
 
     /**
      * Gives one value without copying the frame.
@@ -66,8 +95,26 @@ public final class ModelFrameEvent extends Event {
      * @param index position in {@link #columns()}
      * @return the value
      */
-    public float feature(final int index) { return this.features[index]; }
+    public float feature(final int index) {
+        return this.features[index];
+    }
 
-    /** @return whether the producer considers the player in combat */
-    public boolean inCombat() { return this.inCombat; }
+    /**
+     * Gives a copy of the dataset values.
+     *
+     * @return an independent copy
+     */
+    public float @NotNull [] features() {
+        return this.features.clone();
+    }
+
+    /**
+     * Tells whether the producer considers the player in combat.
+     *
+     * @return {@code true} in combat
+     */
+    public boolean inCombat() {
+        return this.inCombat;
+    }
+
 }

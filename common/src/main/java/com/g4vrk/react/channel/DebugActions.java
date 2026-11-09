@@ -42,12 +42,15 @@ public final class DebugActions implements ReportChannel.Delivery {
         }
         final String violations = String.valueOf(report.violations());
 
-        list.run(recipient, text -> text
-                .replace("<player>", report.playerName())
-                .replace("<check>", report.check())
-                .replace("<violations>", violations)
-                .replace("<vl>", violations)
-                .replace("<details>", report.details()));
+        list.run(
+                recipient,
+                text -> text
+                        .replace("<player>", report.playerName())
+                        .replace("<check>", report.check())
+                        .replace("<violations>", violations)
+                        .replace("<vl>", violations)
+                        .replace("<details>", report.details())
+        );
     }
 
 }

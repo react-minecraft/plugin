@@ -40,9 +40,15 @@ class ChecksumsTest {
     void readsBothSha256sumModesAndSkipsBrokenLines() {
         final Checksums checksums = Checksums.parse(RELEASE);
 
-        assertEquals(Map.of(
-                "react-rcp-1.4.0-sources.jar", SOURCES_HASH.toLowerCase(),
-                "react-rcp-1.4.0.jar", JAR_HASH), checksums.files());
+        assertEquals(
+                Map.of(
+                        "react-rcp-1.4.0-sources.jar",
+                        SOURCES_HASH.toLowerCase(),
+                        "react-rcp-1.4.0.jar",
+                        JAR_HASH
+                ),
+                checksums.files()
+        );
     }
 
     @Test

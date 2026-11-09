@@ -142,8 +142,13 @@ public final class ConfigFile<T> {
         final Path backup = path.resolveSibling(path.getFileName() + ".v" + previous + ".bak");
         Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
         loader(path).save(migrated);
-        logger.warn("Migrated {} from version {} to {}. The old file is kept as {}",
-                path.getFileName(), previous, migrations.latest(), backup.getFileName());
+        logger.warn(
+                "Migrated {} from version {} to {}. The old file is kept as {}",
+                path.getFileName(),
+                previous,
+                migrations.latest(),
+                backup.getFileName()
+        );
     }
 
     private void stampVersion(final int version) throws IOException {

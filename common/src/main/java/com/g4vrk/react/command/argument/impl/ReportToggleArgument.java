@@ -77,8 +77,12 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
                 .permission(permission)
                 .optional("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false));
         if (byCheck) {
-            builder = builder.optional("check", StringParser.stringParser(), SuggestionProvider.blocking((context, input) ->
-                    React.INSTANCE.configs().checks().keySet().stream().map(Suggestion::suggestion).toList()));
+            builder = builder.optional(
+                    "check",
+                    StringParser.stringParser(),
+                    SuggestionProvider.blocking((context, input) ->
+                            React.INSTANCE.configs().checks().keySet().stream().map(Suggestion::suggestion).toList())
+            );
         }
         return builder.handler(context -> {
 
@@ -110,9 +114,12 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
 
         final String names = players == null ? "*" : players.stream().map(Player::getName).collect(Collectors.joining(", "));
         final String checkName = check == null ? "*" : check;
-        this.enabledPlayersActions.run(sender, text -> text
-                .replace("<players>", names)
-                .replace("<check>", checkName));
+        this.enabledPlayersActions.run(
+                sender,
+                text -> text
+                        .replace("<players>", names)
+                        .replace("<check>", checkName)
+        );
     }
 
     @Override

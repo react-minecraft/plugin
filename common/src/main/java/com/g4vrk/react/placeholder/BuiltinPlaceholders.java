@@ -48,9 +48,12 @@ public final class BuiltinPlaceholders {
                     : ProbabilityColor.miniMessage(average);
         });
 
-        registry.register("history-size", (player, query) -> player instanceof TrackedPlayerImpl impl
-                ? Integer.toString(impl.inferenceHistory.size())
-                : null);
+        registry.register(
+                "history-size",
+                (player, query) -> player instanceof TrackedPlayerImpl impl
+                        ? Integer.toString(impl.inferenceHistory.size())
+                        : null
+        );
     }
 
     private static @NotNull String number(final double value) {

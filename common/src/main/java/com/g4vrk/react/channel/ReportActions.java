@@ -34,12 +34,15 @@ public final class ReportActions implements ReportChannel.Delivery {
     public void deliver(final @NotNull Audience recipient, final @NotNull CheckReport report) {
         final String violations = String.valueOf(report.violations());
 
-        this.actions.run(recipient, text -> text
-                .replace("<player>", report.playerName())
-                .replace("<check>", report.check())
-                .replace("<violations>", violations)
-                .replace("<vl>", violations)
-                .replace("<details>", report.details()));
+        this.actions.run(
+                recipient,
+                text -> text
+                        .replace("<player>", report.playerName())
+                        .replace("<check>", report.check())
+                        .replace("<violations>", violations)
+                        .replace("<vl>", violations)
+                        .replace("<details>", report.details())
+        );
     }
 
 }

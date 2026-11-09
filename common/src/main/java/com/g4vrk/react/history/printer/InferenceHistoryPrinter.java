@@ -79,12 +79,16 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
             for (int index = start; index > end; index--) {
                 final InferenceHistoryEntry entry = history[index];
 
-                this.send(receiver, format.entryFormat(), TagResolver.resolver(
-                        common,
-                        Placeholder.component("probability", ProbabilityColor.component(entry.getProbability())),
-                        Placeholder.unparsed("probability-plain", ProbabilityFormatter.format(entry.getProbability())),
-                        Placeholder.unparsed("check", entry.getCheck().name())
-                ));
+                this.send(
+                        receiver,
+                        format.entryFormat(),
+                        TagResolver.resolver(
+                                        common,
+                                        Placeholder.component("probability", ProbabilityColor.component(entry.getProbability())),
+                                        Placeholder.unparsed("probability-plain", ProbabilityFormatter.format(entry.getProbability())),
+                                        Placeholder.unparsed("check", entry.getCheck().name())
+                                )
+                );
             }
         }
 

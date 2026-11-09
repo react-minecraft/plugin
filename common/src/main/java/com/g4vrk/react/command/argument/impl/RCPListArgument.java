@@ -76,24 +76,42 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                     for (final HostedRCPEnvironment environment : environments) {
                         final RCPMetadata metadata = environment.metadata();
                         final String status = environment.currentStatus();
-                        run(status == null ? entry : entryWithStatus, sender, Map.of(
-                                "<name>", metadata.name(),
-                                "<version>", metadata.version(),
-                                "<api>", Integer.toString(metadata.apiVersion()),
-                                "<status>", status == null ? "" : status));
+                        run(
+                                status == null ? entry : entryWithStatus,
+                                sender,
+                                Map.of(
+                                        "<name>",
+                                        metadata.name(),
+                                        "<version>",
+                                        metadata.version(),
+                                        "<api>",
+                                        Integer.toString(metadata.apiVersion()),
+                                        "<status>",
+                                        status == null ? "" : status
+                                )
+                        );
                     }
 
                     final UpdateService.Status reported = updates.reactRCPStatus();
                     final UpdateService.Status status = reported == null
                             ? new UpdateService.Status(null, UpdateChannel.RELEASE, null, "not checked")
                             : reported;
-                    run(react, sender, Map.of(
-                            "<version>", status.version() == null
-                                    ? texts.noVersion()
-                                    : texts.version().replace("<version>", status.version()),
-                            "<channel>", status.channel().name().toLowerCase(Locale.ROOT),
-                            "<state>", status.state(),
-                            "<checked>", checked(status.lastCheck())));
+                    run(
+                            react,
+                            sender,
+                            Map.of(
+                                    "<version>",
+                                    status.version() == null
+                                            ? texts.noVersion()
+                                            : texts.version().replace("<version>", status.version()),
+                                    "<channel>",
+                                    status.channel().name().toLowerCase(Locale.ROOT),
+                                    "<state>",
+                                    status.state(),
+                                    "<checked>",
+                                    checked(status.lastCheck())
+                            )
+                    );
                 });
     }
 

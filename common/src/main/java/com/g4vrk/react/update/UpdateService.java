@@ -290,8 +290,14 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         }
 
         final ComponentSettings component = componentSettings(ExtensionKind.RCP, "React");
-        install("React RCP", ReleaseClient.REACT_RCP, REACT_RCP_PREFIX, component.effectiveChannel(),
-                component.pinned(), ExtensionKind.RCP.jars(dataFolder));
+        install(
+                "React RCP",
+                ReleaseClient.REACT_RCP,
+                REACT_RCP_PREFIX,
+                component.effectiveChannel(),
+                component.pinned(),
+                ExtensionKind.RCP.jars(dataFolder)
+        );
     }
 
     /**
@@ -367,8 +373,14 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                     descriptor.name().equalsIgnoreCase(entry.getKey())
                             || descriptor.github() != null && descriptor.github().repository().equalsIgnoreCase(addon.repository()));
             if (!installed) {
-                install("addon " + entry.getKey(), addon.repository(), prefix(addon.repository()),
-                        UpdateChannel.RELEASE, null, ExtensionKind.ADDON.jars(dataFolder));
+                install(
+                        "addon " + entry.getKey(),
+                        addon.repository(),
+                        prefix(addon.repository()),
+                        UpdateChannel.RELEASE,
+                        null,
+                        ExtensionKind.ADDON.jars(dataFolder)
+                );
             }
         }
     }
@@ -385,8 +397,13 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             final ReleaseClient.Release release = client.release(repository, channel, pinned);
             if (release.checksums().apiVersion() != RCPAPI.VERSION) {
                 statuses.put(key(repository), new Status(release.version(), channel, Instant.now(), "api-version " + release.checksums().apiVersion()));
-                logger.warn("Not installing {} {}: it needs api-version {}, this plugin provides {}",
-                        display, release.version(), release.checksums().apiVersion(), RCPAPI.VERSION);
+                logger.warn(
+                        "Not installing {} {}: it needs api-version {}, this plugin provides {}",
+                        display,
+                        release.version(),
+                        release.checksums().apiVersion(),
+                        RCPAPI.VERSION
+                );
                 return;
             }
             final Map.Entry<String, String> jar = release.checksums().jar(prefix);
@@ -422,8 +439,15 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         final List<Component> components = new ArrayList<>();
         final Path pluginJar = plugin.jar();
         if (pluginJar != null) {
-            components.add(new Component(UpdateDownloadedEvent.Kind.PLUGIN, "React", PLUGIN_REPOSITORY, plugin.prefix(),
-                    pluginJar, plugin.updateFolder().resolve(pluginJar.getFileName()), null));
+            components.add(new Component(
+                    UpdateDownloadedEvent.Kind.PLUGIN,
+                    "React",
+                    PLUGIN_REPOSITORY,
+                    plugin.prefix(),
+                    pluginJar,
+                    plugin.updateFolder().resolve(pluginJar.getFileName()),
+                    null
+            ));
         }
         for (final ExtensionKind kind : ExtensionKind.values()) {
             for (final ExtensionDescriptor descriptor : scan(kind)) {
@@ -464,8 +488,15 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             final ReleaseClient.Release release = client.release(component.repository(), channel, settings.pinned());
             final Instant now = Instant.now();
             if (component.extension() != null && release.checksums().apiVersion() != RCPAPI.VERSION) {
-                statuses.put(key(component.repository()), new Status(release.version(), channel, now,
-                        "needs api-version " + release.checksums().apiVersion()));
+                statuses.put(
+                        key(component.repository()),
+                        new Status(
+                                release.version(),
+                                channel,
+                                now,
+                                "needs api-version " + release.checksums().apiVersion()
+                        )
+                );
                 return false;
             }
             final Map.Entry<String, String> jar = release.checksums().jar(component.prefix());

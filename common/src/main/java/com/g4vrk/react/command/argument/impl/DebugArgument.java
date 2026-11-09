@@ -19,8 +19,15 @@ public final class DebugArgument extends ReportToggleArgument {
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull ActionParser<Audience> actionParser
     ) {
-        super(builderFactory, actionParser, BuiltinChannels.DEBUG, Permissions.DEBUG, ActionsConfig::debug, true,
-                "debug");
+        super(
+                builderFactory,
+                actionParser,
+                BuiltinChannels.DEBUG,
+                Permissions.DEBUG,
+                ActionsConfig::debug,
+                true,
+                "debug"
+        );
     }
 
 }

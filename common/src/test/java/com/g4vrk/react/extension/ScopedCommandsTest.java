@@ -46,11 +46,15 @@ class ScopedCommandsTest {
     @Test
     void rejectsMismatchedLabelAndClosedScope() {
         final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon");
-        assertThrows(IllegalArgumentException.class,
-                () -> addon.register("other", addon.command("punish").handler(context -> { })));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> addon.register("other", addon.command("punish").handler(context -> { }))
+        );
         addon.close();
-        assertThrows(IllegalStateException.class,
-                () -> addon.register("punish", addon.command("punish").handler(context -> { })));
+        assertThrows(
+                IllegalStateException.class,
+                () -> addon.register("punish", addon.command("punish").handler(context -> { }))
+        );
     }
 
     private List<String> literals() {

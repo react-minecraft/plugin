@@ -178,12 +178,15 @@ public final class StorageManager {
 
     public void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
         for (final Check check : player.checkManager.checks()) {
-            enqueue(new StorageMutation.Violation(
-                    player.uniqueId(),
-                    check.id(),
-                    check.violations(),
-                    System.currentTimeMillis()
-            ), true);
+            enqueue(
+                    new StorageMutation.Violation(
+                                    player.uniqueId(),
+                                    check.id(),
+                                    check.violations(),
+                                    System.currentTimeMillis()
+                            ),
+                    true
+            );
         }
     }
 

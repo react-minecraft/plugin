@@ -63,8 +63,11 @@ public final class ConfigMigrationChain {
         final int current = version(root);
 
         if (current > latest) {
-            throw new SerializationException(root.node(VERSION_KEY), Integer.class,
-                    "File version " + current + " is newer than this build supports (" + latest + ")");
+            throw new SerializationException(
+                    root.node(VERSION_KEY),
+                    Integer.class,
+                    "File version " + current + " is newer than this build supports (" + latest + ")"
+            );
         }
         if (current == latest) {
             return -1;

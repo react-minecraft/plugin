@@ -103,7 +103,8 @@ public final class CommandService {
                 reload,
                 reboot,
                 new HistoryArgument(builderFactory, historyPrinter, playerRegistry),
-                rcps)) {
+                rcps
+        )) {
             argument.builds().forEach(manager::command);
         }
     }

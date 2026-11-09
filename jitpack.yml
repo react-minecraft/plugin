@@ -3,4 +3,5 @@ jdk:
 before_install:
   - chmod +x gradlew
 install:
-  - ./gradlew clean build publishToMavenLocal
+  # Tests run in CI; JitPack only publishes, its small heap runs out compiling them.
+  - ./gradlew clean publishToMavenLocal -x test -x compileTestJava -Dorg.gradle.jvmargs=-Xmx1g

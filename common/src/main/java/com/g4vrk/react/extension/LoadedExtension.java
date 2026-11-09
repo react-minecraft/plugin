@@ -10,7 +10,6 @@ import com.g4vrk.react.rcp.RCPHost;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,9 +59,9 @@ public final class LoadedExtension {
         final Path directory = descriptor.kind().data(context.dataFolder()).resolve(descriptor.name());
         Files.createDirectories(directory);
 
-        final URLClassLoader classLoader = new URLClassLoader(
+        final URLClassLoader classLoader = new ExtensionClassLoader(
                 context.logger().getName() + "#" + descriptor.name(),
-                new URL[]{descriptor.jar().toUri().toURL()},
+                descriptor.jar().toUri().toURL(),
                 RCPLifecycle.class.getClassLoader()
         );
 

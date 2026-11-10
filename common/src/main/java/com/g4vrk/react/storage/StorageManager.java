@@ -177,6 +177,10 @@ public final class StorageManager {
     }
 
     public void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
+        if (!player.dataReady()) {
+            return;
+        }
+
         for (final Check check : player.checkManager.checks()) {
             enqueue(
                     new StorageMutation.Violation(

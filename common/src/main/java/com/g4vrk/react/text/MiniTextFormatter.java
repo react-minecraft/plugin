@@ -46,6 +46,16 @@ public final class MiniTextFormatter implements TextFormatter {
     }
 
     @Override
+    public @NotNull Component format(final @NotNull String text) {
+        return this.serializers.universalSerializer().serialize(text);
+    }
+
+    @Override
+    public @NotNull Component format(final @NotNull String text, final @NotNull TrackedPlayer player) {
+        return this.serializers.universalSerializer().serialize(text, mapper(this.placeholders, player));
+    }
+
+    @Override
     public @NotNull Component format(final @NotNull String text, final @NotNull TagResolver @NotNull ... resolvers) {
         if (resolvers.length == 0) {
             return this.serializers.universalSerializer().serialize(text);
@@ -91,12 +101,22 @@ public final class MiniTextFormatter implements TextFormatter {
         return this.serializers.universalSerializer().serialize(text, mapper(this.placeholders, player));
     }
 
+    @Override
+    public @NotNull Component formatMapped(
+            final @NotNull String text,
+            final @NotNull TagMapper source
+    ) {
+        return this.serializers.universalSerializer().serialize(text, mapper(source));
+    }
+
     private static com.g4vrk.text.TagMapper mapper(
             final @NotNull PlaceholderRegistry registry,
             final @NotNull TrackedPlayer player
     ) {
-        final TagMapper source = registry.mapper(player);
+        return mapper(registry.mapper(player));
+    }
 
+    private static com.g4vrk.text.TagMapper mapper(final @NotNull TagMapper source) {
         return new com.g4vrk.text.TagMapper() {
 
             @Override
@@ -114,10 +134,11 @@ public final class MiniTextFormatter implements TextFormatter {
 
     private static boolean present() {
         try {
+            Component.class.getMethod("compact");
             Class.forName(MINI_MESSAGE_CLASS, false, MiniTextFormatter.class.getClassLoader());
 
             return true;
-        } catch (final ClassNotFoundException ignored) {
+        } catch (final ReflectiveOperationException ignored) {
             return false;
         }
     }

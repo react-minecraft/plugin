@@ -45,6 +45,10 @@ dependencies {
 
     compileOnly(libs.cloud.paper)
 
+    implementation(libs.adventure.minimessage) {
+        isTransitive = false
+    }
+
     implementation(libs.textserializer.legacy)
     implementation(libs.actions)
     implementation(libs.schedula.common)

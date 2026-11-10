@@ -17,6 +17,23 @@ import org.jetbrains.annotations.NotNull;
 public interface TextFormatter {
 
     /**
+     * Formats text without requiring MiniMessage classes from the server.
+     *
+     * @param text the raw text
+     * @return the formatted component
+     */
+    @NotNull Component format(final @NotNull String text);
+
+    /**
+     * Resolves player placeholders on servers with or without native MiniMessage.
+     *
+     * @param text the raw text
+     * @param player the placeholder subject
+     * @return the formatted component
+     */
+    @NotNull Component format(final @NotNull String text, final @NotNull TrackedPlayer player);
+
+    /**
      * Formats text.
      *
      * @param text      the raw text
@@ -37,6 +54,18 @@ public interface TextFormatter {
             final @NotNull String text,
             final @NotNull TrackedPlayer player,
             final @NotNull TagResolver @NotNull ... resolvers
+    );
+
+    /**
+     * Formats mapped tags on every supported server, including Paper 1.16.5.
+     *
+     * @param text the raw text
+     * @param mapper the tags returned as MiniMessage markup
+     * @return the formatted server component
+     */
+    @NotNull Component formatMapped(
+            final @NotNull String text,
+            final @NotNull TagMapper mapper
     );
 
 }

@@ -10,9 +10,9 @@ import com.g4vrk.react.registry.view.RegistryView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
@@ -25,19 +25,23 @@ import java.util.function.Consumer;
 public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerImpl> implements RCPPlayerRegistry {
 
     private final PlayerRegistry players;
-    private final List<HostedRCPEnvironment> environments = new CopyOnWriteArrayList<>();
+    private volatile List<HostedRCPEnvironment> environments = List.of();
 
     public RCPHost(final @NotNull PlayerRegistry playerRegistry) {
         super(playerRegistry);
         this.players = playerRegistry;
     }
 
-    public void attach(final @NotNull HostedRCPEnvironment environment) {
-        this.environments.add(environment);
+    public synchronized void attach(final @NotNull HostedRCPEnvironment environment) {
+        final List<HostedRCPEnvironment> updated = new ArrayList<>(environments);
+        updated.add(environment);
+        this.environments = List.copyOf(updated);
     }
 
-    public void detach(final @NotNull HostedRCPEnvironment environment) {
-        this.environments.remove(environment);
+    public synchronized void detach(final @NotNull HostedRCPEnvironment environment) {
+        final List<HostedRCPEnvironment> updated = new ArrayList<>(environments);
+        updated.remove(environment);
+        this.environments = List.copyOf(updated);
     }
 
     @Override
@@ -86,7 +90,7 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
     }
 
     public @NotNull List<HostedRCPEnvironment> environments() {
-        return List.copyOf(this.environments);
+        return this.environments;
     }
 
     public @Nullable String status() {

@@ -55,7 +55,13 @@ public final class CommandService {
 
     public CommandService(final @NotNull Plugin plugin, final @NotNull Logger logger) {
         this.logger = logger;
-        this.manager = LegacyPaperCommandManager.createNative(plugin, ExecutionCoordinator.simpleCoordinator());
+        this.manager = LegacyPaperCommandManager.createNative(
+                plugin,
+                ExecutionCoordinator.<CommandSender>builder()
+                        .parsingExecutor(this::withCommandLock)
+                        .suggestionsExecutor(this::withCommandLock)
+                        .build()
+        );
         // Addons and RCPs register and delete their commands after the server has started.
         this.manager.settings().set(ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);
         this.builderFactory = new CommandBuilderFactory(
@@ -112,6 +118,12 @@ public final class CommandService {
     public void reload(final @NotNull ActionsConfig actions) {
         for (final ReloadObserver<ActionsConfig> observer : observers) {
             observer.onReload(actions);
+        }
+    }
+
+    private void withCommandLock(final @NotNull Runnable task) {
+        synchronized (this.manager) {
+            task.run();
         }
     }
 

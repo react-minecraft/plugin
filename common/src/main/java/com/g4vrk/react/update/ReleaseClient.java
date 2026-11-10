@@ -47,7 +47,7 @@ public final class ReleaseClient {
     private static final String CHECKSUMS = "checksums.txt";
     private static final String SIGNATURE = CHECKSUMS + ".sig";
     private static final String REVOKED_URL = RCPAPI.API_URL + "/api/v1/rcp/revoked";
-    private static final String PUBLIC_KEY = "MCowBQYDK2VwAyEAQ1cusiIHlnREUXw/ubE9IqSkXBxYPmZYNnxn58Jpo8g=";
+    private static final String PUBLIC_KEY = "MCowBQYDK2VwAyEAjBPvgQr/pgYBmpHeXr0t+G402p1vHKGx3MbANe+FntI=";
     private static final Pattern VERSION = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.+-]{0,39}");
     private static final Pattern REPOSITORY = Pattern.compile("[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}");
     private static final Duration TIMEOUT = Duration.ofSeconds(15);

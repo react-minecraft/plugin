@@ -9,11 +9,25 @@ import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
 import com.g4vrk.react.storage.model.StoredInference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -23,6 +37,9 @@ import java.util.function.Function;
 
 import static com.g4vrk.react.storage.constant.StorageConstants.FAILURE_LOG_INTERVAL_MILLIS;
 
+/**
+ * Owns the storage connection, its workers and the bounded queue of pending writes.
+ */
 public final class StorageManager {
 
     private final Logger logger;
@@ -31,8 +48,7 @@ public final class StorageManager {
 
     private final ThreadPoolExecutor executor;
     private final ScheduledThreadPoolExecutor scheduler;
-    private final java.util.concurrent.ConcurrentLinkedDeque<StorageMutation> pendingWrites = new java.util.concurrent.ConcurrentLinkedDeque<>();
-    private final AtomicInteger pendingWriteCount = new AtomicInteger();
+    private final Deque<StorageMutation> pendingWrites = new ArrayDeque<>();
     private final Object pendingWriteLock = new Object();
     private final AtomicBoolean available = new AtomicBoolean();
     private final AtomicBoolean started = new AtomicBoolean();
@@ -45,7 +61,7 @@ public final class StorageManager {
     private final ReentrantLock flushLock = new ReentrantLock();
     private final Object availabilityMonitor = new Object();
 
-    private volatile StorageBackend backend;
+    private volatile @Nullable StorageBackend backend;
     private volatile CompletableFuture<Void> initialization = CompletableFuture.completedFuture(null);
     private volatile CompletableFuture<Void> availabilitySignal;
 
@@ -53,7 +69,9 @@ public final class StorageManager {
             final @NotNull Logger logger,
             final @NotNull DatabaseSettings settings
     ) {
+
         this(logger, settings, new StorageBackendFactory()::create);
+
     }
 
     StorageManager(
@@ -82,6 +100,7 @@ public final class StorageManager {
     }
 
     public @NotNull CompletableFuture<Void> start() {
+
         if (!started.compareAndSet(false, true) || !settings.enabled()) {
             return initialization;
         }
@@ -103,9 +122,11 @@ public final class StorageManager {
             }
         });
         return initialization;
+
     }
 
     public @NotNull CompletableFuture<PlayerStorageData> loadPlayer(final @NotNull UUID playerUuid) {
+
         if (!settings.enabled()) {
             return CompletableFuture.completedFuture(PlayerStorageData.EMPTY);
         }
@@ -126,9 +147,11 @@ public final class StorageManager {
                 markUnavailable(failure);
             }
         });
+
     }
 
     public @NotNull CompletableFuture<PlayerStorageData> loadPlayerWhenAvailable(final @NotNull UUID playerUuid) {
+
         if (closing.get()) {
             return CompletableFuture.failedFuture(new IllegalStateException("Database storage is closed"));
         }
@@ -144,6 +167,7 @@ public final class StorageManager {
                     return retryDelay().thenCompose(ignored -> loadPlayerWhenAvailable(playerUuid));
                 })
                 .thenCompose(future -> future);
+
     }
 
     public void saveViolation(
@@ -151,14 +175,24 @@ public final class StorageManager {
             final @NotNull String check,
             final double violations
     ) {
+
+        if (!settings.enabled()) {
+            return;
+        }
         enqueue(new StorageMutation.Violation(playerUuid, check, violations, System.currentTimeMillis()), false);
+
     }
 
     public void saveInference(
             final @NotNull UUID playerUuid,
             final @NotNull StoredInference inference
     ) {
+
+        if (!settings.enabled()) {
+            return;
+        }
         enqueue(new StorageMutation.Inference(playerUuid, UUID.randomUUID(), inference), false);
+
     }
 
     /**
@@ -173,58 +207,83 @@ public final class StorageManager {
             final @NotNull String check,
             final long until
     ) {
+
         enqueue(new StorageMutation.Bypass(playerUuid, check, until), false);
+
     }
 
     public void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
-        if (!player.dataReady()) {
+
+        saveSnapshot(player, false);
+
+    }
+
+    private void saveSnapshot(final @NotNull TrackedPlayerImpl player, final boolean allowClosing) {
+
+        if (!settings.enabled() || !player.dataReady()) {
             return;
         }
 
         for (final Check check : player.checkManager.checks()) {
             enqueue(
                     new StorageMutation.Violation(
-                                    player.uniqueId(),
-                                    check.id(),
-                                    check.violations(),
-                                    System.currentTimeMillis()
-                            ),
-                    true
+                            player.uniqueId(),
+                            check.id(),
+                            check.violations(),
+                            System.currentTimeMillis()
+                    ),
+                    allowClosing
             );
         }
+
     }
 
     public long historyCutoff() {
+
         return System.currentTimeMillis() - settings.historyRetention().toMillis();
+
     }
 
     public @NotNull Duration historyRetention() {
+
         return settings.historyRetention();
+
     }
 
     public boolean enabled() {
+
         return settings.enabled();
+
     }
 
     public boolean available() {
+
         return available.get();
+
     }
 
     public boolean closing() {
+
         return closing.get();
+
     }
 
     public @NotNull CompletableFuture<Void> whenAvailable() {
-        return available.get() ? CompletableFuture.completedFuture(null) : availabilitySignal;
+
+        synchronized (availabilityMonitor) {
+            return availabilitySignal;
+        }
+
     }
 
     public void close(final @NotNull Collection<TrackedPlayerImpl> players) {
+
         if (!closing.compareAndSet(false, true)) {
             return;
         }
 
         if (settings.enabled()) {
-            players.forEach(this::saveSnapshot);
+            players.forEach(player -> saveSnapshot(player, true));
             final CompletableFuture<Void> flush = initialization
                     .handle((ignored, failure) -> null)
                     .thenCompose(ignored -> runAsync(this::flushAll));
@@ -248,40 +307,57 @@ public final class StorageManager {
 
         backendLock.writeLock().lock();
         try {
-            available.set(false);
+            synchronized (availabilityMonitor) {
+                available.set(false);
+                availabilitySignal.completeExceptionally(new IllegalStateException("Database storage is closed"));
+            }
             if (backend != null) {
                 backend.close();
                 backend = null;
             }
-            availabilitySignal.completeExceptionally(new IllegalStateException("Database storage is closed"));
         } catch (final Exception ex) {
             logFailure("Could not close the database backend", ex);
         } finally {
             backendLock.writeLock().unlock();
         }
+
     }
 
     private void enqueue(final @NotNull StorageMutation mutation, final boolean allowClosing) {
-        if (!settings.enabled() || closing.get() && !allowClosing) {
+
+        if (!settings.enabled()) {
             return;
         }
 
+        final boolean discarded;
         synchronized (pendingWriteLock) {
-            pendingWrites.addLast(mutation);
-            int buffered = pendingWriteCount.incrementAndGet();
-            while (buffered > settings.pendingWriteCapacity()) {
-                if (pendingWrites.pollFirst() == null) {
-                    break;
-                }
-
-                buffered = pendingWriteCount.decrementAndGet();
-                logFailure("Database write buffer is full; the oldest unsaved operation was discarded", null);
+            if (closing.get() && !allowClosing) {
+                return;
             }
+
+            discarded = pendingWrites.size() == settings.pendingWriteCapacity();
+            if (discarded) {
+                pendingWrites.removeFirst();
+            }
+            pendingWrites.addLast(mutation);
         }
+        if (discarded) {
+            logFailure("Database write buffer is full; the oldest unsaved operation was discarded", null);
+        }
+
+    }
+
+    private boolean hasPendingWrites() {
+
+        synchronized (pendingWriteLock) {
+            return !pendingWrites.isEmpty();
+        }
+
     }
 
     private void requestFlush() {
-        if (!settings.enabled() || closing.get() || !available.get() || pendingWrites.isEmpty()) {
+
+        if (!settings.enabled() || closing.get() || !available.get() || !hasPendingWrites()) {
             return;
         }
         if (!flushRunning.compareAndSet(false, true)) {
@@ -300,14 +376,16 @@ public final class StorageManager {
             flushRunning.set(false);
             logFailure("Database executor queue is full; writes remain buffered", ex);
         }
+
     }
 
-    private void flushOneBatch() {
+    private boolean flushOneBatch() {
+
         flushLock.lock();
         try {
             final List<StorageMutation> batch = drainBatch();
             if (batch.isEmpty()) {
-                return;
+                return false;
             }
 
             try {
@@ -315,26 +393,30 @@ public final class StorageManager {
                     storage.writeBatch(batch);
                     return null;
                 });
+                return true;
             } catch (final Exception ex) {
                 requeue(batch);
                 markUnavailable(ex);
+                return false;
             }
         } finally {
             flushLock.unlock();
         }
+
     }
 
     private void flushAll() {
-        while (available.get() && !pendingWrites.isEmpty()) {
-            final int before = pendingWriteCount.get();
-            flushOneBatch();
-            if (!available.get() || pendingWriteCount.get() >= before) {
+
+        while (available.get() && hasPendingWrites()) {
+            if (!flushOneBatch()) {
                 break;
             }
         }
+
     }
 
     private @NotNull List<StorageMutation> drainBatch() {
+
         final List<StorageMutation> batch = new ArrayList<>(settings.batchSize());
         synchronized (pendingWriteLock) {
             while (batch.size() < settings.batchSize()) {
@@ -342,39 +424,32 @@ public final class StorageManager {
                 if (mutation == null) {
                     break;
                 }
-                pendingWriteCount.decrementAndGet();
                 batch.add(mutation);
             }
         }
         return batch;
+
     }
 
     private void requeue(final @NotNull List<StorageMutation> batch) {
-        final List<StorageMutation> reversed = new ArrayList<>(batch);
-        Collections.reverse(reversed);
+
+        final boolean discarded;
         synchronized (pendingWriteLock) {
-            for (final StorageMutation mutation : reversed) {
-                while (pendingWriteCount.get() >= settings.pendingWriteCapacity()) {
-                    if (pendingWrites.pollFirst() == null) {
-                        break;
-                    }
-
-                    pendingWriteCount.decrementAndGet();
-                    logFailure("Database write buffer was full while requeueing a failed batch; the oldest unsaved operation was discarded", null);
-                }
-
-                if (pendingWriteCount.get() >= settings.pendingWriteCapacity()) {
-                    logFailure("Database write buffer has no room to requeue a failed batch", null);
-                    continue;
-                }
-
-                pendingWrites.addFirst(mutation);
-                pendingWriteCount.incrementAndGet();
+            final int availableSlots = settings.pendingWriteCapacity() - pendingWrites.size();
+            final int firstRetained = Math.max(0, batch.size() - availableSlots);
+            for (int index = batch.size() - 1; index >= firstRetained; index--) {
+                pendingWrites.addFirst(batch.get(index));
             }
+            discarded = firstRetained > 0;
         }
+        if (discarded) {
+            logFailure("Database write buffer is full after a failed batch; the oldest unsaved operations were discarded", null);
+        }
+
     }
 
     private void requestCleanup() {
+
         if (!available.get() || closing.get()) {
             return;
         }
@@ -388,9 +463,11 @@ public final class StorageManager {
                 markUnavailable(ex);
             }
         });
+
     }
 
     private void connect() throws Exception {
+
         final StorageBackend replacement = backendFactory.apply(settings);
         try {
             replacement.initialize();
@@ -427,13 +504,15 @@ public final class StorageManager {
         } finally {
             backendLock.writeLock().unlock();
         }
+
     }
 
-    private void markUnavailable(final Throwable failure) {
-        if (!settings.enabled() || closing.get()) {
-            return;
-        }
+    private void markUnavailable(final @NotNull Throwable failure) {
+
         synchronized (availabilityMonitor) {
+            if (!settings.enabled() || closing.get()) {
+                return;
+            }
             available.set(false);
             if (availabilitySignal.isDone()) {
                 availabilitySignal = new CompletableFuture<>();
@@ -441,9 +520,11 @@ public final class StorageManager {
         }
         logFailure("Database operation failed; continuing in fail-open mode", failure);
         scheduleReconnect();
+
     }
 
     private void scheduleReconnect() {
+
         if (closing.get() || !settings.enabled() || !reconnectScheduled.compareAndSet(false, true)) {
             return;
         }
@@ -471,9 +552,11 @@ public final class StorageManager {
                 logFailure("Could not schedule a database reconnect", ex);
             }
         }
+
     }
 
     private <T> T withBackend(final @NotNull BackendFunction<T> action) throws Exception {
+
         backendLock.readLock().lock();
         try {
             if (!available.get() || backend == null) {
@@ -483,16 +566,20 @@ public final class StorageManager {
         } finally {
             backendLock.readLock().unlock();
         }
+
     }
 
     private @NotNull CompletableFuture<Void> runAsync(final @NotNull CheckedRunnable action) {
+
         return supplyAsync(() -> {
             action.run();
             return null;
         });
+
     }
 
     private @NotNull CompletableFuture<Void> retryDelay() {
+
         final CompletableFuture<Void> delay = new CompletableFuture<>();
         try {
             scheduler.schedule(
@@ -504,17 +591,21 @@ public final class StorageManager {
             delay.completeExceptionally(ex);
         }
         return delay;
+
     }
 
     private boolean backendFailure(final @NotNull Throwable failure) {
+
         Throwable cause = failure;
         while ((cause instanceof CompletionException || cause instanceof ExecutionException) && cause.getCause() != null) {
             cause = cause.getCause();
         }
         return !(cause instanceof RejectedExecutionException);
+
     }
 
     private <T> @NotNull CompletableFuture<T> supplyAsync(final @NotNull CheckedSupplier<T> supplier) {
+
         final CompletableFuture<T> future = new CompletableFuture<>();
         try {
             executor.execute(() -> {
@@ -528,9 +619,11 @@ public final class StorageManager {
             future.completeExceptionally(ex);
         }
         return future;
+
     }
 
-    private void logFailure(final @NotNull String message, final Throwable failure) {
+    private void logFailure(final @NotNull String message, final @Nullable Throwable failure) {
+
         final long now = System.currentTimeMillis();
         final long previous = lastFailureLog.get();
         if (now - previous < FAILURE_LOG_INTERVAL_MILLIS || !lastFailureLog.compareAndSet(previous, now)) {
@@ -541,27 +634,39 @@ public final class StorageManager {
         } else {
             logger.warn(message, failure);
         }
+
     }
 
     private static @NotNull ThreadFactory threadFactory(final @NotNull String prefix) {
+
         final AtomicInteger counter = new AtomicInteger();
         return runnable -> {
             final Thread thread = new Thread(runnable, prefix + '-' + counter.incrementAndGet());
             thread.setDaemon(true);
             return thread;
         };
+
     }
 
+    /**
+     * An operation using the current database backend.
+     */
     @FunctionalInterface
     private interface BackendFunction<T> {
         T apply(final @NotNull StorageBackend storage) throws Exception;
     }
 
+    /**
+     * A database worker operation that does not return a value.
+     */
     @FunctionalInterface
     private interface CheckedRunnable {
         void run() throws Exception;
     }
 
+    /**
+     * A database worker operation that returns a value.
+     */
     @FunctionalInterface
     private interface CheckedSupplier<T> {
         T get() throws Exception;

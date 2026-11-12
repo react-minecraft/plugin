@@ -355,7 +355,24 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     }
 
     private static boolean isReactRCP(final @NotNull ExtensionDescriptor descriptor) {
-        return descriptor.github() != null && ReleaseClient.REACT_RCP.equalsIgnoreCase(descriptor.github().repository());
+
+        final GitHubSource source = source(descriptor);
+        return source != null && ReleaseClient.REACT_RCP.equalsIgnoreCase(source.repository());
+
+    }
+
+    private static @Nullable GitHubSource source(final @NotNull ExtensionDescriptor descriptor) {
+
+        final GitHubSource declared = descriptor.github();
+        if (declared != null) {
+            return declared;
+        }
+        if (descriptor.kind() == ExtensionKind.RCP && descriptor.name().equalsIgnoreCase("React")
+                && descriptor.mainClass().equals("com.g4vrk.react.inference.ReactInferenceRCP")) {
+            return new GitHubSource(ReleaseClient.REACT_RCP, true);
+        }
+        return null;
+
     }
 
     private void officialAddons() {
@@ -451,7 +468,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         }
         for (final ExtensionKind kind : ExtensionKind.values()) {
             for (final ExtensionDescriptor descriptor : scan(kind)) {
-                final GitHubSource github = descriptor.github();
+                final GitHubSource github = source(descriptor);
                 if (github == null || !github.updatable()) {
                     continue;
                 }

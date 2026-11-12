@@ -33,13 +33,17 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
 
     private final Logger logger;
     private final Map<String, PlaceholderResolver> resolvers = new ConcurrentHashMap<>();
+    private final Map<String, PlaceholderResolver> readOnly = Collections.unmodifiableMap(this.resolvers);
 
     public SimplePlaceholderRegistry(final @NotNull Logger logger) {
+
         this.logger = logger;
+
     }
 
     @Override
     public void register(final @NotNull String key, final @NotNull PlaceholderResolver resolver) {
+
         if (!isValid(key)) {
             throw new IllegalArgumentException("Placeholder key '" + key + "' must match [a-z0-9-]+");
         }
@@ -47,20 +51,26 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
         if (this.resolvers.putIfAbsent(key, resolver) != null) {
             throw new IllegalArgumentException("Placeholder key '" + key + "' is already registered");
         }
+
     }
 
     @Override
     public @Nullable PlaceholderResolver unregister(final @NotNull String key) {
+
         return this.resolvers.remove(key);
+
     }
 
     @Override
     public @Nullable PlaceholderResolver get(final @NotNull String key) {
+
         return this.resolvers.get(key);
+
     }
 
     @Override
     public @Nullable String getKey(final @NotNull PlaceholderResolver value) {
+
         for (final Map.Entry<String, PlaceholderResolver> entry : this.resolvers.entrySet()) {
             if (entry.getValue() == value) {
                 return entry.getKey();
@@ -68,31 +78,42 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
         }
 
         return null;
+
     }
 
     @Override
     public @NotNull Set<String> keySet() {
-        return Collections.unmodifiableSet(this.resolvers.keySet());
+
+        return this.readOnly.keySet();
+
     }
 
     @Override
     public @NotNull Set<Map.Entry<String, PlaceholderResolver>> entrySet() {
-        return Collections.unmodifiableSet(this.resolvers.entrySet());
+
+        return this.readOnly.entrySet();
+
     }
 
     @Override
     public @NotNull Stream<PlaceholderResolver> stream() {
+
         return this.resolvers.values().stream();
+
     }
 
     @Override
     public int size() {
+
         return this.resolvers.size();
+
     }
 
     @Override
     public @NotNull Iterator<PlaceholderResolver> iterator() {
-        return this.resolvers.values().iterator();
+
+        return this.readOnly.values().iterator();
+
     }
 
     @Override
@@ -101,6 +122,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
             final @NotNull String key,
             final @NotNull String query
     ) {
+
         final PlaceholderResolver resolver = this.resolvers.get(key);
 
         if (resolver == null) {
@@ -113,29 +135,32 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
             this.logger.error("Placeholder '{}' failed for {}", key, player.name(), exception);
             return null;
         }
+
     }
 
     @Override
     public @NotNull TagResolver tags(final @NotNull TrackedPlayer player) {
+
         return new Tags(player);
+
     }
 
     @Override
     public @NotNull TagMapper mapper(final @NotNull TrackedPlayer player) {
+
         return new Mapped(player);
+
     }
 
     @Override
     public @NotNull String apply(final @NotNull String text, final @NotNull TrackedPlayer player) {
+
         if (!Placeholders.mentions(text)) {
             return text;
         }
 
-        return PlaceholderScanner.apply(text, (key, query, bracket) -> {
-            final String resolved = this.resolve(player, key, query);
+        return PlaceholderScanner.apply(text, (key, query, bracket) -> this.resolve(player, key, query));
 
-            return resolved == null ? null : resolved;
-        });
     }
 
     /**
@@ -171,22 +196,28 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
         private final TrackedPlayer player;
 
         private Mapped(final @NotNull TrackedPlayer player) {
+
             this.player = player;
+
         }
 
         @Override
         public @Nullable String map(final @NotNull String name, final @NotNull String args) {
+
             if (!name.startsWith(PREFIX)) {
                 return null;
             }
 
             return SimplePlaceholderRegistry.this.resolve(this.player, name.substring(PREFIX.length()), args);
+
         }
 
         @Override
         public boolean has(final @NotNull String name) {
+
             return name.startsWith(PREFIX)
                     && SimplePlaceholderRegistry.this.resolvers.containsKey(name.substring(PREFIX.length()));
+
         }
 
     }
@@ -199,7 +230,9 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
         private final TrackedPlayer player;
 
         private Tags(final @NotNull TrackedPlayer player) {
+
             this.player = player;
+
         }
 
         @Override
@@ -208,6 +241,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
                 final @NotNull ArgumentQueue arguments,
                 final @NotNull Context context
         ) throws ParsingException {
+
             if (!name.startsWith(PREFIX)) {
                 return null;
             }
@@ -219,12 +253,15 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
             );
 
             return value == null ? null : Tag.preProcessParsed(value);
+
         }
 
         @Override
         public boolean has(final @NotNull String name) {
+
             return name.startsWith(PREFIX)
                     && SimplePlaceholderRegistry.this.resolvers.containsKey(name.substring(PREFIX.length()));
+
         }
 
     }

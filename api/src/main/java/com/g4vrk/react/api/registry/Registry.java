@@ -88,21 +88,21 @@ public interface Registry<K, V> extends Iterable<V> {
     /**
      * Lists the registered keys.
      *
-     * @return an unmodifiable snapshot
+     * @return an unmodifiable set that may reflect later registry changes
      */
     @NotNull Set<K> keySet();
 
     /**
      * Lists the registered keys with their values.
      *
-     * @return an unmodifiable snapshot
+     * @return an unmodifiable set of read-only entries that may reflect later registry changes
      */
     @NotNull Set<Map.Entry<K, V>> entrySet();
 
     /**
      * Streams the registered values.
      *
-     * @return a stream over a snapshot of the values
+     * @return a stream over the values, which may reflect concurrent registry changes
      */
     @NotNull Stream<V> stream();
 

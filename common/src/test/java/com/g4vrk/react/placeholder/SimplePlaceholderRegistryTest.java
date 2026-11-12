@@ -46,4 +46,18 @@ class SimplePlaceholderRegistryTest {
         assertNull(registry.resolve(player, "missing", ""));
     }
 
+    @Test
+    void keepsRegistryViewsReadOnly() {
+
+        registry.register("vl", (target, query) -> "original");
+        final var values = registry.iterator();
+        values.next();
+        final var entry = registry.entrySet().iterator().next();
+
+        assertThrows(UnsupportedOperationException.class, values::remove);
+        assertThrows(UnsupportedOperationException.class, () -> entry.setValue((target, query) -> "replacement"));
+        assertEquals("original", registry.resolve(player, "vl", ""));
+
+    }
+
 }

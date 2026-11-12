@@ -1,145 +1,86 @@
 <div align="center">
 
-<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Manrope&weight=700&size=38&pause=1000&color=EB2544&background=FFFFFF00&center=true&vCenter=true&width=700&lines=React+AntiCheat;Minecraft+Cheat+Protection" alt="React Typing SVG"/></a>
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Manrope&weight=700&size=38&pause=1000&color=EB2544&background=FFFFFF00&center=true&vCenter=true&width=700&lines=React+AntiCheat;Minecraft+Cheat+Protection" alt="React AntiCheat"/></a>
 
-<p>Защита основанная на AI аналитике поворотов</p>
+<p>Античит для Minecraft с анализом поворотов в бою</p>
 
 <p>
-  <a href="https://github.com/g4vrk/React/actions/workflows/gradle-publish.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/g4vrk/React/build.yml?style=flat&label=build&logo=github&logoColor=white" alt="Build">
-  </a>
-  <a href="https://jitpack.io/#g4vrk/React">
-    <img src="https://img.shields.io/jitpack/version/com.github.g4vrk/React?style=flat&logo=jitpack&logoColor=white" alt="JitPack">
-  </a>
-  <a href="https://github.com/g4vrk/React/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/g4vrk/React?style=flat&logo=opensourceinitiative&logoColor=white" alt="License">
-  </a>
-    <br>
-  <a href="https://github.com/g4vrk/React/stargazers">
-    <img src="https://img.shields.io/github/stars/g4vrk/React?style=flat&logo=githubsponsors&logoColor=white" alt="Stars">
-  </a>
-  <a href="https://github.com/g4vrk/React/network/members">
-    <img src="https://img.shields.io/github/forks/g4vrk/React?style=flat&logo=git&logoColor=white" alt="Forks">
-  </a>
+  <a href="https://react-ac.space"><img src="https://img.shields.io/badge/Website-EB2544?style=plastic&logo=googlechrome&logoColor=white" alt="Website"/></a>
+  <a href="https://t.me/react_ac"><img src="https://img.shields.io/badge/Telegram-26A5E4?style=plastic&logo=telegram&logoColor=white" alt="Telegram"/></a>
+  <a href="https://t.me/react_ac_support"><img src="https://img.shields.io/badge/Support-555555?style=plastic&logo=telegram&logoColor=white" alt="Support"/></a>
 </p>
 
 <p>
-  <a href="https://react-ac.space">Сайт</a>
-  &nbsp;•&nbsp;
-  <a href="https://t.me/react_ac">Канал</a>
-  &nbsp;•&nbsp;
-  <a href="https://t.me/react_ac_support">Поддержка</a>
+  <a href="https://github.com/react-minecraft/plugin/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/react-minecraft/plugin/build.yml?style=plastic&logo=github&logoColor=white&branch=master&label=build" alt="Build"/></a>
+  <a href="https://github.com/react-minecraft/plugin/releases/tag/nightly"><img src="https://img.shields.io/badge/Nightly-EB2544?style=plastic&logo=github&logoColor=white" alt="Nightly"/></a>
+  <a href="https://jitpack.io/#react-minecraft/plugin"><img src="https://img.shields.io/badge/JitPack-39A6A3?style=plastic&logo=jitpack&logoColor=white" alt="JitPack"/></a>
+  <a href="https://github.com/react-minecraft/plugin/blob/master/LICENSE"><img src="https://img.shields.io/github/license/react-minecraft/plugin?style=plastic&logo=opensourceinitiative&logoColor=white" alt="License"/></a>
 </p>
 
 </div>
 
----
+[English](README.en.md)
 
-> [English version](README.en.md)
+## Установка
 
-## Скачивание плагина
+1. Поставьте [PacketEvents для Bukkit](https://github.com/retrooper/packetevents/releases), совместимый с вашей версией Minecraft. Для плейсхолдеров `%react_…%` можно поставить [PlaceholderAPI](https://github.com/PlaceholderAPI/PlaceholderAPI).
+2. Возьмите JAR на странице [GitHub Releases](https://github.com/react-minecraft/plugin/releases). Текущая предварительная сборка лежит в [nightly](https://github.com/react-minecraft/plugin/releases/tag/nightly).
+3. Положите в `plugins/` один JAR для вашего ядра. Сборка `react-paper-*.jar` предназначена для Paper, в том числе Paper 1.16.5. Для Folia используйте `react-folia-*.jar`. Java должна удовлетворять требованиям ядра. Сам JAR React требует минимум Java 17 на Paper и Java 21 на Folia.
+4. Запустите сервер. Когда доступен подписанный стабильный релиз для API 2, React загрузит официальный RCP автоматически. Для теста nightly можно вручную положить [React RCP](https://github.com/react-minecraft/rcp/releases/tag/nightly) в `plugins/React/.rcp/providers/` перед запуском.
+5. Для моделей сервиса React выполните `/react link` и подтвердите привязку на сайте. Если у вас уже есть код, используйте `/react link <код>`.
 
-- Последние обновления:
-    - **[GitHub Tags](https://github.com/g4vrk/react/tags)** *(рекомендуется)*
-    - **[SpigotMC RU](https://spigotmc.ru/resources/react-besplatnyj-antichit-s-ii-proverkami.5997/updates)**
+React передаёт данные о поворотах в RCP, обрабатывает результаты анализа и сохраняет историю. Порог проверок, оповещения и действия настраиваются на сервере. Для своего анализа можно написать RCP.
 
----
+## Команды
 
-## Требования & Установка
+| Команда | Действие |
+|---|---|
+| `/react alerts [игроки]` | Оповещения о флагах |
+| `/react monitor [игроки]` | Мониторинг отдельных результатов анализа |
+| `/react rcps` | Загруженные RCP и состояние моделей |
+| `/react link check` | Проверка привязки и доступных моделей |
+| `/react reload` | Перечитать настройки React и RCP |
+| `/react reboot <all\|rcp\|addons\|имя>` | Перезапустить выбранные расширения |
+| `/react reboot` | Перезапустить сам плагин там, где это поддерживается. На Folia для этого нужен рестарт сервера |
 
-- Версия сервера: `1.16.5 - 26.2`
-- Ядро сервера: `Paper / Folia`
+## Обновления
 
-1. Скачайте `.jar` файл плагина
-2. Переместите его в папку `plugins/`
-3. Запустите сервер. После первого тика плагин сам скачает React RCP с
-   [GitHub](https://github.com/react-minecraft/rcp) в `plugins/React/.rcp/providers/`
-4. Привяжите сервер к аккаунту на https://www.react-ac.space/: `/react link <код>`
+| Файл относительно `plugins/React/` | Назначение |
+|---|---|
+| `.rcp/react-rcp.yml` | `settings.enabled` включает официальный React RCP |
+| `.rcp/React/` | Настройки подключения и моделей |
+| `main-config.yml` | `official-addons.*.download-next-start` включает установку отсутствующих официальных аддонов из стабильного канала |
+| `update/settings.yml` | Интервал проверки, уведомления и автоматический перезапуск расширений |
+| `update/plugin.yml`, `update/rcp/React.yml`, `update/addons/<имя>.yml` | `enabled`, канал `release` или `prerelease` и `pinned-version` для конкретного компонента |
 
-> [!IMPORTANT]
-> Каждая сборка RCP проверяется по SHA-256 и подписи ed25519. Если проверка не прошла, файл удаляется,
-> а сервер работает дальше без RCP. Без доступа к GitHub загружается последняя скачанная сборка.
+Автоматическая загрузка проверяет SHA-256 и подпись Ed25519. Подготовленные обновления плагина применяются при рестарте сервера. Обновления RCP и аддонов применяются при перезапуске соответствующего расширения.
 
-### React RCP
+## Сборка
 
-Модели и подключение к React живут не в плагине, а в RCP (Runtime Communication Protocol).
-Настройки загрузки лежат в `plugins/React/.rcp/react-rcp.yml`:
+Используйте JDK 21.
 
-| Ключ                   | По умолчанию | Описание                                                                |
-|------------------------|--------------|-------------------------------------------------------------------------|
-| `settings.enabled`     | `true`       | Загружать ли React RCP                                                  |
+```sh
+git clone https://github.com/react-minecraft/plugin.git
+cd plugin
+./gradlew build
+```
 
-Обновления React RCP настраиваются в `plugins/React/update/rcp/React.yml`: `enabled`, `channel`
-(`release` или `prerelease`) и `pinned-version`. Общие настройки обновлений лежат в
-`plugins/React/update/settings.yml`.
+На Windows запускайте `.\gradlew.bat build`. Готовые JAR лежат в `paper/build/libs/` и `folia/build/libs/`.
 
-Свои настройки RCP хранит в `plugins/React/.rcp/React/`.
-
-| Команда                | Описание                                                       |
-|------------------------|----------------------------------------------------------------|
-| `/react rcps`          | Все RCP: версия, `api-version`, канал, время последней проверки |
-| `/react reboot`        | Обновить и перезагрузить плагин вместе с RCP без рестарта      |
-| `/react link`          | Получить ссылку и привязать сервер к аккаунту React            |
-| `/react link <код>`    | Привязать сервер к аккаунту React                               |
-| `/react link check`    | Проверить привязку и доступные модели                          |
-| `/react alerts [ники]` | Оповещения обо всех игроках или только о указанных             |
-| `/react monitor [ники]`| Мониторинг каждого анализа (алиас `/react verbose`)            |
-
----
-
-## Сборка исходников
-
-1. `git clone https://github.com/g4vrk/React.git`
-2. `cd React`
-3. `./gradlew build`
-4. Готовые файлы плагина будут лежать в папках `<ядро>/build/libs`
-
----
-
-## Как работает анализ?
-
-- Суть плагина в том, что он лишь отправляет запросы на внешний настроенный сайт, вы можете использовать наш
-  сайт https://www.react-ac.space/ или же сделать свою модель и использовать ее.
-- После получения ответа на запрос анализа, плагин работает с этими данными, для того чтобы мы могли смотреть
-  статистику / историю аналитики игроков, так же эти данные сохраняются и доступны в аддонах.
-- То что делать с данными уже исключительно ваше решение, можете банить, можете кикать, можете просто проверять вручную,
-  но суть плагина - облегчить задачу
-
----
-
-## Структура
-
-| Модуль   | Описание                                           |
-|----------|----------------------------------------------------|
-| `api`    | Стабильный API для RCP и аддонов, загрузчики RCP и аддонов |
-| `common` | Главная работа античита, данные, проверки и прочее |
-| `paper`  | Реализация для Paper серверов                      |
-| `folia`  | Реализация для Folia серверов                      |
-
----
+| Модуль | Назначение |
+|---|---|
+| `api` | Контракты React для аддонов и RCP |
+| `common` | Проверки, хранилище, команды и загрузка расширений |
+| `paper`, `folia` | Точки входа для соответствующих серверов |
 
 ## API для разработчиков
 
-> [!IMPORTANT]
-> Если вы хотите добавить в плагин какую либо функцию / механику, то вы можете создать аддон, помощь в их создании
-> оказывает https://t.me/g4vrk/
+React 2.0.0 использует API 2. Метаданные расширения должны указывать `api-version: 2`.
 
-Примеры с пояснениями:
+- [example-addon](https://github.com/react-minecraft/example-addon) показывает, как слушать события React. Аддоны кладутся в `plugins/React/addons/`.
+- [example-rcp](https://github.com/react-minecraft/example-rcp) показывает, как передавать результаты своей модели и добавлять команды. RCP кладутся в `plugins/React/.rcp/providers/`.
 
-- **[example-rcp](https://github.com/react-minecraft/example-rcp)**: своя модель, результат в проверке и подкоманда `/react`.
-  RCP собирается только против `react-api` и грузится, пока совпадает `api-version`;
-- **[example-addon](https://github.com/react-minecraft/example-addon)**: аддон на событиях плагина, собирается против `react-common`.
-
-<details>
-<summary><b>Подключение через JitPack</b></summary>
-
-<br>
-
-<div align="center">
-
-<b>Gradle (Kotlin DSL)</b>
-
-</div>
+Зависимость берётся с JitPack. Замените `VERSION` на тег или коммит плагина. Для публичных контрактов подключайте `react-api`.
 
 ```kotlin
 repositories {
@@ -148,18 +89,13 @@ repositories {
 
 dependencies {
     compileOnly("com.github.react-minecraft.plugin:react-api:VERSION")
-    compileOnly("com.github.react-minecraft.plugin:react-common:VERSION")
 }
 ```
 
-<div align="center">
-
-<b>Maven</b>
-
-</div>
+<details>
+<summary>Maven</summary>
 
 ```xml
-
 <repositories>
     <repository>
         <id>jitpack.io</id>
@@ -169,7 +105,7 @@ dependencies {
 
 <dependency>
     <groupId>com.github.react-minecraft.plugin</groupId>
-    <artifactId>react-common</artifactId>
+    <artifactId>react-api</artifactId>
     <version>VERSION</version>
     <scope>provided</scope>
 </dependency>
@@ -177,8 +113,7 @@ dependencies {
 
 </details>
 
----
 
 ## Лицензия
 
-Плагин распространяется под MIT — см. [LICENSE](LICENSE).
+[MIT](LICENSE).

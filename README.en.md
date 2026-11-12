@@ -1,144 +1,86 @@
 <div align="center">
 
-<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Manrope&weight=700&size=38&pause=1000&color=EB2544&background=FFFFFF00&center=true&vCenter=true&width=700&lines=React+AntiCheat;Minecraft+Cheat+Protection" alt="React Typing SVG"/></a>
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Manrope&weight=700&size=38&pause=1000&color=EB2544&background=FFFFFF00&center=true&vCenter=true&width=700&lines=React+AntiCheat;Minecraft+Cheat+Protection" alt="React AntiCheat"/></a>
 
-<p>Protection powered by AI-based rotation analysis</p>
+<p>Minecraft anticheat with combat rotation analysis</p>
 
 <p>
-  <a href="https://github.com/g4vrk/React/actions/workflows/gradle-publish.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/g4vrk/React/build.yml?style=flat&label=build&logo=github&logoColor=white" alt="Build">
-  </a>
-  <a href="https://jitpack.io/#g4vrk/React">
-    <img src="https://img.shields.io/jitpack/version/com.github.g4vrk/React?style=flat&logo=jitpack&logoColor=white" alt="JitPack">
-  </a>
-  <a href="https://github.com/g4vrk/React/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/g4vrk/React?style=flat&logo=opensourceinitiative&logoColor=white" alt="License">
-  </a>
-  <br>
-  <a href="https://github.com/g4vrk/React/stargazers">
-    <img src="https://img.shields.io/github/stars/g4vrk/React?style=flat&logo=githubsponsors&logoColor=white" alt="Stars">
-  </a>
-  <a href="https://github.com/g4vrk/React/network/members">
-    <img src="https://img.shields.io/github/forks/g4vrk/React?style=flat&logo=git&logoColor=white" alt="Forks">
-  </a>
+  <a href="https://react-ac.space"><img src="https://img.shields.io/badge/Website-EB2544?style=plastic&logo=googlechrome&logoColor=white" alt="Website"/></a>
+  <a href="https://t.me/react_ac"><img src="https://img.shields.io/badge/Telegram-26A5E4?style=plastic&logo=telegram&logoColor=white" alt="Telegram"/></a>
+  <a href="https://t.me/react_ac_support"><img src="https://img.shields.io/badge/Support-555555?style=plastic&logo=telegram&logoColor=white" alt="Support"/></a>
 </p>
 
 <p>
-  <a href="https://react-ac.space">Website</a>
-  &nbsp;•&nbsp;
-  <a href="https://t.me/react_ac">Channel</a>
-  &nbsp;•&nbsp;
-  <a href="https://t.me/react_ac_support">Support</a>
+  <a href="https://github.com/react-minecraft/plugin/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/react-minecraft/plugin/build.yml?style=plastic&logo=github&logoColor=white&branch=master&label=build" alt="Build"/></a>
+  <a href="https://github.com/react-minecraft/plugin/releases/tag/nightly"><img src="https://img.shields.io/badge/Nightly-EB2544?style=plastic&logo=github&logoColor=white" alt="Nightly"/></a>
+  <a href="https://jitpack.io/#react-minecraft/plugin"><img src="https://img.shields.io/badge/JitPack-39A6A3?style=plastic&logo=jitpack&logoColor=white" alt="JitPack"/></a>
+  <a href="https://github.com/react-minecraft/plugin/blob/master/LICENSE"><img src="https://img.shields.io/github/license/react-minecraft/plugin?style=plastic&logo=opensourceinitiative&logoColor=white" alt="License"/></a>
 </p>
 
 </div>
 
----
+[Русский](README.md)
 
-> [Русская версия](README.md)
+## Installation
 
-## Download
+1. Install [PacketEvents for Bukkit](https://github.com/retrooper/packetevents/releases) for your Minecraft version. Install [PlaceholderAPI](https://github.com/PlaceholderAPI/PlaceholderAPI) if you want `%react_…%` placeholders.
+2. Get the plugin from [GitHub Releases](https://github.com/react-minecraft/plugin/releases). The current prerelease is available under [nightly](https://github.com/react-minecraft/plugin/releases/tag/nightly).
+3. Put one JAR in `plugins/`. Use `react-paper-*.jar` on Paper, including Paper 1.16.5, or `react-folia-*.jar` on Folia. Follow your server's Java requirements. The React JAR itself requires Java 17 or later on Paper and Java 21 or later on Folia.
+4. Start the server. React installs the official RCP automatically when a signed stable build for API 2 is available. To try nightly, place the [React RCP JAR](https://github.com/react-minecraft/rcp/releases/tag/nightly) in `plugins/React/.rcp/providers/` before starting the server.
+5. To use the React service, run `/react link` and confirm the link on the website. If you already have a code, use `/react link <code>`.
 
-* Latest releases:
+React passes rotation data to an RCP, processes the results and stores check history. You can configure check thresholds, alerts and actions on the server, or write an RCP for your own analysis.
 
-    * **[GitHub Tags](https://github.com/g4vrk/react/tags)** *(recommended)*
-    * **[SpigotMC RU](https://spigotmc.ru/resources/react-besplatnyj-antichit-s-ii-proverkami.5997/updates)**
+## Commands
 
----
+| Command | Action |
+|---|---|
+| `/react alerts [players]` | Show flag alerts |
+| `/react monitor [players]` | Show individual analysis results |
+| `/react rcps` | List loaded RCPs and model status |
+| `/react link check` | Check the server link and available models |
+| `/react reload` | Reload React and RCP settings |
+| `/react reboot <all\|rcp\|addons\|name>` | Restart selected extensions |
+| `/react reboot` | Restart the plugin on supported servers. On Folia, restart the server |
 
-## Requirements & Installation
+## Updates
 
-* Server versions: `1.16.5 - 26.2`
-* Server software: `Paper / Folia`
+| Path relative to `plugins/React/` | Purpose |
+|---|---|
+| `.rcp/react-rcp.yml` | `settings.enabled` enables the official React RCP |
+| `.rcp/React/` | Connection and model settings |
+| `main-config.yml` | `official-addons.*.download-next-start` installs missing official addons from the stable channel |
+| `update/settings.yml` | Check interval, notifications and automatic extension restarts |
+| `update/plugin.yml`, `update/rcp/React.yml`, `update/addons/<name>.yml` | `enabled`, `release` or `prerelease` channel, and `pinned-version` for each component |
 
-1. Download the plugin `.jar` file.
-2. Move it to the `plugins/` folder.
-3. Start the server. After the first tick the plugin downloads the React RCP from
-   [GitHub](https://github.com/react-minecraft/rcp) into `plugins/React/.rcp/providers/`.
-4. Link the server to your account at https://www.react-ac.space/: `/react link <code>`.
+Automatic downloads are verified with SHA-256 and an Ed25519 signature. Staged plugin updates are applied when the server restarts. RCP and addon updates are applied when their extension restarts.
 
-> [!IMPORTANT]
-> Every RCP build is checked against SHA-256 and an ed25519 signature. A build that fails the check is deleted and
-> the server keeps running without the RCP. When GitHub is unreachable, the last downloaded build is loaded.
+## Building from source
 
-### React RCP
+Use JDK 21.
 
-The models and the React connection live in an RCP (Runtime Communication Protocol), not in the plugin.
-How it is loaded is set in `plugins/React/.rcp/react-rcp.yml`:
+```sh
+git clone https://github.com/react-minecraft/plugin.git
+cd plugin
+./gradlew build
+```
 
-| Key                    | Default   | Description                                                                         |
-|------------------------|-----------|-------------------------------------------------------------------------------------|
-| `settings.enabled`     | `true`    | Whether the React RCP is loaded                                                     |
-| `settings.auto-update` | `true`    | Check for a new version on start and `/react reboot`; `false` downloads it only once |
-| `settings.channel`     | `release` | `release` for releases only, `all` for every CI build (`nightly`)                   |
+On Windows, run `.\gradlew.bat build`. The JARs are in `paper/build/libs/` and `folia/build/libs/`.
 
-The RCP keeps its own settings in `plugins/React/.rcp/React/`.
-
-| Command              | Description                                                        |
-|----------------------|--------------------------------------------------------------------|
-| `/react rcps`        | Every RCP: version, `api-version`, channel, time of the last check |
-| `/react reboot`      | Update and reload the plugin together with the RCP, no restart     |
-| `/react link`        | Get a link and confirm the server on the site                      |
-| `/react link <code>` | Link the server to your React account                              |
-| `/react link check`  | Check the link and the models you have                             |
-| `/react alerts [players]`  | Alerts about everyone or only the given players            |
-| `/react monitor [players]` | Every analysis as it happens (alias `/react verbose`)      |
-
----
-
-## Building from Source
-
-1. `git clone https://github.com/g4vrk/React.git`
-2. `cd React`
-3. `./gradlew build`
-4. The built plugin files will be available in `<platform>/build/libs`.
-
----
-
-## How Does the Analysis Work?
-
-* React sends analysis requests to an externally configured server. You can use our service
-  at https://www.react-ac.space/ or deploy and use your own model.
-* After receiving the analysis response, the plugin processes the returned data so that player statistics and analysis
-  history can be tracked. The same data is also stored and made available to addons through the API.
-* What you do with the results is entirely up to you. You can ban players, kick them, or simply review the data
-  manually. The main purpose of React is to simplify this process.
-
----
-
-## Project Structure
-
-| Module   | Description                                   |
-|----------|-----------------------------------------------|
-| `api`    | Stable API for RCPs and addons, RCP and addon loaders |
-| `common` | Core anti-cheat logic, data, checks, and more |
-| `paper`  | Implementation for Paper servers              |
-| `folia`  | Implementation for Folia servers              |
-
----
+| Module | Purpose |
+|---|---|
+| `api` | React contracts for addons and RCPs |
+| `common` | Checks, storage, commands and extension loading |
+| `paper`, `folia` | Platform entry points |
 
 ## Developer API
 
-> [!IMPORTANT]
-> If you want to add your own functionality or mechanics to the plugin, you can create an addon. Help with addon
-> development is available at https://t.me/g4vrk/
+React 2.0.0 uses API 2. Set `api-version: 2` in extension metadata.
 
-Examples with explanations:
+- [example-addon](https://github.com/react-minecraft/example-addon) shows how to listen for React events. Install addons in `plugins/React/addons/`.
+- [example-rcp](https://github.com/react-minecraft/example-rcp) shows how to submit your own model results and add commands. Install RCPs in `plugins/React/.rcp/providers/`.
 
-- **[example-rcp](https://github.com/react-minecraft/example-rcp)**: a model of its own, a result in the check and a `/react`
-  subcommand. An RCP builds against `react-api` only and loads while its `api-version` matches;
-- **[example-addon](https://github.com/react-minecraft/example-addon)**: an addon on the plugin's events, built against `react-common`.
-
-<details>
-<summary><b>Using JitPack</b></summary>
-
-<br>
-
-<div align="center">
-
-<b>Gradle (Kotlin DSL)</b>
-
-</div>
+Resolve the dependency from JitPack. Replace `VERSION` with a plugin tag or commit. Use `react-api` for the public contracts.
 
 ```kotlin
 repositories {
@@ -147,18 +89,13 @@ repositories {
 
 dependencies {
     compileOnly("com.github.react-minecraft.plugin:react-api:VERSION")
-    compileOnly("com.github.react-minecraft.plugin:react-common:VERSION")
 }
 ```
 
-<div align="center">
-
-<b>Maven</b>
-
-</div>
+<details>
+<summary>Maven</summary>
 
 ```xml
-
 <repositories>
     <repository>
         <id>jitpack.io</id>
@@ -168,7 +105,7 @@ dependencies {
 
 <dependency>
     <groupId>com.github.react-minecraft.plugin</groupId>
-    <artifactId>react-common</artifactId>
+    <artifactId>react-api</artifactId>
     <version>VERSION</version>
     <scope>provided</scope>
 </dependency>
@@ -176,8 +113,7 @@ dependencies {
 
 </details>
 
----
 
 ## License
 
-The plugin is distributed under the MIT License. See [LICENSE](LICENSE).
+[MIT](LICENSE).

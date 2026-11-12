@@ -5,6 +5,7 @@ import com.g4vrk.react.api.event.Event;
 import com.g4vrk.react.api.event.EventPriority;
 import com.g4vrk.react.api.event.Subscribe;
 import com.g4vrk.react.api.event.Subscription;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.NOPLogger;
 
@@ -78,24 +79,79 @@ class SimpleEventBusTest {
 
     @Test
     void scopedBusRemovesEverythingOnClose() {
+
         final List<String> calls = new ArrayList<>();
         final ScopedEventBus scoped = new ScopedEventBus(bus);
 
+        scoped.register(new Listener(calls));
         scoped.register(new Listener(calls));
         scoped.subscribe(TestEvent.class, event -> calls.add("lambda"));
         scoped.close();
         bus.post(new TestEvent());
 
         assertEquals(List.of(), calls);
+        assertThrows(IllegalStateException.class, () -> scoped.subscribe(TestEvent.class, event -> calls.add("late")));
+
+    }
+
+    @Test
+    void scopedUnregisterLeavesOtherListenersInPlace() {
+
+        final List<String> calls = new ArrayList<>();
+        final Listener listener = new Listener(calls);
+        bus.register(listener);
+
+        final ScopedEventBus scoped = new ScopedEventBus(bus);
+        scoped.unregister(listener);
+        bus.post(new TestEvent());
+
+        assertEquals(List.of("listener"), calls);
+
     }
 
     @Test
     void rejectsWrongHandlerSignatures() {
-        assertThrows(IllegalArgumentException.class, () -> bus.register(new Object() {
-            @Subscribe
-            void wrong(final String text) {
-            }
-        }));
+
+        final List<String> calls = new ArrayList<>();
+        assertThrows(IllegalArgumentException.class, () -> bus.register(new InvalidListener(calls)));
+        bus.post(new TestEvent());
+
+        assertTrue(calls.isEmpty());
+
+    }
+
+    /**
+     * Its valid handler is discovered before the invalid inherited handler.
+     */
+    private static final class InvalidListener extends InvalidHandler {
+
+        private final List<String> calls;
+
+        private InvalidListener(final @NotNull List<String> calls) {
+
+            this.calls = calls;
+
+        }
+
+        @Subscribe
+        void valid(final @NotNull TestEvent event) {
+
+            calls.add("listener");
+
+        }
+
+    }
+
+    /**
+     * Supplies a handler with a parameter that is not an event.
+     */
+    private static class InvalidHandler {
+
+        @Subscribe
+        void wrong(final @NotNull String text) {
+
+        }
+
     }
 
     private static final class TestEvent extends CancellableEvent {

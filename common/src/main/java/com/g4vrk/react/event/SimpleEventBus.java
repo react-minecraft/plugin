@@ -20,7 +20,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -39,50 +38,67 @@ public final class SimpleEventBus implements EventBus {
     private final Logger logger;
 
     private final List<Handler> handlers = new ArrayList<>();
-    private final Map<Object, List<Subscription>> listeners = new IdentityHashMap<>();
+    private final Map<Object, List<Handler>> listeners = new IdentityHashMap<>();
     private final Map<Class<?>, Handler[]> baked = new ConcurrentHashMap<>();
     private final AtomicLong order = new AtomicLong();
 
     public SimpleEventBus(final @NotNull Logger logger) {
+
         this.logger = logger;
+
     }
 
     @Override
     public void register(final @NotNull Object listener) {
-        final List<Subscription> subscriptions = new ArrayList<>();
+
+        final List<Handler> registered = new ArrayList<>();
 
         for (final Method method : methods(listener.getClass())) {
             final Subscribe subscribe = method.getAnnotation(Subscribe.class);
             final Class<? extends Event> type = eventType(method);
             final MethodHandle handle = handle(method, listener);
 
-            subscriptions.add(subscribe(type, subscribe.priority(), subscribe.ignoreCancelled(), event -> {
-                try {
-                    handle.invoke(event);
-                } catch (final RuntimeException | Error exception) {
-                    throw exception;
-                } catch (final Throwable throwable) {
-                    throw new IllegalStateException(throwable);
-                }
-            }));
+            registered.add(new Handler(
+                    type,
+                    subscribe.priority(),
+                    subscribe.ignoreCancelled(),
+                    event -> invoke(handle, event),
+                    order.getAndIncrement()
+            ));
         }
 
-        synchronized (this) {
-            listeners.computeIfAbsent(listener, key -> new ArrayList<>()).addAll(subscriptions);
+        if (registered.isEmpty()) {
+            return;
         }
+        synchronized (this) {
+            listeners.computeIfAbsent(listener, key -> new ArrayList<>()).addAll(registered);
+            handlers.addAll(registered);
+            baked.clear();
+        }
+
+    }
+
+    private static void invoke(final @NotNull MethodHandle handle, final @NotNull Event event) {
+
+        try {
+            handle.invoke(event);
+        } catch (final RuntimeException | Error exception) {
+            throw exception;
+        } catch (final Throwable throwable) {
+            throw new IllegalStateException(throwable);
+        }
+
     }
 
     @Override
-    public void unregister(final @NotNull Object listener) {
-        final List<Subscription> subscriptions;
+    public synchronized void unregister(final @NotNull Object listener) {
 
-        synchronized (this) {
-            subscriptions = listeners.remove(listener);
+        final List<Handler> registered = listeners.remove(listener);
+        if (registered != null) {
+            handlers.removeAll(registered);
+            baked.clear();
         }
 
-        if (subscriptions != null) {
-            subscriptions.forEach(Subscription::unsubscribe);
-        }
     }
 
     @Override
@@ -93,6 +109,7 @@ public final class SimpleEventBus implements EventBus {
             final boolean ignoreCancelled,
             final @NotNull Consumer<? super E> handler
     ) {
+
         final Handler entry = new Handler(
                 type,
                 priority,
@@ -106,20 +123,19 @@ public final class SimpleEventBus implements EventBus {
             baked.clear();
         }
 
-        final AtomicBoolean active = new AtomicBoolean(true);
-
         return () -> {
-            if (active.compareAndSet(true, false)) {
-                synchronized (this) {
-                    handlers.remove(entry);
+            synchronized (this) {
+                if (handlers.remove(entry)) {
                     baked.clear();
                 }
             }
         };
+
     }
 
     @Override
     public <E extends Event> @NotNull E post(final @NotNull E event) {
+
         Handler[] matching = baked.get(event.getClass());
 
         if (matching == null) {
@@ -139,9 +155,11 @@ public final class SimpleEventBus implements EventBus {
         }
 
         return event;
+
     }
 
     private synchronized Handler @NotNull [] bake(final @NotNull Class<?> type) {
+
         final Handler[] matching = handlers.stream()
                 .filter(handler -> handler.type().isAssignableFrom(type))
                 .sorted(ORDER)
@@ -149,9 +167,11 @@ public final class SimpleEventBus implements EventBus {
 
         baked.put(type, matching);
         return matching;
+
     }
 
     private static @NotNull List<Method> methods(final @NotNull Class<?> type) {
+
         final List<Method> methods = new ArrayList<>();
 
         for (Class<?> current = type; current != null && current != Object.class; current = current.getSuperclass()) {
@@ -162,10 +182,12 @@ public final class SimpleEventBus implements EventBus {
         }
 
         return methods;
+
     }
 
     @SuppressWarnings("unchecked")
     private static @NotNull Class<? extends Event> eventType(final @NotNull Method method) {
+
         final Class<?>[] parameters = method.getParameterTypes();
 
         if (parameters.length != 1 || !Event.class.isAssignableFrom(parameters[0])) {
@@ -179,17 +201,23 @@ public final class SimpleEventBus implements EventBus {
         }
 
         return (Class<? extends Event>) parameters[0];
+
     }
 
     private static @NotNull MethodHandle handle(final @NotNull Method method, final @NotNull Object listener) {
+
         try {
             method.setAccessible(true);
             return MethodHandles.lookup().unreflect(method).bindTo(listener);
         } catch (final ReflectiveOperationException | RuntimeException exception) {
             throw new IllegalArgumentException("Cannot access " + method, exception);
         }
+
     }
 
+    /**
+     * A handler ordered by priority and registration sequence.
+     */
     private record Handler(
             @NotNull Class<?> type,
             @NotNull EventPriority priority,

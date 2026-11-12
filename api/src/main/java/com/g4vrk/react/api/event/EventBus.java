@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 public interface EventBus {
 
     /**
-     * Registers every {@link Subscribe} method of an object.
+     * Registers every {@link Subscribe} method of an object after validating all handlers.
      *
      * @param listener the object with handler methods
      * @throws IllegalArgumentException when a handler method has a wrong signature

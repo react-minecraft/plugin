@@ -24,7 +24,7 @@ mongodb = "5.11.1"
 sqlite = "3.53.2.1"
 
 configurate = "4.2.0"
-cloud-paper = "2.0.0"
+cloud-paper = "2.0.1"
 
 textserializer = "33546d5"
 actions = "2.2.0"
@@ -58,7 +58,7 @@ mongodb = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" 
 sqlite = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
 
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }
-cloud-core = { module = "org.incendo:cloud-core", version.ref = "cloud-paper" }
+cloud-core = { module = "org.incendo:cloud-core", version = "2.0.0" }
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-paper" }
 
 textserializer-legacy = { module = "com.github.g4vrk.TextSerializer:legacy", version.ref = "textserializer" }

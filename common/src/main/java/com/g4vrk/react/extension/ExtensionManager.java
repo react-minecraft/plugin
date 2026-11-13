@@ -69,7 +69,7 @@ public final class ExtensionManager implements AutoCloseable {
     }
 
     /**
-     * Loads and enables every jar, addons first.
+     * Loads and enables every JAR in dependency order.
      *
      * @param beforeLoad runs on the extension thread before the jars are read, for downloads
      * @return done once every extension is enabled or failed
@@ -111,7 +111,7 @@ public final class ExtensionManager implements AutoCloseable {
                 final boolean selected = kinds == null
                         ? descriptor.name().equalsIgnoreCase(key) || extension.plan().id().toString().equals(key)
                         : kinds.contains(descriptor.kind());
-                if (selected || extension.plan().dependencies().keySet().stream().anyMatch(affected::contains)) {
+                if (selected || extension.services().dependencyIds().stream().anyMatch(affected::contains)) {
                     targets.add(extension);
                     affected.add(extension.plan().id());
                 }

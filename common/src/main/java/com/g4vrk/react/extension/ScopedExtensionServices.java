@@ -4,6 +4,7 @@ import com.g4vrk.react.api.extension.ExtensionId;
 import com.g4vrk.react.api.extension.ExtensionServices;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -52,6 +53,12 @@ final class ScopedExtensionServices implements ExtensionServices {
 
         final LoadedExtension dependency = dependencies.get(id);
         return dependency != null && dependency.services().enabled;
+
+    }
+
+    Set<ExtensionId> dependencyIds() {
+
+        return dependencies.keySet();
 
     }
 

@@ -3,8 +3,10 @@ package com.g4vrk.react.extension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -40,6 +42,16 @@ final class ExtensionClassLoader extends URLClassLoader {
     void addLibrary(final URL library) {
 
         addURL(library);
+
+    }
+
+    @Override
+    public Enumeration<URL> getResources(final String name) throws IOException {
+
+        if (name.equals(ExtensionPlan.BOOTSTRAP_SERVICE)) {
+            return findResources(name);
+        }
+        return super.getResources(name);
 
     }
 

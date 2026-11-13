@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -21,6 +22,8 @@ import java.util.Set;
  * Reads and validates the bootstrap declarations of one extension JAR.
  */
 final class ExtensionPlan implements ExtensionBootstrapContext {
+
+    static final String BOOTSTRAP_SERVICE = "META-INF/services/" + ExtensionBootstrap.class.getName();
 
     private final Map<ExtensionId, Dependency> dependencies = new LinkedHashMap<>();
     private final Set<String> exports = new LinkedHashSet<>();
@@ -76,7 +79,7 @@ final class ExtensionPlan implements ExtensionBootstrapContext {
 
     Map<ExtensionId, Dependency> dependencies() {
 
-        return Map.copyOf(dependencies);
+        return Collections.unmodifiableMap(dependencies);
 
     }
 

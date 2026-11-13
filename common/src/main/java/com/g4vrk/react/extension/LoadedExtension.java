@@ -56,6 +56,8 @@ public final class LoadedExtension {
      *
      * @param context    the plugin services
      * @param descriptor the metadata of the jar
+     * @param plan the validated bootstrap declarations
+     * @param dependencies enabled providers visible to this JAR
      * @return the loaded, not yet enabled extension
      * @throws Exception when the jar cannot be loaded; nothing is left open then
      */

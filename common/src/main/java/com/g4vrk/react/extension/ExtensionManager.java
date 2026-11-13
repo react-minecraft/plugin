@@ -1,5 +1,6 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.react.api.extension.ExtensionId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -11,9 +12,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.ServiceConfigurationError;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -78,9 +82,7 @@ public final class ExtensionManager implements AutoCloseable {
                 logger.error("Could not check extension updates", failure);
             }
             final RebootResult result = new RebootResult();
-            for (final ExtensionKind kind : ExtensionKind.values()) {
-                loadAll(kind, name -> true, result);
-            }
+            loadAll(descriptor -> true, result);
         }, executor);
     }
 
@@ -102,13 +104,16 @@ public final class ExtensionManager implements AutoCloseable {
                 case ADDONS -> Set.of(ExtensionKind.ADDON);
                 default -> null;
             };
-            final NameFilter filter = kinds == null ? name -> name.equalsIgnoreCase(key) : name -> true;
-
             final List<LoadedExtension> targets = new ArrayList<>();
+            final Set<ExtensionId> affected = new HashSet<>();
             for (final LoadedExtension extension : loaded) {
                 final ExtensionDescriptor descriptor = extension.descriptor();
-                if ((kinds == null || kinds.contains(descriptor.kind())) && filter.accepts(descriptor.name())) {
+                final boolean selected = kinds == null
+                        ? descriptor.name().equalsIgnoreCase(key) || extension.plan().id().toString().equals(key)
+                        : kinds.contains(descriptor.kind());
+                if (selected || extension.plan().dependencies().keySet().stream().anyMatch(affected::contains)) {
                     targets.add(extension);
+                    affected.add(extension.plan().id());
                 }
             }
 
@@ -119,11 +124,10 @@ public final class ExtensionManager implements AutoCloseable {
                 logger.info("Disabled {}", extension);
             }
 
-            for (final ExtensionKind kind : ExtensionKind.values()) {
-                if (kinds == null || kinds.contains(kind)) {
-                    loadAll(kind, filter, result);
-                }
-            }
+            final Set<ExtensionDescriptor> stopped = new HashSet<>();
+            targets.forEach(extension -> stopped.add(extension.descriptor()));
+            loadAll(descriptor -> (kinds == null ? descriptor.name().equalsIgnoreCase(key) : kinds.contains(descriptor.kind()))
+                    || stopped.stream().anyMatch(old -> old.kind() == descriptor.kind() && old.name().equalsIgnoreCase(descriptor.name())), result);
 
             for (final LoadedExtension extension : targets) {
                 final String name = extension.descriptor().name();
@@ -183,44 +187,123 @@ public final class ExtensionManager implements AutoCloseable {
      */
     public @NotNull List<String> targets() {
         final List<String> targets = new ArrayList<>(List.of(ALL, RCP, ADDONS));
-        loaded.forEach(extension -> targets.add(extension.descriptor().name()));
+        loaded.forEach(extension -> {
+            targets.add(extension.descriptor().name());
+            targets.add(extension.plan().id().toString());
+        });
         return targets;
     }
 
     private void loadAll(
-            final @NotNull ExtensionKind kind,
-            final @NotNull NameFilter filter,
+            final @NotNull DescriptorFilter filter,
             final @NotNull RebootResult result
     ) {
-        for (ExtensionDescriptor descriptor : scan(kind)) {
-            if (!filter.accepts(descriptor.name())) {
-                continue;
-            }
-            if (extension(descriptor.name()) != null) {
-                logger.warn("Skipping {}: an extension named '{}' is already loaded", descriptor.jar().getFileName(), descriptor.name());
-                continue;
-            }
-
-            LoadedExtension extension = null;
-            try {
-                final Path jar = updates.apply(kind, descriptor.name(), descriptor.jar());
-                if (!jar.equals(descriptor.jar())) {
-                    descriptor = ExtensionDescriptor.read(kind, jar);
+        final Map<ExtensionId, LoadedExtension> available = new LinkedHashMap<>();
+        loaded.forEach(extension -> available.put(extension.plan().id(), extension));
+        final Map<ExtensionId, Candidate> pending = new LinkedHashMap<>();
+        final Set<ExtensionId> duplicates = new HashSet<>();
+        for (final ExtensionKind kind : ExtensionKind.values()) {
+            for (final ExtensionDescriptor installed : scan(kind)) {
+                if (!filter.accepts(installed) || loaded.stream().anyMatch(extension ->
+                        extension.descriptor().kind() == kind && extension.descriptor().name().equalsIgnoreCase(installed.name()))) {
+                    continue;
                 }
-                extension = LoadedExtension.load(context, descriptor);
-                loaded.add(extension);
-                extension.enable();
-                result.loaded().add(descriptor.name());
-                logger.info("Enabled {}", extension);
-            } catch (final Throwable failure) {
-                logger.error("Could not enable {} '{}'", kind.displayName(), descriptor.name(), failure);
-                result.failed().add(descriptor.name());
-                if (extension != null) {
-                    loaded.remove(extension);
-                    extension.close();
+                try {
+                    final Path jar = updates.apply(kind, installed.name(), installed.jar());
+                    final ExtensionDescriptor descriptor = jar.equals(installed.jar()) ? installed : ExtensionDescriptor.read(kind, jar);
+                    final ExtensionPlan plan = ExtensionPlan.read(descriptor);
+                    final Candidate candidate = new Candidate(descriptor, plan);
+                    if (available.containsKey(plan.id()) || duplicates.contains(plan.id())) {
+                        fail(candidate, "Duplicate extension ID " + plan.id(), result);
+                        continue;
+                    }
+                    final Candidate previous = pending.putIfAbsent(plan.id(), candidate);
+                    if (previous != null) {
+                        duplicates.add(plan.id());
+                        pending.remove(plan.id());
+                        fail(previous, "Duplicate extension ID " + plan.id(), result);
+                        fail(candidate, "Duplicate extension ID " + plan.id(), result);
+                    }
+                } catch (final Exception | LinkageError | ServiceConfigurationError failure) {
+                    logger.error("Could not bootstrap {} '{}'", kind.displayName(), installed.name(), failure);
+                    result.failed().add(installed.name());
                 }
             }
         }
+
+        while (!pending.isEmpty()) {
+            Candidate ready = null;
+            for (final Candidate candidate : pending.values()) {
+                final Map<ExtensionId, ExtensionPlan.Dependency> dependencies = candidate.plan().dependencies();
+                if (dependencies.entrySet().stream().noneMatch(entry -> entry.getValue().required() && pending.containsKey(entry.getKey()))) {
+                    if (ready == null) {
+                        ready = candidate;
+                    }
+                    if (dependencies.keySet().stream().noneMatch(pending::containsKey)) {
+                        ready = candidate;
+                        break;
+                    }
+                }
+            }
+            if (ready == null) {
+                final Set<ExtensionId> blocked = pending.keySet();
+                pending.values().forEach(candidate -> fail(candidate, "Blocked by a required dependency cycle among " + blocked, result));
+                return;
+            }
+            pending.remove(ready.plan().id());
+            enable(ready, available, pending, result);
+        }
+    }
+
+    private void enable(final Candidate candidate, final Map<ExtensionId, LoadedExtension> available,
+                        final Map<ExtensionId, Candidate> pending, final RebootResult result) {
+
+        final Map<ExtensionId, LoadedExtension> dependencies = new LinkedHashMap<>();
+        for (final Map.Entry<ExtensionId, ExtensionPlan.Dependency> entry : candidate.plan().dependencies().entrySet()) {
+            final LoadedExtension provider = available.get(entry.getKey());
+            if (provider != null && provider.plan().apiVersion() == entry.getValue().apiVersion()) {
+                dependencies.put(entry.getKey(), provider);
+            } else if (entry.getValue().required()) {
+                fail(candidate, "Requires " + entry.getKey() + " API " + entry.getValue().apiVersion()
+                        + (provider == null ? " (unavailable)" : " (found API " + provider.plan().apiVersion() + ')'), result);
+                return;
+            } else if (pending.containsKey(entry.getKey())) {
+                logger.warn("Skipping optional dependency {} -> {} to avoid blocking activation", candidate.plan().id(), entry.getKey());
+            }
+        }
+
+        LoadedExtension extension = null;
+        try {
+            extension = LoadedExtension.load(context, candidate.descriptor(), candidate.plan(), dependencies);
+            extension.enable();
+            loaded.add(extension);
+            available.put(candidate.plan().id(), extension);
+            result.loaded().add(candidate.descriptor().name());
+            logger.info("Enabled {}", extension);
+        } catch (final Throwable failure) {
+            if (failure instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            logger.error("Could not enable {}", candidate.plan().id(), failure);
+            result.failed().add(candidate.descriptor().name());
+            if (extension != null) {
+                extension.close();
+            }
+        }
+
+    }
+
+    private void fail(final Candidate candidate, final String reason, final RebootResult result) {
+
+        logger.error("Could not enable {}: {}", candidate.plan().id(), reason);
+        result.failed().add(candidate.descriptor().name());
+
+    }
+
+    /**
+     * An installed JAR with its bootstrap declarations.
+     */
+    private record Candidate(ExtensionDescriptor descriptor, ExtensionPlan plan) {
     }
 
     private @NotNull Collection<ExtensionDescriptor> scan(final @NotNull ExtensionKind kind) {
@@ -285,9 +368,9 @@ public final class ExtensionManager implements AutoCloseable {
     }
 
     @FunctionalInterface
-    private interface NameFilter {
+    private interface DescriptorFilter {
 
-        boolean accepts(final @NotNull String name);
+        boolean accepts(final @NotNull ExtensionDescriptor descriptor);
 
     }
 

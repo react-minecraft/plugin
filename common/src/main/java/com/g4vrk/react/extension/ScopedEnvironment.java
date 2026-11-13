@@ -4,6 +4,8 @@ import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.extension.ConfigFactory;
 import com.g4vrk.react.api.extension.ExtensionEnvironment;
+import com.g4vrk.react.api.extension.ExtensionId;
+import com.g4vrk.react.api.extension.ExtensionServices;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
 import net.kyori.adventure.audience.Audience;
@@ -30,6 +32,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     private final ScopedCommands commands;
     private final ScopedListeners listeners;
     private final ScopedPlaceholders placeholders;
+    private ScopedExtensionServices extensionServices;
 
     protected ScopedEnvironment(
             final @NotNull ExtensionContext context,
@@ -57,6 +60,26 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
      */
     public @NotNull ExtensionDescriptor descriptor() {
         return descriptor;
+    }
+
+    void attachServices(final ScopedExtensionServices services) {
+
+        this.extensionServices = services;
+
+    }
+
+    @Override
+    public @NotNull ExtensionServices services() {
+
+        return extensionServices;
+
+    }
+
+    @Override
+    public boolean dependencyAvailable(final @NotNull ExtensionId id) {
+
+        return extensionServices.available(id);
+
     }
 
     @Override

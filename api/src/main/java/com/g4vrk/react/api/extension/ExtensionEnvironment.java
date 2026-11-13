@@ -24,6 +24,12 @@ import java.nio.file.Path;
 @ApiStatus.AvailableSince("2.0")
 public interface ExtensionEnvironment {
 
+    /** Returns the services published and consumed by this extension. */
+    @NotNull ExtensionServices services();
+
+    /** Checks an optional dependency before loading code that imports its types. */
+    boolean dependencyAvailable(final @NotNull ExtensionId id);
+
     /**
      * The name from the extension's metadata file.
      *

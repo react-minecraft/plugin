@@ -3,6 +3,7 @@ package com.g4vrk.react.extension;
 import com.g4vrk.react.api.addon.JavaAddon;
 import com.g4vrk.react.api.event.addon.AddonDisableEvent;
 import com.g4vrk.react.api.event.addon.AddonEnableEvent;
+import com.g4vrk.react.api.extension.ExtensionId;
 import com.g4vrk.react.api.rcp.RCPLifecycle;
 import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.provider.RCPProvider;
@@ -10,9 +11,9 @@ import com.g4vrk.react.rcp.RCPHost;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * One addon or RCP jar that is loaded: its class loader, environment and main object.
@@ -23,7 +24,9 @@ public final class LoadedExtension {
 
     private final ExtensionContext context;
     private final ExtensionDescriptor descriptor;
-    private final URLClassLoader classLoader;
+    private final ExtensionClassLoader classLoader;
+    private final ExtensionPlan plan;
+    private final ScopedExtensionServices services;
     private final ScopedEnvironment environment;
     private final Object instance;
 
@@ -32,13 +35,17 @@ public final class LoadedExtension {
     private LoadedExtension(
             final @NotNull ExtensionContext context,
             final @NotNull ExtensionDescriptor descriptor,
-            final @NotNull URLClassLoader classLoader,
+            final @NotNull ExtensionClassLoader classLoader,
+            final @NotNull ExtensionPlan plan,
+            final @NotNull ScopedExtensionServices services,
             final @NotNull ScopedEnvironment environment,
             final @NotNull Object instance
     ) {
         this.context = context;
         this.descriptor = descriptor;
         this.classLoader = classLoader;
+        this.plan = plan;
+        this.services = services;
         this.environment = environment;
         this.instance = instance;
     }
@@ -54,30 +61,37 @@ public final class LoadedExtension {
      */
     static @NotNull LoadedExtension load(
             final @NotNull ExtensionContext context,
-            final @NotNull ExtensionDescriptor descriptor
+            final @NotNull ExtensionDescriptor descriptor,
+            final @NotNull ExtensionPlan plan,
+            final @NotNull Map<ExtensionId, LoadedExtension> dependencies
     ) throws Exception {
         final Path directory = descriptor.kind().data(context.dataFolder()).resolve(descriptor.name());
         Files.createDirectories(directory);
 
-        final URLClassLoader classLoader = new ExtensionClassLoader(
+        final ExtensionClassLoader classLoader = new ExtensionClassLoader(
                 context.logger().getName() + "#" + descriptor.name(),
                 descriptor.jar().toUri().toURL(),
                 RCPLifecycle.class.getClassLoader()
         );
+        final ScopedExtensionServices services = new ScopedExtensionServices(plan, classLoader, dependencies);
 
         ScopedEnvironment environment = null;
         try {
+            classLoader.link(dependencies.values());
+            plan.loadLibraries(classLoader, directory);
             final Class<?> mainClass = Class.forName(descriptor.mainClass(), true, classLoader);
             final Object instance;
 
             if (descriptor.kind() == ExtensionKind.RCP) {
                 final HostedRCPEnvironment rcp = new HostedRCPEnvironment(context, descriptor, directory, classLoader);
                 environment = rcp;
+                rcp.attachServices(services);
                 instance = createRCP(mainClass, rcp);
                 context.rcpHost().attach(rcp);
             } else {
                 final HostedAddonEnvironment addonEnvironment = new HostedAddonEnvironment(context, descriptor, directory, classLoader);
                 environment = addonEnvironment;
+                addonEnvironment.attachServices(services);
                 final JavaAddon addon = createAddon(mainClass);
                 addon.init(addonEnvironment, classLoader);
                 withContextLoader(classLoader, addon::onLoad);
@@ -85,7 +99,7 @@ public final class LoadedExtension {
             }
 
             environment.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
-            return new LoadedExtension(context, descriptor, classLoader, environment, instance);
+            return new LoadedExtension(context, descriptor, classLoader, plan, services, environment, instance);
         } catch (final Exception | LinkageError failure) {
             if (environment != null) {
                 release(context.rcpHost(), environment);
@@ -97,6 +111,24 @@ public final class LoadedExtension {
             }
             throw failure instanceof Exception exception ? exception : new IllegalStateException(failure);
         }
+    }
+
+    ExtensionPlan plan() {
+
+        return plan;
+
+    }
+
+    ExtensionClassLoader loader() {
+
+        return classLoader;
+
+    }
+
+    ScopedExtensionServices services() {
+
+        return services;
+
     }
 
     private static @NotNull RCPLifecycle createRCP(
@@ -157,13 +189,16 @@ public final class LoadedExtension {
         if (enabled) {
             return;
         }
+        services.begin();
+        enabled = true;
         if (instance instanceof JavaAddon addon) {
             withContextLoader(classLoader, () -> addon.enabled(true));
+            services.publish();
             context.events().post(new AddonEnableEvent(descriptor.name(), descriptor.version()));
         } else {
             withContextLoader(classLoader, ((RCPLifecycle) instance)::onEnable);
+            services.publish();
         }
-        enabled = true;
     }
 
     void reload() throws Exception {
@@ -190,6 +225,7 @@ public final class LoadedExtension {
         } catch (final Throwable failure) {
             environment.logger().error("{} '{}' failed to disable", descriptor.kind().displayName(), descriptor.name(), failure);
         } finally {
+            services.close();
             release(context.rcpHost(), environment);
             try {
                 classLoader.close();

@@ -26,7 +26,7 @@ sqlite = "3.53.2.1"
 configurate = "4.2.0"
 cloud-paper = "2.0.1"
 
-textserializer = "33546d5"
+textserializer = "7a92d2d"
 actions = "2.2.0"
 
 schedula = "1.1.2"

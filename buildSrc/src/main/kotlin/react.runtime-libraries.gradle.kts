@@ -10,7 +10,7 @@ plugins {
 val catalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
 val libraryGroups = mapOf(
     "core" to listOf(
-        "adventure-minimessage", "configurate-yaml", "cloud-paper", "textserializer-legacy", "actions",
+        "configurate-yaml", "cloud-paper", "textserializer-legacy", "actions",
         "schedula-common", if (project.name == "folia") "schedula-folia" else "schedula-bukkit"
     ),
     "database-sqlite" to listOf("hikari", "sqlite"),
@@ -30,9 +30,6 @@ libraryGroups.forEach { (groupName, aliases) ->
     }
     aliases.forEach { alias ->
         val dependency = dependencies.create(catalog.findLibrary(alias).get().get().toString()) as ExternalModuleDependency
-        if (alias == "adventure-minimessage") {
-            dependency.isTransitive = false
-        }
         dependencies.add(libraries.name, dependency)
     }
     val jars = libraries.incoming.artifactView {

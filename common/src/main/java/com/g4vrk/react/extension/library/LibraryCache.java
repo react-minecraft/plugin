@@ -7,6 +7,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
@@ -34,7 +35,7 @@ public final class LibraryCache {
         }
         Files.createDirectories(directory);
         final Path cached = directory.resolve(sha256 + '-' + name);
-        if (Files.isRegularFile(cached) && sha256.equals(digest(cached))) {
+        if (Files.isRegularFile(cached, LinkOption.NOFOLLOW_LINKS) && sha256.equals(digest(cached))) {
             return cached;
         }
 

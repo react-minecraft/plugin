@@ -96,19 +96,21 @@ public final class RuntimeLibraries extends URLClassLoader {
     }
 
     @Override
-    protected synchronized Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+    protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
 
         if (!name.startsWith(CORE_PACKAGE) || name.startsWith(LOADER_PACKAGE)) {
             return super.loadClass(name, resolve);
         }
-        Class<?> type = findLoadedClass(name);
-        if (type == null) {
-            type = findClass(name);
+        synchronized (getClassLoadingLock(name)) {
+            Class<?> type = findLoadedClass(name);
+            if (type == null) {
+                type = findClass(name);
+            }
+            if (resolve) {
+                resolveClass(type);
+            }
+            return type;
         }
-        if (resolve) {
-            resolveClass(type);
-        }
-        return type;
 
     }
 

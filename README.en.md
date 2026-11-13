@@ -60,6 +60,15 @@
 
 ### React RCP
 
+React keeps third-party libraries in `plugins/React/.libraries`. On first startup it downloads the shared
+libraries and the dependencies of the selected database. Disabling storage skips the database drivers.
+Later starts verify the cached JARs against their SHA-256 digests and download any missing or damaged files.
+
+Addons and RCPs declare dependencies in Java with `ExtensionBootstrap`. For example, `rcp:react-inference`
+exports an API package that an addon can link with `context.require(...)` or `context.optional(...)`.
+Private libraries are cached in `.libraries` inside the extension's data folder.
+See [example-addon](https://github.com/react-minecraft/example-addon#вызов-api-установленного-rcp) for a service and library example.
+
 The models and the React connection live in an RCP (Runtime Communication Protocol), not in the plugin.
 How it is loaded is set in `plugins/React/.rcp/react-rcp.yml`:
 

@@ -2,6 +2,7 @@ plugins {
     id("java-library")
     id("react.base-conventions")
     id("react.shadow-conventions")
+    id("react.runtime-libraries")
 }
 
 val mainClass = "com.g4vrk.react.folia.FoliaReactPlugin"
@@ -12,7 +13,7 @@ dependencies {
 
     compileOnly(libs.folia.api)
 
-    implementation(libs.schedula.folia)
+    compileOnly(libs.schedula.folia)
 
 }
 

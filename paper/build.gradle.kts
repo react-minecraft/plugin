@@ -2,6 +2,7 @@ plugins {
     id("java")
     id("react.base-conventions")
     id("react.shadow-conventions")
+    id("react.runtime-libraries")
 }
 
 val mainClass = "com.g4vrk.react.paper.PaperReactPlugin"
@@ -12,7 +13,7 @@ dependencies {
 
     compileOnly(libs.paper.api)
 
-    implementation(libs.schedula.bukkit)
+    compileOnly(libs.schedula.bukkit)
 
 }
 

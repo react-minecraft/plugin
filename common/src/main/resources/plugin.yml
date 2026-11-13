@@ -68,10 +68,3 @@ permissions:
     default: false
     children:
       react.monitor.enable_on_join: true
-
-libraries:
-  - org.spongepowered:configurate-yaml:4.2.0
-
-  - org.xerial:sqlite-jdbc:3.42.0.0
-
-  - org.incendo:cloud-paper:2.0.0

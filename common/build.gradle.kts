@@ -23,21 +23,11 @@ dependencies {
     compileOnly(libs.packetevents)
 
 
-    implementation(libs.hikari) {
+    compileOnly(libs.hikari) {
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
 
-    implementation(libs.h2)
-
-    implementation(libs.mysql) {
-        exclude(group = "org.slf4j", module = "slf4j-api")
-    }
-
-    implementation(libs.mongodb) {
-        exclude(group = "org.slf4j", module = "slf4j-api")
-    }
-
-    implementation(libs.sqlite) {
+    compileOnly(libs.mongodb) {
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
 
@@ -45,17 +35,25 @@ dependencies {
 
     compileOnly(libs.cloud.paper)
 
-    implementation(libs.adventure.minimessage) {
+    compileOnly(libs.adventure.minimessage) {
         isTransitive = false
     }
 
-    implementation(libs.textserializer.legacy)
-    implementation(libs.actions)
-    implementation(libs.schedula.common)
+    compileOnly(libs.textserializer.legacy)
+    compileOnly(libs.actions)
+    compileOnly(libs.schedula.common)
 
     testImplementation(libs.paper.api)
     testImplementation(libs.configurate.yaml)
     testImplementation(libs.cloud.core)
+    testImplementation(libs.hikari)
+    testImplementation(libs.mongodb)
+    testImplementation(libs.textserializer.legacy)
+    testImplementation(libs.actions)
+    testImplementation(libs.schedula.common)
+    testRuntimeOnly(libs.h2)
+    testRuntimeOnly(libs.mysql)
+    testRuntimeOnly(libs.sqlite)
 
 }
 

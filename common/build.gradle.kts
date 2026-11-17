@@ -5,6 +5,13 @@ plugins {
 
 repositories {
     maven {
+        url = uri("https://libraries.minecraft.net/")
+        content {
+            includeModule("com.mojang", "brigadier")
+        }
+    }
+
+    maven {
         url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     }
 }
@@ -34,6 +41,7 @@ dependencies {
     compileOnly(libs.configurate.yaml)
 
     compileOnly(libs.cloud.paper)
+    compileOnly(libs.brigadier)
 
     compileOnly(libs.adventure.minimessage) {
         isTransitive = false

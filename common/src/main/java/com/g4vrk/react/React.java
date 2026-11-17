@@ -146,7 +146,7 @@ public class React {
         this.playerRegistry = new PlayerRegistry();
         this.scheduler = schedulaAPI.createScheduler();
         this.rcpHost = new RCPHost(playerRegistry);
-        this.commands = new CommandService(plugin, logger);
+        this.commands = new CommandService(plugin);
 
         this.updateNotifier = new UpdateNotifier(
                 events,

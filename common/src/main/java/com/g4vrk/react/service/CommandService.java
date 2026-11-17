@@ -27,15 +27,16 @@ import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
+import org.incendo.cloud.exception.ArgumentParseException;
 import org.incendo.cloud.exception.InvalidCommandSenderException;
 import org.incendo.cloud.exception.InvalidSyntaxException;
 import org.incendo.cloud.exception.NoPermissionException;
 import org.incendo.cloud.exception.NoSuchCommandException;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.paper.LegacyPaperCommandManager;
+import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.setting.ManagerSetting;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
 
 import java.util.List;
 
@@ -45,7 +46,6 @@ import java.util.List;
 @Accessors(fluent = true)
 public final class CommandService {
 
-    private final Logger logger;
     @Getter
     private final LegacyPaperCommandManager<CommandSender> manager;
     @Getter
@@ -53,8 +53,7 @@ public final class CommandService {
 
     private List<ReloadObserver<ActionsConfig>> observers = List.of();
 
-    public CommandService(final @NotNull Plugin plugin, final @NotNull Logger logger) {
-        this.logger = logger;
+    public CommandService(final @NotNull Plugin plugin) {
         this.manager = LegacyPaperCommandManager.createNative(
                 plugin,
                 ExecutionCoordinator.<CommandSender>builder()
@@ -95,8 +94,12 @@ public final class CommandService {
         this.observers = List.of(help, alerts, monitor, debug, bypass, reload, reboot, rcps);
 
         manager.command(builderFactory.create().handler(context -> help.root(context.sender())));
+        manager.command(builderFactory.create()
+                .required("unknown", StringParser.greedyStringParser())
+                .handler(context -> help.unknownCommand(context.sender())));
         manager.exceptionController()
                 .registerHandler(NoPermissionException.class, context -> help.noPermission(context.context().sender()))
+                .registerHandler(ArgumentParseException.class, context -> help.unknownCommand(context.context().sender()))
                 .registerHandler(InvalidSyntaxException.class, context -> help.unknownCommand(context.context().sender()))
                 .registerHandler(NoSuchCommandException.class, context -> help.unknownCommand(context.context().sender()))
                 .registerHandler(InvalidCommandSenderException.class, context -> help.playerOnly(context.context().sender()));
@@ -128,11 +131,9 @@ public final class CommandService {
     }
 
     private void registerCompletions() {
-        // Paper hands Brigadier commands over only once, in its COMMANDS lifecycle event at startup.
-        // Addons and RCPs add commands later (and again on every /react reboot), so the commands go
-        // through the Bukkit command map, which takes registrations at any time.
-        if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
-            logger.info("Registering Asynchronous completions in commandManager...");
+        if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
+            manager.registerBrigadier();
+        } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
             manager.registerAsynchronousCompletions();
         }
     }

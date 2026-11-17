@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -20,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
@@ -141,12 +143,20 @@ public final class ReleaseClient {
     ) throws IOException, InterruptedException, VerificationException {
         Files.createDirectories(target.toAbsolutePath().getParent());
         final Path part = target.resolveSibling(target.getFileName() + ".part");
-        Files.write(part, get(release.base() + jar.getKey()));
-        if (!matches(part, jar.getValue())) {
-            Files.deleteIfExists(part);
-            throw new VerificationException("SHA-256 of " + jar.getKey() + " does not match");
+        try {
+            get(release.base() + jar.getKey(), part);
+            if (!matches(part, jar.getValue())) {
+                throw new VerificationException("SHA-256 of " + jar.getKey() + " does not match");
+            }
+            Files.move(part, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (final IOException | InterruptedException | VerificationException failure) {
+            try {
+                Files.deleteIfExists(part);
+            } catch (final IOException cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+            throw failure;
         }
-        Files.move(part, target, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
@@ -162,9 +172,9 @@ public final class ReleaseClient {
             return false;
         }
         try {
-            final byte[] digest = MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(file));
+            final byte[] digest = digest(file);
             return MessageDigest.isEqual(digest, HexFormat.of().parseHex(sha256));
-        } catch (final GeneralSecurityException | IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException ex) {
             return false;
         }
     }
@@ -210,6 +220,36 @@ public final class ReleaseClient {
             throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
         return response.body();
+    }
+
+    private void get(final @NotNull String url, final @NotNull Path target) throws IOException, InterruptedException {
+        final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(TIMEOUT)
+                .header("User-Agent", "React-Updater")
+                .GET()
+                .build();
+        final HttpResponse<Path> response = http.send(request, HttpResponse.BodyHandlers.ofFile(target));
+        if (response.statusCode() != 200) {
+            throw new IOException("HTTP " + response.statusCode() + " for " + url);
+        }
+    }
+
+    private static byte[] digest(final @NotNull Path file) throws IOException {
+        final MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (final NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is unavailable", ex);
+        }
+
+        try (final InputStream input = Files.newInputStream(file)) {
+            final byte[] buffer = new byte[8192];
+            int length;
+            while ((length = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, length);
+            }
+        }
+        return digest.digest();
     }
 
     private static void verifySignature(final byte[] data, final byte[] signatureText) throws VerificationException {

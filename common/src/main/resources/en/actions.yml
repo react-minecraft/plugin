@@ -23,12 +23,12 @@ alerts:
   # Actions run for every alert. <player> - the player, <check> - the check,
   # <violations> or <vl> - violations, <details> - details from the check
   alert:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#eb2544><player></color> <white>провалил <color:#eb2544><check></color> <dark_gray>(x<vl>) <gray><details></gray>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#eb2544><player></color> <white>failed <color:#eb2544><check></color> <dark_gray>(x<vl>) <gray><details></gray>"
 
   # Actions performed when alerts are enabled
   on-enable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#11ff11>enabled ✔"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#11ff11>enabled ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions run when alerts are enabled only for some players. <players> - their names
@@ -38,8 +38,8 @@ alerts:
 
   # Actions performed when alerts are disabled
   on-disable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#ff1111>disabled ✘"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#ff1111>disabled ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 # /react monitor (or /react verbose) - monitoring of every analysis
@@ -47,12 +47,12 @@ monitor:
 
   # Actions run for every analysis, placeholders as in alerts.alert
   message:
-    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <dark_gray>Аналитика: <color:#747474><player></color> <dark_gray>-></dark_gray> <color:#747474><check></color> <dark_gray><details></dark_gray>"
+    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <dark_gray>Analysis: <color:#747474><player></color> <dark_gray>-></dark_gray> <color:#747474><check></color> <dark_gray><details></dark_gray>"
 
   # Actions performed when monitoring is enabled
   on-enable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#11ff11>enabled ✔"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#11ff11>enabled ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions run when only some players are monitored. <players> - their names
@@ -62,8 +62,8 @@ monitor:
 
   # Actions performed when monitoring is disabled
   on-disable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#ff1111>disabled ✘"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#ff1111>disabled ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 
@@ -125,14 +125,14 @@ reload:
 
   # Actions performed when a reload starts
   on-start:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка плагина..."
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Reloading the plugin..."
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Reloading..."
     - "[sound] block.note_block.pling;1.0;1.0"
 
   # Actions performed when a reload finishes
   on-finish:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин перезагружен!"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Plugin reloaded!"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Plugin reloaded successfully!"
     - "[sound] entity.player.levelup;1.0;1.0"
 
 # /react reboot

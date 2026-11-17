@@ -20,21 +20,21 @@ history:
 
       header:
         - ""
-        - " <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <white>AI history <gray>→</gray> <#ff3655><player> <gray>(page <page> / <pages>)"
-        - " <gray>➥ Analysis of recent sessions"
+        - " <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <white>AI history</white> <gray>→</gray> <#ff3655><player></#ff3655> <dark_gray>(page <page> / <pages>)"
+        - " <gray>➥ Recent analysis sessions"
         - ""
-        - " <white>Average cheat probability: <avg-probability>"
+        - " <white>Average cheat probability:</white> <avg-probability>"
         - ""
 
       empty:
-        - " <gray>- No entries"
+        - " <white>- No entries"
 
       entry-format:
-        - " <gray>-</gray> <white>Cheat probability: <probability>"
+        - " <gray>•</gray> <white>Check: <check></white> <dark_gray>·</dark_gray> <white>Probability:</white> <probability>"
 
       footer:
         - ""
-        - "                <gradient:#eb2544:#ff3655><prev><hover:show_text:'<white>Previous page'>«««««</hover></prev></gradient>       <gray>|       <gradient:#eb2544:#ff3655><next><hover:show_text:'<white>Next page'>»»»»»»</hover></next></gradient>"
+        - "  <gradient:#eb2544:#ff3655><prev><hover:show_text:'<white>Previous page'>‹ Previous</hover></prev></gradient> <gray>|</gray> <gradient:#eb2544:#ff3655><next><hover:show_text:'<white>Next page'>Next ›</hover></next></gradient>"
 
 # Не меняйте / Do not change
 config-version: 2

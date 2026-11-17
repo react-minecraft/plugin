@@ -107,6 +107,13 @@ public final class ReactConfigs {
             })
             // collect-addon is private and no longer an official addon.
             .step(root -> root.node("official-addons").removeChild("collect"))
+            .step(root -> {
+                final ConfigurationNode legacy = root.node("official-addons");
+                if (!legacy.virtual()) {
+                    root.node("external-addons").mergeFrom(legacy);
+                    root.removeChild("official-addons");
+                }
+            })
             .build();
 
     private final Path directory;

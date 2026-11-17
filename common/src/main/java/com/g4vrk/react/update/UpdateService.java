@@ -148,7 +148,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     public synchronized void onStart() {
         loadSettings();
         reactRCP();
-        officialAddons();
+        externalAddons();
         checkAll();
     }
 
@@ -375,14 +375,14 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     }
 
-    private void officialAddons() {
-        final Map<String, MainConfig.OfficialAddon> addons = main.get().officialAddons();
+    private void externalAddons() {
+        final Map<String, MainConfig.ExternalAddon> addons = main.get().externalAddons();
         if (addons == null || addons.isEmpty()) {
             return;
         }
         final List<ExtensionDescriptor> present = scan(ExtensionKind.ADDON);
-        for (final Map.Entry<String, MainConfig.OfficialAddon> entry : addons.entrySet()) {
-            final MainConfig.OfficialAddon addon = entry.getValue();
+        for (final Map.Entry<String, MainConfig.ExternalAddon> entry : addons.entrySet()) {
+            final MainConfig.ExternalAddon addon = entry.getValue();
             if (addon == null || !addon.downloadNextStart() || addon.repository() == null) {
                 continue;
             }

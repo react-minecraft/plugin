@@ -59,6 +59,9 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
             return;
         }
         scheduler().scheduleEntity(reactPlayer.bukkitPlayer, () -> {
+            if (closed) {
+                return;
+            }
             final AimAI check = reactPlayer.checkManager.getCheck(AimAI.class);
             if (check != null) {
                 check.onResult(result);
@@ -67,7 +70,7 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
     }
 
     @Override
-    public void listen(final @NotNull RCPPlayerListener listener) {
+    public synchronized void listen(final @NotNull RCPPlayerListener listener) {
         if (closed) {
             throw new IllegalStateException("RCP '" + name() + "' is disabled");
         }
@@ -98,7 +101,7 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         closed = true;
         playerListeners.clear();
         status = null;

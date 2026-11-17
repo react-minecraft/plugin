@@ -11,6 +11,7 @@ import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
+import com.g4vrk.react.action.PlaySoundAction;
 import com.g4vrk.react.api.ReactAPI;
 import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.channel.DebugActions;
@@ -132,6 +133,7 @@ public class React {
 
         final ActionRegistry<Audience> actionRegistry = new SimpleActionRegistry<>(true);
         DefaultActionSet.Adventure.registerDefaults(actionRegistry, text -> serializers.universalSerializer().serialize(text), ";");
+        actionRegistry.register(new PlaySoundAction(logger), "sound", "play-sound");
         this.actionParser = new SimpleActionParser<>(actionRegistry);
 
         logger.info("Creating Data management modules...");

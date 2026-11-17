@@ -78,7 +78,7 @@ public record ActionsConfig(
     }
 
     @ConfigSerializable
-    public record Reload(List<String> onStart, List<String> onFinish) {
+    public record Reload(List<String> onStart, List<String> onFinish, List<String> onFailure) {
     }
 
     /**

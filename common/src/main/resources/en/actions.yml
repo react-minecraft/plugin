@@ -137,6 +137,10 @@ reload:
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Plugin reloaded successfully!"
     - "[sound] entity.player.levelup;1.0;1.0"
 
+  on-failure:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Reload failed. See the server console."
+    - "[sound] block.note_block.bass;1.0;0.8"
+
 # /react reboot
 reboot:
 

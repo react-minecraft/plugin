@@ -6,6 +6,9 @@ import com.g4vrk.schedula.folia.impl.task.runner.factory.FoliaSchedulerFactory;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Supplies React with the Folia scheduler factory.
+ */
 public final class FoliaReactAPI implements ReactAPI {
 
     private final SchedulaAPI api;
@@ -13,13 +16,18 @@ public final class FoliaReactAPI implements ReactAPI {
     public FoliaReactAPI(
             final @NotNull Plugin plugin
     ) {
+
         this.api = SchedulaAPI.builder()
                 .factory(new FoliaSchedulerFactory(plugin))
                 .build();
+
     }
 
     @Override
     public @NotNull SchedulaAPI schedulaAPI() {
+
         return api;
+
     }
+
 }

@@ -28,7 +28,7 @@ public final class PlayerSelectorArgument {
                 .name("players")
                 .parser(parser)
                 .required(required)
-                .preprocessor((context, input) -> allowed(input.remainingInput())
+                .preprocessor((context, input) -> allowed(input.remainingInput().stripLeading())
                         ? ArgumentParseResult.success(true)
                         : ArgumentParseResult.failure(new IllegalArgumentException("Expected a player selector")))
                 .suggestionProvider((context, input) -> parser.parser().suggestionProvider().suggestionsFuture(context, input)

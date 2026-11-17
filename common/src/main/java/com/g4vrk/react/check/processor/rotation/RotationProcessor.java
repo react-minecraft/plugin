@@ -19,6 +19,10 @@ public final class RotationProcessor {
             final float pitch
     ) {
 
+        if (!Float.isFinite(yaw) || !Float.isFinite(pitch)) {
+            return;
+        }
+
         final RotationData rotationData = player.rotationData;
 
         rotationData.push(yaw, pitch);

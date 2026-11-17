@@ -111,6 +111,12 @@ bypass:
   list-empty:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Nobody online has a bypass"
 
+  invalid-check:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Unknown check."
+    - "[sound] block.note_block.bass;1.0;0.8"
+  invalid-duration:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Enter a duration, such as 10m or 1h, or forever."
+    - "[sound] block.note_block.bass;1.0;0.8"
   all-checks: "all checks"
   forever: "forever"
 

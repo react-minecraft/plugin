@@ -67,6 +67,8 @@ public record ActionsConfig(
             List<String> granted,
             List<String> removed,
             List<String> cancelled,
+            List<String> invalidCheck,
+            List<String> invalidDuration,
             List<String> listHeader,
             List<String> listEntry,
             List<String> listEmpty,

@@ -111,6 +111,12 @@ bypass:
   list-empty:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Ни у кого онлайн нет обхода"
 
+  invalid-check:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Неизвестная проверка."
+    - "[sound] block.note_block.bass;1.0;0.8"
+  invalid-duration:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Укажи время, например 10m или 1h, либо forever."
+    - "[sound] block.note_block.bass;1.0;0.8"
   all-checks: "все проверки"
   forever: "навсегда"
 

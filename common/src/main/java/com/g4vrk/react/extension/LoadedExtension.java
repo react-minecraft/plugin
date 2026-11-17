@@ -100,7 +100,7 @@ public final class LoadedExtension {
                 instance = addon;
             }
 
-            environment.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
+            context.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
             return new LoadedExtension(context, descriptor, classLoader, plan, services, environment, instance);
         } catch (final Exception | LinkageError failure) {
             if (environment != null) {

@@ -49,13 +49,18 @@ public record ExtensionContext(
 ) {
 
     /**
-     * A logger for one extension, named {@code React#<name>}.
+     * A logger scoped to an extension with a distinct name.
      *
      * @param name the extension name
      * @return the logger
      */
     public @NotNull Logger logger(final @NotNull String name) {
+
+        if (plugin.getName().equalsIgnoreCase(name)) {
+            return logger;
+        }
         return LoggerFactory.getLogger(logger.getName() + "#" + name);
+
     }
 
 }

@@ -42,6 +42,7 @@ dependencies {
 
     compileOnly(libs.cloud.paper)
     compileOnly(libs.brigadier)
+    compileOnly(libs.xseries)
 
     compileOnly(libs.adventure.minimessage) {
         isTransitive = false

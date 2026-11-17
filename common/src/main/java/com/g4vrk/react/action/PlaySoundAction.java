@@ -1,5 +1,6 @@
 package com.g4vrk.react.action;
 
+import com.cryptomorin.xseries.XSound;
 import com.g4vrk.functionalActions.Action;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
@@ -8,8 +9,6 @@ import org.bukkit.Keyed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-
-import java.util.Locale;
 
 /**
  * Plays configured sound keys across Bukkit versions that expose Sound as an enum or interface.
@@ -43,12 +42,9 @@ public final class PlaySoundAction implements Action<Audience> {
     private static @NotNull Key key(final @NotNull String value) {
 
         if (value.indexOf(':') < 0 && value.indexOf('.') < 0) {
-            try {
-                final Keyed sound = (Keyed) org.bukkit.Sound.class.getMethod("valueOf", String.class)
-                        .invoke(null, value.toUpperCase(Locale.ROOT));
+            final Keyed sound = XSound.matchXSound(value).map(XSound::parseSound).orElse(null);
+            if (sound != null) {
                 return Key.key(sound.getKey().toString());
-            } catch (final ReflectiveOperationException ignored) {
-                /* An unqualified value may also name a Minecraft sound key. */
             }
         }
         return Key.key(value);

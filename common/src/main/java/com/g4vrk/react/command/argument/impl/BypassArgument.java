@@ -6,6 +6,7 @@ import com.g4vrk.react.Permissions;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.command.argument.LocalArgument;
+import com.g4vrk.react.command.argument.PlayerSelectorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.player.TrackedPlayerImpl;
@@ -16,7 +17,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
-import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
 import org.incendo.cloud.parser.ArgumentParser;
 import org.incendo.cloud.parser.standard.DurationParser;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -94,7 +94,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     @Override
     public @NotNull Command.Builder<CommandSender> build() {
         return root()
-                .required("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
+                .argument(PlayerSelectorArgument.players(true))
                 .optional(
                         "duration",
                         ArgumentParser.firstOf(DurationParser.durationParser(), StringParser.stringParser()),
@@ -128,7 +128,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                 build(),
                 root()
                         .literal("remove")
-                        .required("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
+                        .argument(PlayerSelectorArgument.players(true))
                         .optional("check", StringParser.stringParser(), checkSuggestions())
                         .handler(context -> {
                             final MultiplePlayerSelector selector = context.get("players");

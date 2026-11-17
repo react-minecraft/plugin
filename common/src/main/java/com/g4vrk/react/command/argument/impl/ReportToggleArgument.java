@@ -6,6 +6,7 @@ import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.impl.ReportChannel;
 import com.g4vrk.react.command.argument.LocalArgument;
+import com.g4vrk.react.command.argument.PlayerSelectorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import net.kyori.adventure.audience.Audience;
@@ -13,7 +14,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
-import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
@@ -76,7 +76,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         Command.Builder<CommandSender> builder = builderFactory.create()
                 .literal(literal, aliases)
                 .permission(permission)
-                .optional("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false));
+                .argument(PlayerSelectorArgument.players(false));
         if (byCheck) {
             builder = builder.optional(
                     "check",

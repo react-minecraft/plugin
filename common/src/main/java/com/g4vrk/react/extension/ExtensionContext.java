@@ -29,6 +29,7 @@ import java.nio.file.Path;
  * @param placeholders the shared placeholder registry
  * @param text         the MiniMessage formatter
  * @param commands     the Cloud command tree of the plugin
+ * @param commandsChanged schedules a client command tree refresh when required by the server
  * @param players      the tracked players
  * @param rcpHost      where RCP environments attach
  * @param punishments  the rules of punishments.yml
@@ -43,6 +44,7 @@ public record ExtensionContext(
         @NotNull TextFormatter text,
         @NotNull ActionParser<Audience> actions,
         @NotNull CommandManager<CommandSender> commands,
+        @NotNull Runnable commandsChanged,
         @NotNull PlayerRegistry players,
         @NotNull RCPHost rcpHost,
         @NotNull PunishmentRegistry punishments

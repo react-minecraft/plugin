@@ -48,7 +48,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
         this.text = context.text();
         this.actions = context.actions();
         this.scheduler = new ScopedScheduler(context.scheduler());
-        this.commands = new ScopedCommands(context.commands(), logger, descriptor.name());
+        this.commands = new ScopedCommands(context.commands(), logger, descriptor.name(), context.commandsChanged());
         this.listeners = new ScopedListeners(plugin, context.events(), logger);
         this.placeholders = new ScopedPlaceholders(context.placeholders());
     }

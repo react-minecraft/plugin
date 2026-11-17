@@ -256,6 +256,19 @@ texts:
   not-checked: "not checked"
   checked-now: "checked just now"
   checked-ago: "checked <minutes> min ago"
+  update-labels:
+    release: "stable releases"
+    prerelease: "nightly"
+    disabled: "disabled"
+    installed: "installed"
+    offline: "release unavailable"
+    rejected: "signature rejected"
+    no jar: "no compatible JAR"
+    up to date: "up to date"
+    staged: "ready to install"
+    failed: "update failed"
+    not checked: "not checked"
+    api-version: "incompatible API <version>"
 
 # Не меняйте / Do not change
 config-version: 3

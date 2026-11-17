@@ -3,6 +3,7 @@ package com.g4vrk.react.config.model;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.util.List;
+import java.util.Map;
 
 @ConfigSerializable
 public record ActionsConfig(
@@ -121,7 +122,8 @@ public record ActionsConfig(
             String version,
             String notChecked,
             String checkedNow,
-            String checkedAgo
+            String checkedAgo,
+            Map<String, String> updateLabels
     ) {
     }
 

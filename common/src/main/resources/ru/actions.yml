@@ -255,6 +255,19 @@ texts:
   not-checked: "не проверялось"
   checked-now: "проверено только что"
   checked-ago: "проверено <minutes> мин назад"
+  update-labels:
+    release: "стабильные релизы"
+    prerelease: "ночные сборки"
+    disabled: "отключено"
+    installed: "установлено"
+    offline: "релиз недоступен"
+    rejected: "подпись отклонена"
+    no jar: "нет совместимого JAR"
+    up to date: "актуальная версия"
+    staged: "готово к установке"
+    failed: "ошибка обновления"
+    not checked: "не проверялось"
+    api-version: "несовместимый API <version>"
 
 # Не меняйте / Do not change
 config-version: 3

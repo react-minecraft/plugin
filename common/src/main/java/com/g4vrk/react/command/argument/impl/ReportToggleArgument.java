@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
  * {@code /react <literal> [players]} for a {@link ReportChannel}.
  *
  * <p>Without players it toggles reports of everyone. With players, e.g. {@code Steve,Alex}
- * or {@code @a}, the sender gets reports only about them until the next plain command. When the
+ * or {@code @a}, the sender toggles that selection. When the
  * channel filters by check, a check id after the players narrows it to that check.</p>
  */
 public abstract class ReportToggleArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
@@ -109,7 +110,12 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
             final @Nullable Collection<Player> players,
             final @Nullable String check
     ) {
-        final List<java.util.UUID> uuids = players == null ? null : players.stream().map(Player::getUniqueId).toList();
+
+        final Set<UUID> uuids = players == null ? null : players.stream().map(Player::getUniqueId).collect(Collectors.toSet());
+        if (this.channel.follows(sender, uuids, check) && this.channel.remove(sender)) {
+            this.disabledActions.run(sender);
+            return;
+        }
         this.channel.subscribe(sender, uuids, check);
 
         final String names = players == null ? "*" : players.stream().map(Player::getName).collect(Collectors.joining(", "));
@@ -120,6 +126,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
                         .replace("<players>", names)
                         .replace("<check>", checkName)
         );
+
     }
 
     @Override

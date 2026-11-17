@@ -33,6 +33,7 @@ import org.incendo.cloud.exception.InvalidSyntaxException;
 import org.incendo.cloud.exception.NoPermissionException;
 import org.incendo.cloud.exception.NoSuchCommandException;
 import org.incendo.cloud.execution.ExecutionCoordinator;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.paper.LegacyPaperCommandManager;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.setting.ManagerSetting;
@@ -45,6 +46,8 @@ import java.util.List;
  */
 @Accessors(fluent = true)
 public final class CommandService {
+
+    private static final CloudKey<String> UNKNOWN = CloudKey.of("unknown", String.class);
 
     @Getter
     private final LegacyPaperCommandManager<CommandSender> manager;
@@ -95,7 +98,7 @@ public final class CommandService {
 
         manager.command(builderFactory.create().handler(context -> help.root(context.sender())));
         manager.command(builderFactory.create()
-                .required("unknown", StringParser.greedyStringParser())
+                .required(UNKNOWN, StringParser.greedyStringParser())
                 .handler(context -> help.unknownCommand(context.sender())));
         manager.exceptionController()
                 .registerHandler(NoPermissionException.class, context -> help.noPermission(context.context().sender()))

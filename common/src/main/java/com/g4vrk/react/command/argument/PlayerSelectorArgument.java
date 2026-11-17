@@ -4,6 +4,7 @@ import org.bukkit.command.CommandSender;
 import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
 import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
 import org.incendo.cloud.component.CommandComponent;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.ArgumentParseResult;
 import org.incendo.cloud.parser.ParserDescriptor;
 import org.incendo.cloud.suggestion.Suggestion;
@@ -17,6 +18,8 @@ import java.util.List;
  */
 public final class PlayerSelectorArgument {
 
+    public static final CloudKey<MultiplePlayerSelector> PLAYERS = CloudKey.of("players", MultiplePlayerSelector.class);
+
     private PlayerSelectorArgument() {
 
     }
@@ -25,7 +28,7 @@ public final class PlayerSelectorArgument {
 
         final ParserDescriptor<CommandSender, MultiplePlayerSelector> parser = MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false);
         return CommandComponent.<CommandSender, MultiplePlayerSelector>builder()
-                .name("players")
+                .key(PLAYERS)
                 .parser(parser)
                 .required(required)
                 .preprocessor((context, input) -> allowed(input.remainingInput().stripLeading())

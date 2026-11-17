@@ -16,6 +16,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.Command;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
@@ -31,6 +32,8 @@ import java.util.List;
  * {@code addons} or one name. Their staged updates are put in place on the way.</p>
  */
 public final class RebootArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
+
+    private static final CloudKey<String> TARGET = CloudKey.of("target", String.class);
 
     private final CommandBuilderFactory builderFactory;
     private final ActionParser<Audience> actionParser;
@@ -73,14 +76,14 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                 .literal("reboot")
                 .permission("react.command.reboot")
                 .optional(
-                        "target",
+                        TARGET,
                         StringParser.stringParser(),
                         SuggestionProvider.blocking((context, input) ->
                                 extensions.targets().stream().map(Suggestion::suggestion).toList())
                 )
                 .handler(context -> {
                     final CommandSender sender = context.sender();
-                    final String target = context.getOrDefault("target", null);
+                    final String target = context.getOrDefault(TARGET, null);
                     if (target != null) {
                         rebootExtensions(sender, target);
                         return;

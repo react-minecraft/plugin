@@ -14,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
@@ -34,6 +35,8 @@ import java.util.stream.Collectors;
  * channel filters by check, a check id after the players narrows it to that check.</p>
  */
 public abstract class ReportToggleArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
+
+    private static final CloudKey<String> CHECK = CloudKey.of("check", String.class);
 
     private final CommandBuilderFactory builderFactory;
     private final ActionParser<Audience> actionParser;
@@ -79,7 +82,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
                 .argument(PlayerSelectorArgument.players(false));
         if (byCheck) {
             builder = builder.optional(
-                    "check",
+                    CHECK,
                     StringParser.stringParser(),
                     SuggestionProvider.blocking((context, input) ->
                             React.INSTANCE.configs().checks().keySet().stream().map(Suggestion::suggestion).toList())
@@ -88,8 +91,8 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         return builder.handler(context -> {
 
                     final CommandSender sender = context.sender();
-                    final MultiplePlayerSelector selector = context.getOrDefault("players", null);
-                    final String check = context.getOrDefault("check", null);
+                    final MultiplePlayerSelector selector = context.getOrDefault(PlayerSelectorArgument.PLAYERS, null);
+                    final String check = context.getOrDefault(CHECK, null);
 
                     if (selector != null || check != null) {
                         this.follow(sender, selector == null ? null : selector.values(), check);

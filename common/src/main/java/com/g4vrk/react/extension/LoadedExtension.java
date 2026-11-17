@@ -22,6 +22,9 @@ import java.util.Map;
  */
 public final class LoadedExtension {
 
+    private static final String INFERENCE_RCP_MAIN = "com.g4vrk.react.inference.ReactInferenceRCP";
+    private static final String INFERENCE_RCP_DIRECTORY = "react-inference-rcp";
+
     private final ExtensionContext context;
     private final ExtensionDescriptor descriptor;
     private final ExtensionClassLoader classLoader;
@@ -67,7 +70,7 @@ public final class LoadedExtension {
             final @NotNull ExtensionPlan plan,
             final @NotNull Map<ExtensionId, LoadedExtension> dependencies
     ) throws Exception {
-        final Path directory = descriptor.kind().data(context.dataFolder()).resolve(descriptor.name());
+        final Path directory = dataDirectory(context, descriptor);
         Files.createDirectories(directory);
 
         final ExtensionClassLoader classLoader = new ExtensionClassLoader(
@@ -113,6 +116,29 @@ public final class LoadedExtension {
             }
             throw failure instanceof Exception exception ? exception : new IllegalStateException(failure);
         }
+    }
+
+    private static @NotNull Path dataDirectory(
+            final @NotNull ExtensionContext context,
+            final @NotNull ExtensionDescriptor descriptor
+    ) throws IOException {
+
+        final Path root = descriptor.kind().data(context.dataFolder());
+        if (descriptor.kind() != ExtensionKind.RCP || !INFERENCE_RCP_MAIN.equals(descriptor.mainClass())) {
+            return root.resolve(descriptor.name());
+        }
+
+        final Path directory = root.resolve(INFERENCE_RCP_DIRECTORY);
+        final Path legacy = root.resolve("React");
+        if (Files.isDirectory(legacy)) {
+            if (Files.notExists(directory)) {
+                Files.move(legacy, directory);
+            } else {
+                context.logger().warn("Both React RCP data folders exist. Loading data from {}", directory);
+            }
+        }
+        return directory;
+
     }
 
     ExtensionPlan plan() {

@@ -6,6 +6,7 @@ import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.impl.ReportChannel;
 import com.g4vrk.react.command.argument.LocalArgument;
+import com.g4vrk.react.command.argument.PlayerSelectorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import net.kyori.adventure.audience.Audience;
@@ -13,7 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
-import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
@@ -21,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,10 +31,12 @@ import java.util.stream.Collectors;
  * {@code /react <literal> [players]} for a {@link ReportChannel}.
  *
  * <p>Without players it toggles reports of everyone. With players, e.g. {@code Steve,Alex}
- * or {@code @a}, the sender gets reports only about them until the next plain command. When the
+ * or {@code @a}, the sender toggles that selection. When the
  * channel filters by check, a check id after the players narrows it to that check.</p>
  */
 public abstract class ReportToggleArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
+
+    private static final CloudKey<String> CHECK = CloudKey.of("check", String.class);
 
     private final CommandBuilderFactory builderFactory;
     private final ActionParser<Audience> actionParser;
@@ -75,10 +79,10 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         Command.Builder<CommandSender> builder = builderFactory.create()
                 .literal(literal, aliases)
                 .permission(permission)
-                .optional("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false));
+                .argument(PlayerSelectorArgument.players(false));
         if (byCheck) {
             builder = builder.optional(
-                    "check",
+                    CHECK,
                     StringParser.stringParser(),
                     SuggestionProvider.blocking((context, input) ->
                             React.INSTANCE.configs().checks().keySet().stream().map(Suggestion::suggestion).toList())
@@ -87,8 +91,8 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         return builder.handler(context -> {
 
                     final CommandSender sender = context.sender();
-                    final MultiplePlayerSelector selector = context.getOrDefault("players", null);
-                    final String check = context.getOrDefault("check", null);
+                    final MultiplePlayerSelector selector = context.getOrDefault(PlayerSelectorArgument.PLAYERS, null);
+                    final String check = context.getOrDefault(CHECK, null);
 
                     if (selector != null || check != null) {
                         this.follow(sender, selector == null ? null : selector.values(), check);
@@ -109,7 +113,12 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
             final @Nullable Collection<Player> players,
             final @Nullable String check
     ) {
-        final List<java.util.UUID> uuids = players == null ? null : players.stream().map(Player::getUniqueId).toList();
+
+        final Set<UUID> uuids = players == null ? null : players.stream().map(Player::getUniqueId).collect(Collectors.toSet());
+        if (this.channel.follows(sender, uuids, check) && this.channel.remove(sender)) {
+            this.disabledActions.run(sender);
+            return;
+        }
         this.channel.subscribe(sender, uuids, check);
 
         final String names = players == null ? "*" : players.stream().map(Player::getName).collect(Collectors.joining(", "));
@@ -120,6 +129,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
                         .replace("<players>", names)
                         .replace("<check>", checkName)
         );
+
     }
 
     @Override

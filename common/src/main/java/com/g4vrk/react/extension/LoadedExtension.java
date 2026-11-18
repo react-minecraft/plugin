@@ -11,7 +11,6 @@ import com.g4vrk.react.rcp.RCPHost;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -67,8 +66,7 @@ public final class LoadedExtension {
             final @NotNull ExtensionPlan plan,
             final @NotNull Map<ExtensionId, LoadedExtension> dependencies
     ) throws Exception {
-        final Path directory = descriptor.kind().data(context.dataFolder()).resolve(descriptor.name());
-        Files.createDirectories(directory);
+        final Path directory = ExtensionDataDirectory.resolve(context, descriptor);
 
         final ExtensionClassLoader classLoader = new ExtensionClassLoader(
                 context.logger().getName() + "#" + descriptor.name(),
@@ -100,7 +98,7 @@ public final class LoadedExtension {
                 instance = addon;
             }
 
-            environment.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
+            context.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
             return new LoadedExtension(context, descriptor, classLoader, plan, services, environment, instance);
         } catch (final Exception | LinkageError failure) {
             if (environment != null) {

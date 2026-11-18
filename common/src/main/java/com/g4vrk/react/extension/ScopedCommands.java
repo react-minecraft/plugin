@@ -20,17 +20,20 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
     private final CommandManager<CommandSender> manager;
     private final Logger logger;
     private final String owner;
+    private final Runnable commandsChanged;
     private final Map<String, List<Command<CommandSender>>> commands = new LinkedHashMap<>();
     private boolean closed;
 
     public ScopedCommands(
             final @NotNull CommandManager<CommandSender> manager,
             final @NotNull Logger logger,
-            final @NotNull String owner
+            final @NotNull String owner,
+            final @NotNull Runnable commandsChanged
     ) {
         this.manager = manager;
         this.logger = logger;
         this.owner = owner;
+        this.commandsChanged = commandsChanged;
     }
 
     @Override
@@ -51,6 +54,7 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
             }
             this.manager.command(command);
             this.commands.computeIfAbsent(label, ignored -> new ArrayList<>()).add(command);
+            this.commandsChanged.run();
         }
     }
 
@@ -75,6 +79,7 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
                     this.manager.command(command);
                 }
                 this.commands.remove(label);
+                this.commandsChanged.run();
                 return true;
             } catch (final RuntimeException failure) {
                 this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);

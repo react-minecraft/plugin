@@ -78,7 +78,7 @@ How it is loaded is set in `plugins/React/.rcp/react-rcp.yml`:
 
 Configure `enabled`, `channel` (`release` or `prerelease`) and `pinned-version` in `plugins/React/update/rcp/React.yml`. Shared updater settings are in `plugins/React/update/settings.yml`.
 
-The RCP keeps its own settings in `plugins/React/.rcp/React/`.
+The RCP keeps its own settings in `plugins/React/.rcp/react-inference-rcp/`.
 
 | Command              | Description                                                        |
 |----------------------|--------------------------------------------------------------------|

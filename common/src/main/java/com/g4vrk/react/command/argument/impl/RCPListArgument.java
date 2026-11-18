@@ -105,14 +105,24 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                                             ? texts.noVersion()
                                             : texts.version().replace("<version>", status.version()),
                                     "<channel>",
-                                    status.channel().name().toLowerCase(Locale.ROOT),
+                                    updateLabel(status.channel().name().toLowerCase(Locale.ROOT)),
                                     "<state>",
-                                    status.state(),
+                                    updateLabel(status.state()),
                                     "<checked>",
                                     checked(status.lastCheck())
                             )
                     );
                 });
+    }
+
+    private @NotNull String updateLabel(final @NotNull String key) {
+
+        if (key.startsWith("api-version ")) {
+            return texts.updateLabels().getOrDefault("api-version", "API <version>")
+                    .replace("<version>", key.substring("api-version ".length()));
+        }
+        return texts.updateLabels().getOrDefault(key, key);
+
     }
 
     private @NotNull String checked(final @Nullable Instant instant) {

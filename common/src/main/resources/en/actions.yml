@@ -23,12 +23,12 @@ alerts:
   # Actions run for every alert. <player> - the player, <check> - the check,
   # <violations> or <vl> - violations, <details> - details from the check
   alert:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#eb2544><player></color> <white>провалил <color:#eb2544><check></color> <dark_gray>(x<vl>) <gray><details></gray>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#eb2544><player></color> <white>failed <color:#eb2544><check></color> <dark_gray>(x<vl>) <gray><details></gray>"
 
   # Actions performed when alerts are enabled
   on-enable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#11ff11>включены ✔"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#11ff11>enabled ✔"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#11ff11>enabled ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions run when alerts are enabled only for some players. <players> - their names
@@ -38,8 +38,8 @@ alerts:
 
   # Actions performed when alerts are disabled
   on-disable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Оповещения <color:#ff1111>выключены ✘"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#ff1111>disabled ✘"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Alerts <color:#ff1111>disabled ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 # /react monitor (or /react verbose) - monitoring of every analysis
@@ -47,12 +47,12 @@ monitor:
 
   # Actions run for every analysis, placeholders as in alerts.alert
   message:
-    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <dark_gray>Аналитика: <color:#747474><player></color> <dark_gray>-></dark_gray> <color:#747474><check></color> <dark_gray><details></dark_gray>"
+    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <white>Analysis:</white> <color:#747474><player></color> <dark_gray>→</dark_gray> <color:#747474><check></color> <gray><details></gray>"
 
   # Actions performed when monitoring is enabled
   on-enable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#11ff11>включен ✔"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#11ff11>enabled ✔"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#11ff11>enabled ✔"
     - "[sound] entity.player.levelup;1.0;1.0"
 
   # Actions run when only some players are monitored. <players> - their names
@@ -62,8 +62,8 @@ monitor:
 
   # Actions performed when monitoring is disabled
   on-disable:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Мониторинг аналитики <color:#ff1111>выключен ✘"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#ff1111>disabled ✘"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Analysis monitoring <color:#ff1111>disabled ✘"
     - "[sound] entity.creeper.hurt;1.0;1.0"
 
 
@@ -90,15 +90,17 @@ bypass:
 
   # <players> - the names, <check> - the check, <duration> - how long
   granted:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>bypass <white><check></white> for <white><duration>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players> bypass <check> for <duration>"
+    - "[sound] entity.player.levelup;0.7;1.0"
 
   # <players> - the names, <check> - the check
   removed:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>no longer bypass <white><check>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players> no longer bypass <check>"
+    - "[sound] entity.player.levelup;0.7;1.0"
 
   # Nothing changed for <player>: no such bypass, or an addon cancelled it
   cancelled:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Nothing changed for <gray><player>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Nothing changed for <white><player>"
 
   # <count> - how many online players have a bypass
   list-header:
@@ -106,11 +108,17 @@ bypass:
 
   # <player>, <check>, <duration> - the time left
   list-entry:
-    - "[msg]  <dark_gray>•</dark_gray> <white><player> <gray><check> <dark_gray>|</dark_gray> <duration>"
+    - "[msg]   <dark_gray>•</dark_gray> <white><player> <dark_gray>→</dark_gray> <white><check> <dark_gray>·</dark_gray> <gray><duration>"
 
   list-empty:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Nobody online has a bypass"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Nobody online has a bypass."
 
+  invalid-check:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Unknown check."
+    - "[sound] block.note_block.bass;1.0;0.8"
+  invalid-duration:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Enter a duration, such as 10m or 1h, or forever."
+    - "[sound] block.note_block.bass;1.0;0.8"
   all-checks: "all checks"
   forever: "forever"
 
@@ -119,22 +127,27 @@ reload:
 
   # Actions performed when a reload starts
   on-start:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка плагина..."
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Начата перезагрузка..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Reloading the plugin..."
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Reloading..."
     - "[sound] block.note_block.pling;1.0;1.0"
 
   # Actions performed when a reload finishes
   on-finish:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин перезагружен!"
-    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Plugin reloaded!"
+    - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Plugin reloaded successfully!"
     - "[sound] entity.player.levelup;1.0;1.0"
+
+  on-failure:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Reload failed. See the server console."
+    - "[sound] block.note_block.bass;1.0;0.8"
 
 # /react reboot
 reboot:
 
   # Before the reboot. <jar> - the plugin file, <version> - its version
   starting:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Rebooting React from <white><jar></white> (<version>)..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Rebooting React from <jar> (<version>)..."
+    - "[sound] block.note_block.pling;0.7;1.0"
 
   # The reboot cannot start. <reason> - why
   cancelled:
@@ -149,15 +162,21 @@ reboot:
 
   # /react reboot <target> for addons and RCPs. <target> - all, rcp, addons or a name
   extensions-starting:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Rebooting <white><target></white>..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Rebooting <target>..."
+    - "[sound] block.note_block.pling;0.7;1.0"
 
   # <loaded>, <unloaded>, <failed> - the names, or "-"
   extensions-done:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Rebooted. <gray>Loaded: <white><loaded></white> <dark_gray>|</dark_gray> unloaded: <white><unloaded></white> <dark_gray>|</dark_gray> failed: <color:#ff3655><failed>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Extension reboot finished:</white>"
+    - "[msg]   <dark_gray>•</dark_gray> <gray>Loaded:</gray> <white><loaded>"
+    - "[msg]   <dark_gray>•</dark_gray> <gray>Unloaded:</gray> <white><unloaded>"
+    - "[msg]   <dark_gray>•</dark_gray> <gray>Failed:</gray> <color:#ff3655><failed>"
+    - "[sound] block.note_block.pling;0.7;1.0"
 
   # Nothing matched <target>
   extensions-unknown:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>No addon or RCP <gray><target>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>No addon or RCP named <white><target>"
+    - "[sound] block.note_block.bass;0.8;0.8"
 
 # /react rcps
 rcps:
@@ -168,15 +187,17 @@ rcps:
 
   # One RCP without a status. <name>, <version>, <api> - its API version
   entry:
-    - "[msg]  <dark_gray>•</dark_gray> <white><name> <gray>v<version> <dark_gray>|</dark_gray> api <api>"
+    - "[msg]   <dark_gray>•</dark_gray> <white><name> <gray>v<version></gray> <dark_gray>·</dark_gray> <gray>API <api>"
 
   # One RCP with a status. <status> - what it says about itself
   entry-with-status:
-    - "[msg]  <dark_gray>•</dark_gray> <white><name> <gray>v<version> <dark_gray>|</dark_gray> api <api> <dark_gray>|</dark_gray> <color:#ff3655><status>"
+    - "[msg]   <dark_gray>•</dark_gray> <white><name> <gray>v<version></gray> <dark_gray>·</dark_gray> <gray>API <api>"
+    - "[msg]     <gray>Status:</gray> <white><status>"
 
   # React RCP updates. <version>, <channel>, <state>, <checked>
   react:
-    - "[msg]  <dark_gray>»</dark_gray> <white>React RCP <gray><version> <dark_gray>|</dark_gray> <channel> <dark_gray>|</dark_gray> <state> <dark_gray>|</dark_gray> <checked>"
+    - "[msg]   <dark_gray>»</dark_gray> <white>React RCP <version> <dark_gray>·</dark_gray> <gray><channel>"
+    - "[msg]     <gray>Status:</gray> <white><state> <dark_gray>·</dark_gray> <gray>Checked: <checked>"
 
 # Update notifications, for alert recipients and players with react.notify.update on join
 updates:
@@ -195,26 +216,31 @@ help:
   # /react with no arguments
   root:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Commands:"
-    - "[msg] <color:#eb2544>/react alerts [players]</color> <gray>- alerts, optionally for some players"
-    - "[msg] <color:#eb2544>/react monitor [players]</color> <gray>- analysis monitor, optionally for some players"
-    - "[msg] <color:#eb2544>/react history <player></color> <gray>- check history"
-    - "[msg] <color:#eb2544>/react debug [players] [check]</color> <gray>- debug lines of the checks"
-    - "[msg] <color:#eb2544>/react bypass <players> [time] [check]</color> <gray>- let players skip checks"
-    - "[msg] <color:#eb2544>/react reload</color> <gray>- reload configs"
-    - "[msg] <color:#eb2544>/react reboot [target]</color> <gray>- restart the plugin, addons or RCPs"
-    - "[msg] <color:#eb2544>/react rcps</color> <gray>- installed RCPs"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react alerts [players]</color> <white>Toggle alerts"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react monitor [players]</color> <white>Toggle analysis monitoring"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react history [player] [page]</color> <white>View analysis history"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react debug [players] [check]</color> <white>Show check debug lines"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react bypass <players> [time] [check]</color> <white>Grant a bypass"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react bypass remove <players> [check]</color> <white>Remove a bypass"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react bypass list</color> <white>List active bypasses"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react reload</color> <white>Reload configs"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react reboot [target]</color> <white>Reboot plugin or extensions"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react rcps</color> <white>List installed RCPs"
 
   # No permission for the command
   no-permission:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>You do not have permission."
+    - "[sound] block.note_block.bass;0.8;0.8"
 
   # Unknown command or wrong arguments
   unknown-command:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Unknown command.</color> <gray>List: /react"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Unknown command or invalid arguments.</color> <white>Use <click:run_command:'/react'><u>/react</u></click> for help."
+    - "[sound] block.note_block.bass;0.8;0.8"
 
   # Player-only command
   player-only:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Only players can use this command."
+    - "[sound] block.note_block.bass;0.8;0.8"
 
 # Texts for the placeholders above and for PlaceholderAPI
 texts:
@@ -230,6 +256,19 @@ texts:
   not-checked: "not checked"
   checked-now: "checked just now"
   checked-ago: "checked <minutes> min ago"
+  update-labels:
+    release: "stable releases"
+    prerelease: "nightly"
+    disabled: "disabled"
+    installed: "installed"
+    offline: "release unavailable"
+    rejected: "signature rejected"
+    no jar: "no compatible JAR"
+    up to date: "up to date"
+    staged: "ready to install"
+    failed: "update failed"
+    not checked: "not checked"
+    api-version: "incompatible API <version>"
 
 # Не меняйте / Do not change
 config-version: 3

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,6 +88,22 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
      */
     public @Nullable Set<UUID> targets(final @NotNull Audience recipient) {
         return this.targets.get(recipient);
+    }
+
+    /**
+     * Checks whether the recipient already has this exact report filter.
+     */
+    public boolean follows(
+            final @NotNull Audience recipient,
+            final @Nullable Set<UUID> players,
+            final @Nullable String checkId
+    ) {
+
+        final String currentCheck = this.checks.get(recipient);
+        return this.recipients().contains(recipient)
+                && Objects.equals(this.targets.get(recipient), players)
+                && (currentCheck == null ? checkId == null : currentCheck.equalsIgnoreCase(checkId));
+
     }
 
     @Override

@@ -10,11 +10,17 @@ import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.data.SinglePlayerSelector;
 import org.incendo.cloud.bukkit.parser.selector.SinglePlayerSelectorParser;
-import org.incendo.cloud.component.DefaultValue;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.IntegerParser;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Shows a page of the selected player's analysis history.
+ */
 public final class HistoryArgument extends LocalArgument {
+
+    private static final CloudKey<SinglePlayerSelector> PLAYER = CloudKey.of("player", SinglePlayerSelector.class);
+    private static final CloudKey<Integer> PAGE = CloudKey.of("page", Integer.class);
 
     private final CommandBuilderFactory builderFactory;
 
@@ -36,19 +42,21 @@ public final class HistoryArgument extends LocalArgument {
         return builderFactory.create()
                 .literal("history")
                 .permission("react.command.history")
-                .optional("player", SinglePlayerSelectorParser.singlePlayerSelectorParser())
-                .optional("page", IntegerParser.integerParser(), DefaultValue.constant(1))
+                .optional(PLAYER, SinglePlayerSelectorParser.singlePlayerSelectorParser())
+                .optional(PAGE, IntegerParser.integerParser())
                 .handler(context -> {
                     final CommandSender sender = context.sender();
 
-                    final SinglePlayerSelector selector = context.getOrDefault("player", null);
-                    final int page = context.getOrDefault("page", 1);
+                    final SinglePlayerSelector selector = context.getOrDefault(PLAYER, null);
+                    final int page = context.getOrDefault(PAGE, 1);
 
                     final TrackedPlayerImpl reactPlayer;
 
                     if (selector == null) {
 
-                        if (!(sender instanceof Player player)) return;
+                        if (!(sender instanceof Player player)) {
+                            return;
+                        }
 
                         reactPlayer = this.playerRegistry.get(player.getUniqueId());
 

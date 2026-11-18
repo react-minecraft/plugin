@@ -60,6 +60,8 @@ sqlite = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }
 cloud-core = { module = "org.incendo:cloud-core", version = "2.0.0" }
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-paper" }
+brigadier = { module = "com.mojang:brigadier", version = "1.0.18" }
+xseries = { module = "com.github.cryptomorin:XSeries", version = "14.0.0" }
 
 textserializer-legacy = { module = "com.github.g4vrk.TextSerializer:legacy", version.ref = "textserializer" }
 actions = { module = "com.github.g4vrk:FunctionalActions", version.ref = "actions" }

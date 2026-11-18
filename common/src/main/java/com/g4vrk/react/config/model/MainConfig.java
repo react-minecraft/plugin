@@ -6,7 +6,7 @@ import java.time.Duration;
 import java.util.Map;
 
 @ConfigSerializable
-public record MainConfig(Player player, Map<String, OfficialAddon> officialAddons) {
+public record MainConfig(Player player, Map<String, ExternalAddon> externalAddons) {
 
     @ConfigSerializable
     public record Player(boolean checkBedrockPlayers, Combat combat) {
@@ -17,13 +17,13 @@ public record MainConfig(Player player, Map<String, OfficialAddon> officialAddon
     }
 
     /**
-     * An addon from the react-minecraft organization that React can download by itself.
+     * An addon that React can download from a signed GitHub release.
      *
      * @param repository        the GitHub repository, {@code owner/name}
      * @param downloadNextStart whether a missing jar is downloaded on the next start
      */
     @ConfigSerializable
-    public record OfficialAddon(String repository, boolean downloadNextStart) {
+    public record ExternalAddon(String repository, boolean downloadNextStart) {
     }
 
 }

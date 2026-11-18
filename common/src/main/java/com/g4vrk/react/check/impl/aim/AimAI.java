@@ -72,9 +72,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         final double threshold = result.hasThreshold() ? result.threshold() : alertThreshold;
         final boolean flagged = result.hasThreshold() ? probability >= threshold : probability > threshold;
 
-        if (!result.enforcement()) {
-            debug("Observation (" + result.displayName() + "): " + probability + ", threshold " + threshold);
-        } else if (flagged) {
+        if (flagged) {
             debug("Flagged (" + result.displayName() + "): " + probability + " > " + threshold);
             failAndAlert(1, details);
         } else {

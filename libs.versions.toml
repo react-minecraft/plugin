@@ -27,7 +27,7 @@ configurate = "4.2.0"
 cloud-paper = "2.0.1"
 
 textserializer = "944d27b"
-actions = "2.2.0"
+actions = "a0508d1"
 
 schedula = "1.1.2"
 

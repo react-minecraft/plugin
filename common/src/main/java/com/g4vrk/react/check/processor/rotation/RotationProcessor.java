@@ -1,6 +1,7 @@
 package com.g4vrk.react.check.processor.rotation;
 
 import com.g4vrk.react.check.impl.aim.AimAI;
+import com.g4vrk.react.api.rcp.player.RotationSample;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.rotation.RotationData;
 import org.jetbrains.annotations.NotNull;
@@ -8,10 +9,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Records one movement packet as a rotation and hands the new sample to the aim check.
  *
- * <p>Nothing here allocates: the sample is written into the player's flat history and reaches
- * the check as the {@link RotationData} it lives in.</p>
+ * <p>Each packet thread reuses a sample buffer so a concurrent reset cannot change the sample
+ * while an RCP reads it.</p>
  */
 public final class RotationProcessor {
+
+    private final ThreadLocal<float[]> sample = ThreadLocal.withInitial(() -> new float[RotationSample.STRIDE]);
 
     public void process(
             final @NotNull TrackedPlayerImpl player,
@@ -25,12 +28,10 @@ public final class RotationProcessor {
 
         final RotationData rotationData = player.rotationData;
 
-        rotationData.push(yaw, pitch);
-
-        final float[] current = rotationData.current();
-
-        if (current == null) {
-            return;
+        final float[] current = sample.get();
+        synchronized (rotationData) {
+            rotationData.push(yaw, pitch);
+            System.arraycopy(rotationData.current(), 0, current, 0, RotationSample.STRIDE);
         }
 
         final AimAI check = player.checkManager.getCheck(AimAI.class);

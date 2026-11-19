@@ -27,9 +27,11 @@ public final class CheckFlagEvent extends CancellableEvent {
             final double amount,
             final @NotNull String details
     ) {
+
         this.check = check;
-        this.amount = amount;
+        this.amount(amount);
         this.details = details;
+
     }
 
     /**
@@ -38,7 +40,9 @@ public final class CheckFlagEvent extends CancellableEvent {
      * @return the flagging check
      */
     public @NotNull Check check() {
+
         return check;
+
     }
 
     /**
@@ -47,7 +51,9 @@ public final class CheckFlagEvent extends CancellableEvent {
      * @return the amount added to the level
      */
     public double amount() {
+
         return amount;
+
     }
 
     /**
@@ -56,7 +62,12 @@ public final class CheckFlagEvent extends CancellableEvent {
      * @param amount the new value
      */
     public void amount(final double amount) {
+
+        if (!Double.isFinite(amount) || amount <= 0.0D) {
+            throw new IllegalArgumentException("Violation amount must be finite and positive");
+        }
         this.amount = amount;
+
     }
 
     /**
@@ -65,7 +76,9 @@ public final class CheckFlagEvent extends CancellableEvent {
      * @return the alert details
      */
     public @NotNull String details() {
+
         return details;
+
     }
 
 }

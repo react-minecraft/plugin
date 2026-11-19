@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Base class of every addon.
@@ -98,6 +99,30 @@ public abstract class JavaAddon implements Addon {
     @Override
     public final boolean enabled() {
         return enabled;
+    }
+
+    /**
+     * Prepares this addon for an extension reboot before its resources are removed.
+     *
+     * <p>The host invokes this on its extension thread and keeps the environment usable until
+     * the future completes, up to 15 seconds. A failure or timeout cancels the reboot and leaves
+     * the addon enabled; {@link #cancelDisablePreparation()} is then called.
+     * This hook is not called during shutdown or direct disabling of React.</p>
+     *
+     * @return completion of the preparation
+     */
+    public @NotNull CompletableFuture<Void> prepareDisable() {
+
+        return CompletableFuture.completedFuture(null);
+
+    }
+
+    /**
+     * Reverses preparation after an extension reboot was cancelled. Called on the extension thread
+     * for every addon whose preparation started, including one that already completed it.
+     */
+    public void cancelDisablePreparation() {
+
     }
 
     /**

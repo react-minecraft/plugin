@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * One addon or RCP jar that is loaded: its class loader, environment and main object.
@@ -205,6 +207,30 @@ public final class LoadedExtension {
         if (enabled && instance instanceof RCPLifecycle lifecycle) {
             withContextLoader(classLoader, lifecycle::onReload);
         }
+    }
+
+    @NotNull CompletableFuture<Void> prepareDisable() {
+
+        if (!enabled || !(instance instanceof JavaAddon addon)) {
+            return CompletableFuture.completedFuture(null);
+        }
+        final Thread thread = Thread.currentThread();
+        final ClassLoader previous = thread.getContextClassLoader();
+        thread.setContextClassLoader(classLoader);
+        try {
+            return Objects.requireNonNull(addon.prepareDisable(), "prepareDisable returned null");
+        } finally {
+            thread.setContextClassLoader(previous);
+        }
+
+    }
+
+    void cancelDisablePreparation() throws Exception {
+
+        if (enabled && instance instanceof JavaAddon addon) {
+            withContextLoader(classLoader, addon::cancelDisablePreparation);
+        }
+
     }
 
     /**

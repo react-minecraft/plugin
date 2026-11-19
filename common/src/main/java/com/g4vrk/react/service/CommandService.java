@@ -23,10 +23,12 @@ import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.update.UpdateService;
 import com.g4vrk.schedula.task.scheduler.Scheduler;
+import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
+import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
 import org.incendo.cloud.exception.ArgumentParseException;
 import org.incendo.cloud.exception.InvalidCommandSenderException;
 import org.incendo.cloud.exception.InvalidSyntaxException;
@@ -134,11 +136,18 @@ public final class CommandService {
     }
 
     private void registerCompletions() {
+
         if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
             manager.registerBrigadier();
+            /*
+             * Vanilla suggestions list entity-only selectors for players-only arguments.
+             * Keep the native argument type and use the component's filtered suggestions.
+             */
+            manager.brigadierManager().setNativeSuggestions(new TypeToken<MultiplePlayerSelectorParser<CommandSender>>() {}, false);
         } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
             manager.registerAsynchronousCompletions();
         }
+
     }
 
 }

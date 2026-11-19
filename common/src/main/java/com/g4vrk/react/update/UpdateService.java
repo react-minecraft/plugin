@@ -62,6 +62,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), false, true);
     private volatile @Nullable ScheduledExecutorService timer;
+    private boolean closed;
 
     /**
      * Where the running plugin jar is and where its update goes.
@@ -138,7 +139,10 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      *
      * @param manager rebooted after a download when {@code auto-reboot} is on
      */
-    public void start(final @NotNull ExtensionManager manager) {
+    public synchronized void start(final @NotNull ExtensionManager manager) {
+        if (closed || timer != null) {
+            return;
+        }
         final Duration interval = settings.interval() == null || settings.interval().compareTo(MIN_INTERVAL) < 0
                 ? MIN_INTERVAL
                 : settings.interval();
@@ -533,7 +537,8 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * Stops the periodic checks.
      */
     @Override
-    public void close() {
+    public synchronized void close() {
+        closed = true;
         final ScheduledExecutorService timer = this.timer;
         if (timer != null) {
             timer.shutdownNow();

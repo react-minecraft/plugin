@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 /**
  * The plugin services every extension environment is built from.
@@ -44,7 +45,7 @@ public record ExtensionContext(
         @NotNull TextFormatter text,
         @NotNull ActionParser<Audience> actions,
         @NotNull CommandManager<CommandSender> commands,
-        @NotNull Runnable commandsChanged,
+        @NotNull Consumer<String> commandsChanged,
         @NotNull PlayerRegistry players,
         @NotNull RCPHost rcpHost,
         @NotNull PunishmentRegistry punishments

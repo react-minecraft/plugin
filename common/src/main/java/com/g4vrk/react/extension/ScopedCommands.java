@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /** Commands owned by one extension on the plugin's shared Cloud manager. */
 public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
@@ -20,7 +21,7 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
     private final CommandManager<CommandSender> manager;
     private final Logger logger;
     private final String owner;
-    private final Runnable commandsChanged;
+    private final Consumer<String> commandsChanged;
     private final Map<String, List<Command<CommandSender>>> commands = new LinkedHashMap<>();
     private boolean closed;
 
@@ -28,7 +29,7 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
             final @NotNull CommandManager<CommandSender> manager,
             final @NotNull Logger logger,
             final @NotNull String owner,
-            final @NotNull Runnable commandsChanged
+            final @NotNull Consumer<String> commandsChanged
     ) {
         this.manager = manager;
         this.logger = logger;
@@ -54,7 +55,7 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
             }
             this.manager.command(command);
             this.commands.computeIfAbsent(label, ignored -> new ArrayList<>()).add(command);
-            this.commandsChanged.run();
+            this.commandsChanged.accept(label);
         }
     }
 
@@ -79,7 +80,7 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
                     this.manager.command(command);
                 }
                 this.commands.remove(label);
-                this.commandsChanged.run();
+                this.commandsChanged.accept(label);
                 return true;
             } catch (final RuntimeException failure) {
                 this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);

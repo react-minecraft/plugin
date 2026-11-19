@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.NOPLogger;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScopedCommandsTest {
 
     private final TestManager manager = new TestManager();
-    private final Runnable commandsChanged = () -> {
+    private final Consumer<String> commandsChanged = ignored -> {
     };
 
     @Test

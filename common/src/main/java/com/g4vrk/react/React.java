@@ -12,7 +12,7 @@ import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
 import com.g4vrk.react.action.PlaySoundAction;
-import com.g4vrk.react.command.LegacyCommandTreeRefresh;
+import com.g4vrk.react.command.CommandTreeRefresh;
 import com.g4vrk.react.api.ReactAPI;
 import com.g4vrk.react.api.channel.BuiltinChannels;
 import com.g4vrk.react.channel.DebugActions;
@@ -178,7 +178,7 @@ public class React {
                         text,
                         actionParser,
                         commands.manager(),
-                        new LegacyCommandTreeRefresh(plugin, commands.manager()),
+                        new CommandTreeRefresh(plugin, commands.manager(), scheduler),
                         playerRegistry,
                         rcpHost,
                         punishmentManager

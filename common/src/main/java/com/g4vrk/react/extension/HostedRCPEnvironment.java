@@ -14,9 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The environment of one RCP: verdicts go to the {@link AimAI} check of the player, player
@@ -26,7 +26,7 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
 
     private final RCPHost host;
     private final RCPMetadata metadata;
-    private final List<RCPPlayerListener> playerListeners = new CopyOnWriteArrayList<>();
+    private volatile List<RCPPlayerListener> playerListeners = List.of();
 
     private volatile @Nullable String status;
     private volatile boolean closed;
@@ -74,7 +74,9 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
         if (closed) {
             throw new IllegalStateException("RCP '" + name() + "' is disabled");
         }
-        playerListeners.add(Objects.requireNonNull(listener, "listener"));
+        final List<RCPPlayerListener> updated = new ArrayList<>(playerListeners);
+        updated.add(Objects.requireNonNull(listener, "listener"));
+        playerListeners = List.copyOf(updated);
     }
 
     @Override
@@ -103,7 +105,7 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
     @Override
     public synchronized void close() {
         closed = true;
-        playerListeners.clear();
+        playerListeners = List.of();
         status = null;
         super.close();
     }

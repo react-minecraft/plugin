@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -23,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApiStatus.Internal
 public final class ReportChannel extends AudienceChannel<CheckReport> {
 
-    private final Map<Audience, Set<UUID>> targets = new ConcurrentHashMap<>();
-    private final Map<Audience, String> checks = new ConcurrentHashMap<>();
+    private final Map<Audience, Subscription> subscriptions = new ConcurrentHashMap<>();
+    private final Set<Audience> recipients = Collections.unmodifiableSet(subscriptions.keySet());
 
     private volatile Delivery delivery = (recipient, report) -> {
     };
@@ -63,31 +64,34 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
             final @Nullable Collection<UUID> players,
             final @Nullable String checkId
     ) {
-        if (players == null) {
-            this.targets.remove(recipient);
-        } else {
-            this.targets.put(recipient, Set.copyOf(players));
-        }
-        if (checkId == null) {
-            this.checks.remove(recipient);
-        } else {
-            this.checks.put(recipient, checkId);
-        }
-        return super.subscribe(recipient);
+
+        final Subscription subscription = new Subscription(players == null ? null : Set.copyOf(players), checkId);
+        return subscriptions.put(recipient, subscription) == null;
+
     }
 
     @Override
     public boolean remove(final @NotNull Audience recipient) {
-        this.targets.remove(recipient);
-        this.checks.remove(recipient);
-        return super.remove(recipient);
+
+        return subscriptions.remove(recipient) != null;
+
+    }
+
+    @Override
+    public @NotNull Set<Audience> recipients() {
+
+        return recipients;
+
     }
 
     /**
      * The players the recipient follows, or {@code null} when it follows everyone.
      */
     public @Nullable Set<UUID> targets(final @NotNull Audience recipient) {
-        return this.targets.get(recipient);
+
+        final Subscription subscription = subscriptions.get(recipient);
+        return subscription == null ? null : subscription.players();
+
     }
 
     /**
@@ -99,33 +103,39 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
             final @Nullable String checkId
     ) {
 
-        final String currentCheck = this.checks.get(recipient);
-        return this.recipients().contains(recipient)
-                && Objects.equals(this.targets.get(recipient), players)
-                && (currentCheck == null ? checkId == null : currentCheck.equalsIgnoreCase(checkId));
+        final Subscription subscription = subscriptions.get(recipient);
+        return subscription != null && Objects.equals(subscription.players(), players)
+                && (subscription.checkId() == null ? checkId == null : subscription.checkId().equalsIgnoreCase(checkId));
 
     }
 
     @Override
     public void clear() {
-        this.targets.clear();
-        this.checks.clear();
-        super.clear();
+
+        subscriptions.clear();
+
     }
 
     @Override
     public void publish(final @NotNull CheckReport report) {
         final Delivery delivery = this.delivery;
 
-        for (final Audience recipient : this.recipients()) {
-            final Set<UUID> players = this.targets.get(recipient);
-            final String check = this.checks.get(recipient);
+        for (final Map.Entry<Audience, Subscription> entry : subscriptions.entrySet()) {
+            final Set<UUID> players = entry.getValue().players();
+            final String check = entry.getValue().checkId();
 
             if ((players == null || players.contains(report.player()))
                     && (check == null || check.equalsIgnoreCase(report.checkId()))) {
-                delivery.deliver(recipient, report);
+                delivery.deliver(entry.getKey(), report);
             }
         }
+    }
+
+    /**
+     * The complete report filter published by one subscription change.
+     */
+    private record Subscription(@Nullable Set<UUID> players, @Nullable String checkId) {
+
     }
 
     @FunctionalInterface

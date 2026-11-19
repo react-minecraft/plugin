@@ -87,7 +87,7 @@ public final class PlaceholderScanner {
                 continue;
             }
 
-            if (!this.resolveAt(index)) {
+            if (!this.resolveAt(index, 0)) {
                 index++;
                 continue;
             }
@@ -101,7 +101,7 @@ public final class PlaceholderScanner {
         }
     }
 
-    private boolean resolveAt(final int offset) {
+    private boolean resolveAt(final int offset, final int depth) {
         final int start = offset;
         int index = offset + 1;
 
@@ -130,8 +130,8 @@ public final class PlaceholderScanner {
         while (index < this.buffer.size) {
             char current = this.buffer.chars[index++];
 
-            if (current == BRACKET || current == PAPI) {
-                if (this.resolveAt(index - 1)) {
+            if ((current == BRACKET || current == PAPI) && depth < MAX_DEPTH) {
+                if (this.resolveAt(index - 1, depth + 1)) {
                     current = this.buffer.chars[index - 1];
                 }
             }

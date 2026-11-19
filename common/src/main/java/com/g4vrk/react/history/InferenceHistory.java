@@ -54,6 +54,7 @@ public final class InferenceHistory {
      * @return a number that grows with every change
      */
     public long revision() {
+        this.pruneExpired();
         return this.revision;
     }
 
@@ -62,7 +63,11 @@ public final class InferenceHistory {
     ) {
         this.lock.writeLock().lock();
         try {
-            this.pruneUnsafe(System.currentTimeMillis() - this.retentionMillis);
+            final long now = System.currentTimeMillis();
+            if (now - this.lastPrune >= PRUNE_INTERVAL_MILLIS) {
+                this.pruneUnsafe(now - this.retentionMillis);
+                this.lastPrune = now;
+            }
             this.entries.add(entry);
             this.revision++;
         } finally {

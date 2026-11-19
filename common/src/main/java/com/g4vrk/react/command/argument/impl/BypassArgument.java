@@ -6,17 +6,19 @@ import com.g4vrk.react.Permissions;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.command.argument.LocalArgument;
+import com.g4vrk.react.command.argument.PlayerSelectorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.storage.constant.StorageConstants;
+import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.audience.Audience;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
-import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.ArgumentParser;
 import org.incendo.cloud.parser.standard.DurationParser;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -34,7 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 /**
  * {@code /react bypass}: temporary bypasses, stored in the database.
@@ -48,6 +50,8 @@ import java.util.stream.Stream;
 public final class BypassArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
     private static final String FOREVER = "forever";
+    private static final CloudKey<Either<Duration, String>> DURATION = CloudKey.of("duration", new TypeToken<Either<Duration, String>>() {});
+    private static final CloudKey<String> CHECK = CloudKey.of("check", String.class);
 
     private final CommandBuilderFactory builderFactory;
     private final ActionParser<Audience> actionParser;
@@ -56,6 +60,8 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     private ExecutableActionList<? super Audience> granted;
     private ExecutableActionList<? super Audience> removed;
     private ExecutableActionList<? super Audience> cancelled;
+    private ExecutableActionList<? super Audience> invalidCheck;
+    private ExecutableActionList<? super Audience> invalidDuration;
     private ExecutableActionList<? super Audience> listHeader;
     private ExecutableActionList<? super Audience> listEntry;
     private ExecutableActionList<? super Audience> listEmpty;
@@ -80,6 +86,8 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         this.granted = actionParser.parseAll(bypass.granted());
         this.removed = actionParser.parseAll(bypass.removed());
         this.cancelled = actionParser.parseAll(bypass.cancelled());
+        this.invalidCheck = actionParser.parseAll(bypass.invalidCheck());
+        this.invalidDuration = actionParser.parseAll(bypass.invalidDuration());
         this.listHeader = actionParser.parseAll(bypass.listHeader());
         this.listEntry = actionParser.parseAll(bypass.listEntry());
         this.listEmpty = actionParser.parseAll(bypass.listEmpty());
@@ -90,25 +98,27 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     @Override
     public @NotNull Command.Builder<CommandSender> build() {
         return root()
-                .required("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
+                .argument(PlayerSelectorArgument.players(true))
                 .optional(
-                        "duration",
+                        DURATION,
                         ArgumentParser.firstOf(DurationParser.durationParser(), StringParser.stringParser()),
-                        SuggestionProvider.blocking((context, input) -> Stream.concat(
-                                Stream.of(FOREVER, "10m", "1h", "1d"),
-                                checkIds().stream()
-                        ).map(Suggestion::suggestion).toList())
+                        SuggestionProvider.blocking((context, input) -> List.of(FOREVER, "10m", "1h", "1d")
+                                .stream().map(Suggestion::suggestion).toList())
                 )
-                .optional("check", StringParser.stringParser(), checkSuggestions())
+                .optional(CHECK, StringParser.stringParser(), checkSuggestions())
                 .handler(context -> {
-                    final MultiplePlayerSelector selector = context.get("players");
-                    final Either<Duration, String> time = context.getOrDefault("duration", null);
-                    String check = context.getOrDefault("check", null);
+                    final MultiplePlayerSelector selector = context.get(PlayerSelectorArgument.PLAYERS);
+                    final Either<Duration, String> time = context.getOrDefault(DURATION, null);
+                    String check = context.getOrDefault(CHECK, null);
                     Duration duration = null;
                     if (time != null) {
                         duration = time.primary().orElse(null);
                         final String text = time.fallback().orElse(null);
-                        if (text != null && !text.equalsIgnoreCase(FOREVER) && check == null) {
+                        if (text != null && !text.equalsIgnoreCase(FOREVER)) {
+                            if (check != null || !checkIds().contains(text.toLowerCase(Locale.ROOT))) {
+                                invalidDuration.run(context.sender());
+                                return;
+                            }
                             check = text;
                         }
                     }
@@ -122,11 +132,11 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                 build(),
                 root()
                         .literal("remove")
-                        .required("players", MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false))
-                        .optional("check", StringParser.stringParser(), checkSuggestions())
+                        .argument(PlayerSelectorArgument.players(true))
+                        .optional(CHECK, StringParser.stringParser(), checkSuggestions())
                         .handler(context -> {
-                            final MultiplePlayerSelector selector = context.get("players");
-                            remove(context.sender(), selector.values(), context.getOrDefault("check", null));
+                            final MultiplePlayerSelector selector = context.get(PlayerSelectorArgument.PLAYERS);
+                            remove(context.sender(), selector.values(), context.getOrDefault(CHECK, null));
                         }),
                 root()
                         .literal("list")
@@ -146,6 +156,13 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             final @Nullable Duration duration,
             final @Nullable String check
     ) {
+        if (!validCheck(sender, check)) {
+            return;
+        }
+        if (duration != null && (duration.isNegative() || duration.isZero())) {
+            invalidDuration.run(sender);
+            return;
+        }
         final Instant until = duration == null ? null : Instant.now().plus(duration);
         final List<String> names = new ArrayList<>(players.size());
         for (final Player player : players) {
@@ -176,6 +193,9 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             final @NotNull Collection<Player> players,
             final @Nullable String check
     ) {
+        if (!validCheck(sender, check)) {
+            return;
+        }
         final List<String> names = new ArrayList<>(players.size());
         for (final Player player : players) {
             final TrackedPlayerImpl tracked = playerRegistry.get(player.getUniqueId());
@@ -232,6 +252,16 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         return List.copyOf(React.INSTANCE.configs().checks().keySet());
     }
 
+    private boolean validCheck(final @NotNull CommandSender sender, final @Nullable String check) {
+
+        if (check == null || checkIds().contains(check.toLowerCase(Locale.ROOT))) {
+            return true;
+        }
+        invalidCheck.run(sender);
+        return false;
+
+    }
+
     private static @NotNull SuggestionProvider<CommandSender> checkSuggestions() {
         return SuggestionProvider.blocking((context, input) ->
                 checkIds().stream().map(Suggestion::suggestion).toList());
@@ -241,7 +271,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         final long seconds = Math.max(0, duration.getSeconds());
         final long[] parts = {seconds / 86_400, seconds / 3_600 % 24, seconds / 60 % 60, seconds % 60};
         final String[] units = {"d", "h", "m", "s"};
-        final String text = java.util.stream.IntStream.range(0, parts.length)
+        final String text = IntStream.range(0, parts.length)
                 .filter(index -> parts[index] > 0)
                 .mapToObj(index -> parts[index] + units[index])
                 .collect(Collectors.joining(" "));

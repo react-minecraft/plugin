@@ -46,6 +46,8 @@ permissions:
       react.command.link: true
       react.command.rcps: true
       react.command.history: true
+      react.command.bypass: true
+      react.debug: true
       react.alerts: true
       react.monitor: true
   react.command.reload:
@@ -57,6 +59,10 @@ permissions:
   react.command.rcps:
     default: op
   react.command.history:
+    default: op
+  react.command.bypass:
+    default: op
+  react.debug:
     default: op
   react.monitor:
     default: op

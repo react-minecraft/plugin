@@ -15,11 +15,23 @@ import org.jetbrains.annotations.NotNull;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.*;
+import static com.g4vrk.react.storage.constant.StorageConstants.BYPASS_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstants.INFERENCE_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstants.LEGACY_INFERENCE_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstants.VIOLATIONS_TABLE;
 
+/**
+ * Stores player data in a JDBC database.
+ */
 public final class JdbcStorageBackend implements StorageBackend {
 
     private static final String LOAD_VIOLATIONS = "SELECT check_name, violations, updated_at FROM " + VIOLATIONS_TABLE + " WHERE player_uuid = ?";
@@ -55,7 +67,7 @@ public final class JdbcStorageBackend implements StorageBackend {
         });
     }
 
-    private void migrateLegacyHistory(final @NotNull Connection connection) throws java.sql.SQLException {
+    private void migrateLegacyHistory(final @NotNull Connection connection) throws SQLException {
         boolean legacyExists = false;
         try (final ResultSet tables = connection.getMetaData().getTables(null, null, "%", null)) {
             while (tables.next()) {
@@ -82,7 +94,7 @@ public final class JdbcStorageBackend implements StorageBackend {
     public @NotNull PlayerStorageData loadPlayer(
             final @NotNull UUID playerUuid,
             final long historyCutoff
-    ) throws java.sql.SQLException {
+    ) throws SQLException {
         return executor.query(connection -> new PlayerStorageData(
                 loadViolations(connection, playerUuid),
                 loadInference(connection, playerUuid, historyCutoff),
@@ -175,7 +187,7 @@ public final class JdbcStorageBackend implements StorageBackend {
     private @NotNull Map<String, StoredViolation> loadViolations(
             final @NotNull Connection connection,
             final @NotNull UUID playerUuid
-    ) throws java.sql.SQLException {
+    ) throws SQLException {
         final Map<String, StoredViolation> values = new LinkedHashMap<>();
         try (final PreparedStatement statement = connection.prepareStatement(LOAD_VIOLATIONS)) {
             statement.setString(1, playerUuid.toString());
@@ -195,7 +207,7 @@ public final class JdbcStorageBackend implements StorageBackend {
             final @NotNull Connection connection,
             final @NotNull UUID playerUuid,
             final long historyCutoff
-    ) throws java.sql.SQLException {
+    ) throws SQLException {
         final List<StoredInference> values = new ArrayList<>();
         try (final PreparedStatement statement = connection.prepareStatement(LOAD_INFERENCE)) {
             statement.setString(1, playerUuid.toString());
@@ -216,7 +228,7 @@ public final class JdbcStorageBackend implements StorageBackend {
     private @NotNull Map<String, Long> loadBypasses(
             final @NotNull Connection connection,
             final @NotNull UUID playerUuid
-    ) throws java.sql.SQLException {
+    ) throws SQLException {
         final Map<String, Long> values = new LinkedHashMap<>();
         try (final PreparedStatement statement = connection.prepareStatement(LOAD_BYPASSES)) {
             statement.setString(1, playerUuid.toString());
@@ -233,7 +245,7 @@ public final class JdbcStorageBackend implements StorageBackend {
     private void bindViolation(
             final @NotNull PreparedStatement statement,
             final @NotNull StorageMutation.Violation violation
-    ) throws java.sql.SQLException {
+    ) throws SQLException {
         statement.setString(1, violation.playerUuid().toString());
         statement.setString(2, violation.check());
         statement.setDouble(3, violation.violations());
@@ -243,7 +255,7 @@ public final class JdbcStorageBackend implements StorageBackend {
     private void bindInference(
             final @NotNull PreparedStatement statement,
             final @NotNull StorageMutation.Inference inference
-    ) throws java.sql.SQLException {
+    ) throws SQLException {
         final StoredInference value = inference.value();
         statement.setString(1, inference.id().toString());
         statement.setString(2, inference.playerUuid().toString());

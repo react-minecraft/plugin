@@ -18,12 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScopedCommandsTest {
 
     private final TestManager manager = new TestManager();
+    private final Runnable commandsChanged = () -> {
+    };
 
     @Test
     void removesOnlyOwnSubcommandsUnderSharedRoot() {
         manager.command(manager.commandBuilder("react", "ac").literal("reload").handler(context -> { }));
-        final ScopedCommands rcp = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "rcp");
-        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon");
+        final ScopedCommands rcp = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "rcp", commandsChanged);
+        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
 
         rcp.register("react", rcp.command("react").literal("link").handler(context -> { }));
         addon.register("react", addon.command("react").literal("punish").handler(context -> { }));
@@ -36,7 +38,7 @@ class ScopedCommandsTest {
 
     @Test
     void removesOwnRoot() {
-        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon");
+        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
         addon.register("punish", addon.command("punish").handler(context -> { }));
 
         assertTrue(addon.unregister("punish"));
@@ -45,7 +47,7 @@ class ScopedCommandsTest {
 
     @Test
     void rejectsMismatchedLabelAndClosedScope() {
-        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon");
+        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
         assertThrows(
                 IllegalArgumentException.class,
                 () -> addon.register("other", addon.command("punish").handler(context -> { }))

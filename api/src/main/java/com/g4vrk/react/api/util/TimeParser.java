@@ -42,6 +42,13 @@ public final class TimeParser {
     }
 
     public static @NotNull String format(final @NotNull Duration duration) {
+        if (duration.isNegative()) {
+            throw new IllegalArgumentException("Duration cannot be negative: " + duration);
+        }
+        if (duration.getNano() % 1_000_000 != 0) {
+            throw new IllegalArgumentException("Duration must have millisecond precision: " + duration);
+        }
+
         final long millis = duration.toMillis();
 
         if (millis % ChronoUnit.DAYS.getDuration().toMillis() == 0 && millis != 0) {

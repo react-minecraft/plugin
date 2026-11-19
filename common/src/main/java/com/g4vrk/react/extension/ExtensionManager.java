@@ -117,6 +117,34 @@ public final class ExtensionManager implements AutoCloseable {
                 }
             }
 
+            final List<LoadedExtension> prepared = new ArrayList<>();
+            for (int index = targets.size() - 1; index >= 0; index--) {
+                final LoadedExtension extension = targets.get(index);
+                CompletableFuture<Void> preparation = null;
+                try {
+                    prepared.add(extension);
+                    preparation = extension.prepareDisable();
+                    preparation.get(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } catch (final Throwable failure) {
+                    if (preparation != null) {
+                        preparation.cancel(false);
+                    }
+                    if (failure instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                    }
+                    for (final LoadedExtension previous : prepared) {
+                        try {
+                            previous.cancelDisablePreparation();
+                        } catch (final Throwable cancellationFailure) {
+                            logger.error("Could not cancel reboot preparation for {}", previous, cancellationFailure);
+                        }
+                    }
+                    logger.error("Could not prepare {} for reboot; leaving extensions enabled", extension, failure);
+                    result.failed().add(extension.descriptor().name());
+                    return result;
+                }
+            }
+
             for (int index = targets.size() - 1; index >= 0; index--) {
                 final LoadedExtension extension = targets.get(index);
                 loaded.remove(extension);

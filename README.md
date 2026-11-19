@@ -79,7 +79,7 @@
 (`release` или `prerelease`) и `pinned-version`. Общие настройки обновлений лежат в
 `plugins/React/update/settings.yml`.
 
-Свои настройки RCP хранит в `plugins/React/.rcp/React/`.
+Свои настройки RCP хранит в `plugins/React/.rcp/react-inference-rcp/`.
 
 | Команда                | Описание                                                       |
 |------------------------|----------------------------------------------------------------|

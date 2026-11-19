@@ -17,10 +17,10 @@ player:
     # Number of seconds to analyze rotations after a hit
     time: 2s
 
-# Official addons. Each one is downloaded from its GitHub releases on start when
+# External addons. Each one is downloaded from its GitHub releases on start when
 # download-next-start is true and its jar is not in addons/ yet.
 # Updates of installed addons are set in update/addons/<name>.yml
-official-addons:
+external-addons:
   hologram:
     repository: react-minecraft/hologram-addon
     download-next-start: true
@@ -32,4 +32,4 @@ official-addons:
     download-next-start: true
 
 # Не меняйте / Do not change
-config-version: 4
+config-version: 5

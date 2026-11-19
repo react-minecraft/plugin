@@ -47,7 +47,7 @@ monitor:
 
   # Действия для каждого анализа, плейсхолдеры как у alerts.alert
   message:
-    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <dark_gray>Аналитика: <color:#747474><player></color> <dark_gray>-></dark_gray> <color:#747474><check></color> <dark_gray><details></dark_gray>"
+    - "[msg] <b><gradient:#747474:#6C6C6C>⚡ ᴍᴏɴɪᴛᴏʀ</gradient></b> <dark_gray>»</dark_gray> <white>Аналитика:</white> <color:#747474><player></color> <dark_gray>→</dark_gray> <color:#747474><check></color> <gray><details></gray>"
 
   # Действия при включении мониторинга
   on-enable:
@@ -90,15 +90,17 @@ bypass:
 
   # <players> - ники, <check> - проверка, <duration> - на сколько
   granted:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>обходят <white><check></white> на <white><duration>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players> обходят <check> на <duration>"
+    - "[sound] entity.player.levelup;0.7;1.0"
 
   # <players> - ники, <check> - проверка
   removed:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players></white> <gray>больше не обходят <white><check>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white><players> больше не обходят <check>"
+    - "[sound] entity.player.levelup;0.7;1.0"
 
   # Для <player> ничего не изменилось: такого обхода нет или аддон его отменил
   cancelled:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Ничего не изменилось для <gray><player>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Ничего не изменилось для <white><player>"
 
   # <count> - сколько игроков онлайн с обходом
   list-header:
@@ -106,11 +108,17 @@ bypass:
 
   # <player>, <check>, <duration> - сколько осталось
   list-entry:
-    - "[msg]  <dark_gray>•</dark_gray> <white><player> <gray><check> <dark_gray>|</dark_gray> <duration>"
+    - "[msg]   <dark_gray>•</dark_gray> <white><player> <dark_gray>→</dark_gray> <white><check> <dark_gray>·</dark_gray> <gray><duration>"
 
   list-empty:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Ни у кого онлайн нет обхода"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Ни у кого из игроков онлайн нет обхода."
 
+  invalid-check:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Неизвестная проверка."
+    - "[sound] block.note_block.bass;1.0;0.8"
+  invalid-duration:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Укажи время, например 10m или 1h, либо forever."
+    - "[sound] block.note_block.bass;1.0;0.8"
   all-checks: "все проверки"
   forever: "навсегда"
 
@@ -128,12 +136,17 @@ reload:
     - "[bar] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Плагин успешно перезагружен!"
     - "[sound] entity.player.levelup;1.0;1.0"
 
+  on-failure:
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Не удалось перезагрузить плагин. Подробности в консоли."
+    - "[sound] block.note_block.bass;1.0;0.8"
+
 # /react reboot
 reboot:
 
   # Перед перезапуском. <jar> - файл плагина, <version> - его версия
   starting:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Перезапускаем React из <white><jar></white> (<version>)..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Перезапускаем React из <jar> (<version>)..."
+    - "[sound] block.note_block.pling;0.7;1.0"
 
   # Перезапуск невозможен. <reason> - почему
   cancelled:
@@ -148,15 +161,21 @@ reboot:
 
   # /react reboot <цель> для аддонов и RCP. <target> - all, rcp, addons или имя
   extensions-starting:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <gray>Перезапускаем <white><target></white>..."
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Перезапускаем <target>..."
+    - "[sound] block.note_block.pling;0.7;1.0"
 
   # <loaded>, <unloaded>, <failed> - имена или "-"
   extensions-done:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Перезапущено. <gray>Загружено: <white><loaded></white> <dark_gray>|</dark_gray> выгружено: <white><unloaded></white> <dark_gray>|</dark_gray> с ошибкой: <color:#ff3655><failed>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Перезапуск расширений завершён:</white>"
+    - "[msg]   <dark_gray>•</dark_gray> <gray>Загружены:</gray> <white><loaded>"
+    - "[msg]   <dark_gray>•</dark_gray> <gray>Выгружены:</gray> <white><unloaded>"
+    - "[msg]   <dark_gray>•</dark_gray> <gray>Ошибки:</gray> <color:#ff3655><failed>"
+    - "[sound] block.note_block.pling;0.7;1.0"
 
   # Цель <target> не найдена
   extensions-unknown:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Нет аддона или RCP <gray><target>"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Аддон или RCP с именем <white><target> <color:#ff3655>не найден."
+    - "[sound] block.note_block.bass;0.8;0.8"
 
 # /react rcps
 rcps:
@@ -167,15 +186,17 @@ rcps:
 
   # Одна RCP без статуса. <name>, <version>, <api> - версия API
   entry:
-    - "[msg]  <dark_gray>•</dark_gray> <white><name> <gray>v<version> <dark_gray>|</dark_gray> api <api>"
+    - "[msg]   <dark_gray>•</dark_gray> <white><name> <gray>v<version></gray> <dark_gray>·</dark_gray> <gray>API <api>"
 
   # Одна RCP со статусом. <status> - что она о себе пишет
   entry-with-status:
-    - "[msg]  <dark_gray>•</dark_gray> <white><name> <gray>v<version> <dark_gray>|</dark_gray> api <api> <dark_gray>|</dark_gray> <color:#ff3655><status>"
+    - "[msg]   <dark_gray>•</dark_gray> <white><name> <gray>v<version></gray> <dark_gray>·</dark_gray> <gray>API <api>"
+    - "[msg]     <gray>Статус:</gray> <white><status>"
 
   # Обновление React RCP. <version>, <channel>, <state>, <checked>
   react:
-    - "[msg]  <dark_gray>»</dark_gray> <white>React RCP <gray><version> <dark_gray>|</dark_gray> <channel> <dark_gray>|</dark_gray> <state> <dark_gray>|</dark_gray> <checked>"
+    - "[msg]   <dark_gray>»</dark_gray> <white>React RCP <version> <dark_gray>·</dark_gray> <gray><channel>"
+    - "[msg]     <gray>Статус:</gray> <white><state> <dark_gray>·</dark_gray> <gray>Проверено: <checked>"
 
 # Уведомления об обновлениях: получателям алертов и игрокам с react.notify.update при входе
 updates:
@@ -194,26 +215,31 @@ help:
   # /react без аргументов
   root:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Команды:"
-    - "[msg] <color:#eb2544>/react alerts [ники]</color> <gray>- оповещения, можно указать ники"
-    - "[msg] <color:#eb2544>/react monitor [ники]</color> <gray>- мониторинг аналитики, можно указать ники"
-    - "[msg] <color:#eb2544>/react history <игрок></color> <gray>- история проверок"
-    - "[msg] <color:#eb2544>/react debug [игроки] [проверка]</color> <gray>- debug-строки проверок"
-    - "[msg] <color:#eb2544>/react bypass <игроки> [время] [проверка]</color> <gray>- обход проверок"
-    - "[msg] <color:#eb2544>/react reload</color> <gray>- перезагрузить конфиги"
-    - "[msg] <color:#eb2544>/react reboot [цель]</color> <gray>- перезапустить плагин, аддоны или RCP"
-    - "[msg] <color:#eb2544>/react rcps</color> <gray>- установленные RCP"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react alerts [игроки]</color> <white>Управление оповещениями"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react monitor [игроки]</color> <white>Мониторинг аналитики"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react history [игрок] [страница]</color> <white>История анализа"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react debug [игроки] [проверка]</color> <white>Отладка проверок"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react bypass <игроки> [время] [проверка]</color> <white>Выдать обход"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react bypass remove <игроки> [проверка]</color> <white>Снять обход"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react bypass list</color> <white>Список обходов"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react reload</color> <white>Перезагрузка конфигов"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react reboot [цель]</color> <white>Перезапуск плагина или расширений"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react rcps</color> <white>Установленные RCP"
 
   # Нет прав на команду
   no-permission:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Недостаточно прав."
+    - "[sound] block.note_block.bass;0.8;0.8"
 
   # Неизвестная команда или неверные аргументы
   unknown-command:
-    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Неизвестная команда.</color> <gray>Список: /react"
+    - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Неизвестная команда или неверные аргументы.</color> <white>Список: <click:run_command:'/react'><u>/react</u></click>"
+    - "[sound] block.note_block.bass;0.8;0.8"
 
   # Команда только для игроков
   player-only:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <color:#ff3655>Команда доступна только игрокам."
+    - "[sound] block.note_block.bass;0.8;0.8"
 
 # Тексты для плейсхолдеров выше и для PlaceholderAPI
 texts:
@@ -229,6 +255,19 @@ texts:
   not-checked: "не проверялось"
   checked-now: "проверено только что"
   checked-ago: "проверено <minutes> мин назад"
+  update-labels:
+    release: "стабильные релизы"
+    prerelease: "ночные сборки"
+    disabled: "отключено"
+    installed: "установлено"
+    offline: "релиз недоступен"
+    rejected: "подпись отклонена"
+    no jar: "нет совместимого JAR"
+    up to date: "актуальная версия"
+    staged: "готово к установке"
+    failed: "ошибка обновления"
+    not checked: "не проверялось"
+    api-version: "несовместимый API <version>"
 
 # Не меняйте / Do not change
 config-version: 3

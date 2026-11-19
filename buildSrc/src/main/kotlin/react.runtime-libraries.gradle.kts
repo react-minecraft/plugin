@@ -10,7 +10,7 @@ plugins {
 val catalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
 val libraryGroups = mapOf(
     "core" to listOf(
-        "configurate-yaml", "cloud-paper", "textserializer-legacy", "actions",
+        "configurate-yaml", "cloud-paper", "textserializer-legacy", "actions", "xseries",
         "schedula-common", if (project.name == "folia") "schedula-folia" else "schedula-bukkit"
     ),
     "database-sqlite" to listOf("hikari", "sqlite"),

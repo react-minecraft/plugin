@@ -39,7 +39,16 @@ public final class DurationSerializer implements TypeSerializer<Duration> {
     @Override
     public void serialize(final Type type, final @Nullable Duration duration, final ConfigurationNode node)
             throws SerializationException {
-        node.set(duration == null ? null : TimeParser.format(duration));
+        if (duration == null) {
+            node.set(null);
+            return;
+        }
+
+        try {
+            node.set(TimeParser.format(duration));
+        } catch (final IllegalArgumentException ex) {
+            throw new SerializationException(node, type, ex.getMessage());
+        }
     }
 
 }

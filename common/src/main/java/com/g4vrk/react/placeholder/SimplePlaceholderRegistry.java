@@ -252,7 +252,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
                     Placeholders.join(arguments)
             );
 
-            return value == null ? null : Tag.preProcessParsed(value);
+            return value == null ? null : Tag.inserting(context.deserialize(value));
 
         }
 

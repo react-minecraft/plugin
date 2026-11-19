@@ -52,10 +52,12 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
     public void rotation(final @NotNull TrackedPlayerImpl player, final float @NotNull [] sample) {
         final List<HostedRCPEnvironment> attached = this.environments;
 
-        for (int i = 0; i < attached.size(); i++) {
+        for (int i = 0, environmentCount = attached.size(); i < environmentCount; i++) {
             final HostedRCPEnvironment environment = attached.get(i);
+            final List<RCPPlayerListener> listeners = environment.playerListeners();
 
-            for (final RCPPlayerListener listener : environment.playerListeners()) {
+            for (int listenerIndex = 0, listenerCount = listeners.size(); listenerIndex < listenerCount; listenerIndex++) {
+                final RCPPlayerListener listener = listeners.get(listenerIndex);
                 try {
                     listener.onRotation(player, sample);
                 } catch (final Throwable failure) {

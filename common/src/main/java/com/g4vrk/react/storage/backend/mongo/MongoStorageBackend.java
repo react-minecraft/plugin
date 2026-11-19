@@ -14,20 +14,46 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.*;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.*;
-import static com.mongodb.client.model.Filters.*;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_CHECK;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_EXPIRES_AT;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_ID;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_PLAYER_UUID;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_PROBABILITY;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_TIMESTAMP;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_UPDATED_AT;
+import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_VIOLATIONS;
+import static com.g4vrk.react.storage.constant.StorageConstants.MONGO_BYPASS_COLLECTION;
+import static com.g4vrk.react.storage.constant.StorageConstants.MONGO_INFERENCE_COLLECTION;
+import static com.g4vrk.react.storage.constant.StorageConstants.MONGO_VIOLATIONS_COLLECTION;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
+import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.lt;
+import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Sorts.ascending;
 
+/**
+ * Stores player data in MongoDB collections.
+ */
 public final class MongoStorageBackend implements StorageBackend {
 
     private final MongoClient client;
@@ -59,7 +85,7 @@ public final class MongoStorageBackend implements StorageBackend {
             final long historyCutoff
     ) {
         final String uuid = playerUuid.toString();
-        final Map<String, StoredViolation> loadedViolations = new java.util.LinkedHashMap<>();
+        final Map<String, StoredViolation> loadedViolations = new LinkedHashMap<>();
         for (final Document document : violations.find(eq(FIELD_PLAYER_UUID, uuid))) {
             loadedViolations.put(
                     document.getString(FIELD_CHECK),
@@ -77,7 +103,7 @@ public final class MongoStorageBackend implements StorageBackend {
                     number(document, FIELD_PROBABILITY)
             ));
         }
-        final Map<String, Long> loadedBypasses = new java.util.LinkedHashMap<>();
+        final Map<String, Long> loadedBypasses = new LinkedHashMap<>();
         for (final Document document : bypasses
                 .find(and(eq(FIELD_PLAYER_UUID, uuid), gt(FIELD_EXPIRES_AT, System.currentTimeMillis())))) {
             loadedBypasses.put(document.getString(FIELD_CHECK), longNumber(document, FIELD_EXPIRES_AT));
@@ -143,10 +169,10 @@ public final class MongoStorageBackend implements StorageBackend {
         }
 
         if (!violationWrites.isEmpty()) {
-            violations.bulkWrite(violationWrites, new com.mongodb.client.model.BulkWriteOptions().ordered(false));
+            violations.bulkWrite(violationWrites);
         }
         if (!inferenceWrites.isEmpty()) {
-            inference.bulkWrite(inferenceWrites, new com.mongodb.client.model.BulkWriteOptions().ordered(false));
+            inference.bulkWrite(inferenceWrites, new BulkWriteOptions().ordered(false));
         }
         if (!bypassWrites.isEmpty()) {
             bypasses.bulkWrite(bypassWrites);

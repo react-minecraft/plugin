@@ -11,6 +11,9 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Records valid player rotation packets for active inference.
+ */
 @RequiredArgsConstructor
 public final class RotationListener extends PacketListenerAbstract {
 
@@ -20,21 +23,28 @@ public final class RotationListener extends PacketListenerAbstract {
     @Override
     public void onPacketReceive(final @NotNull PacketReceiveEvent event) {
 
-        if (event.getConnectionState() != ConnectionState.PLAY || !WrapperPlayClientPlayerFlying.isFlying(event.getPacketType())) return;
+        if (event.getConnectionState() != ConnectionState.PLAY
+                || !WrapperPlayClientPlayerFlying.isFlying(event.getPacketType())) {
+            return;
+        }
 
         final WrapperPlayClientPlayerFlying movePacket;
 
         try {
             movePacket = new WrapperPlayClientPlayerFlying(event);
-        } catch (Throwable ignored) {
+        } catch (final RuntimeException ignored) {
             return;
         }
 
-        if (!movePacket.hasRotationChanged()) return;
+        if (!movePacket.hasRotationChanged()) {
+            return;
+        }
 
         final TrackedPlayerImpl player = this.playerRegistry.get(event.getUser().getUUID());
 
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
 
         final Location location = movePacket.getLocation();
 

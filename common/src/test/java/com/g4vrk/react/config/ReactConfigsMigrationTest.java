@@ -42,8 +42,9 @@ class ReactConfigsMigrationTest {
 
         final String main = Files.readString(directory.resolve("main-config.yml"));
         assertFalse(main.contains("format:"));
-        assertTrue(main.contains("config-version: 4"));
-        assertTrue(main.contains("official-addons:"));
+        assertTrue(main.contains("config-version: 5"));
+        assertTrue(main.contains("external-addons:"));
+        assertFalse(main.contains("official-addons:"));
         assertFalse(Files.readString(directory.resolve("actions.yml")).contains("verbose:"));
     }
 

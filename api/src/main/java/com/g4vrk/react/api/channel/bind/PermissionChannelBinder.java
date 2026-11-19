@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+/**
+ * Subscribes audiences with the configured permission and optionally removes other audiences.
+ */
 @ApiStatus.AvailableSince("2.0")
 public class PermissionChannelBinder implements Consumer<Audience> {
 
@@ -34,18 +37,10 @@ public class PermissionChannelBinder implements Consumer<Audience> {
             final @NotNull Audience audience
     ) {
 
-        if (audience instanceof final Permissible permissible) {
-
-            if (permissible.hasPermission(this.permission)) {
-
-                this.channel.subscribe(audience);
-
-            }
-
+        if (audience instanceof final Permissible permissible && permissible.hasPermission(this.permission)) {
+            this.channel.subscribe(audience);
         } else if (this.removeWithoutPermission) {
-
             this.channel.remove(audience);
-
         }
 
     }

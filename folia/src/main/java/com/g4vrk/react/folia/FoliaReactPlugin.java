@@ -1,39 +1,15 @@
 package com.g4vrk.react.folia;
 
-import com.g4vrk.react.extension.library.RuntimeLibraries;
-import org.bukkit.plugin.java.JavaPlugin;
+import com.g4vrk.react.platform.PlatformReactPlugin;
 
 /**
- * Starts the Folia runtime after its shared libraries are available.
+ * Bukkit entry point for the Folia distribution.
  */
-public final class FoliaReactPlugin extends JavaPlugin {
+public final class FoliaReactPlugin extends PlatformReactPlugin {
 
-    private Runnable[] lifecycle;
+    public FoliaReactPlugin() {
 
-    @Override
-    public void onLoad() {
-
-        lifecycle = RuntimeLibraries.start(this, "com.g4vrk.react.folia.FoliaRuntime");
-
-    }
-
-    @Override
-    public void onEnable() {
-
-        if (lifecycle == null) {
-            throw new IllegalStateException("React did not finish loading");
-        }
-        lifecycle[0].run();
-
-    }
-
-    @Override
-    public void onDisable() {
-
-        if (lifecycle != null) {
-            lifecycle[1].run();
-            lifecycle = null;
-        }
+        super("com.g4vrk.react.folia.FoliaRuntime");
 
     }
 

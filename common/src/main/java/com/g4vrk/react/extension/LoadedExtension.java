@@ -11,9 +11,10 @@ import com.g4vrk.react.rcp.RCPHost;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * One addon or RCP jar that is loaded: its class loader, environment and main object.
@@ -67,8 +68,7 @@ public final class LoadedExtension {
             final @NotNull ExtensionPlan plan,
             final @NotNull Map<ExtensionId, LoadedExtension> dependencies
     ) throws Exception {
-        final Path directory = descriptor.kind().data(context.dataFolder()).resolve(descriptor.name());
-        Files.createDirectories(directory);
+        final Path directory = ExtensionDataDirectory.resolve(context, descriptor);
 
         final ExtensionClassLoader classLoader = new ExtensionClassLoader(
                 context.logger().getName() + "#" + descriptor.name(),
@@ -100,7 +100,7 @@ public final class LoadedExtension {
                 instance = addon;
             }
 
-            environment.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
+            context.logger().info("Loaded {} '{}' v{}", descriptor.kind().displayName(), descriptor.name(), descriptor.version());
             return new LoadedExtension(context, descriptor, classLoader, plan, services, environment, instance);
         } catch (final Exception | LinkageError failure) {
             if (environment != null) {
@@ -207,6 +207,30 @@ public final class LoadedExtension {
         if (enabled && instance instanceof RCPLifecycle lifecycle) {
             withContextLoader(classLoader, lifecycle::onReload);
         }
+    }
+
+    @NotNull CompletableFuture<Void> prepareDisable() {
+
+        if (!enabled || !(instance instanceof JavaAddon addon)) {
+            return CompletableFuture.completedFuture(null);
+        }
+        final Thread thread = Thread.currentThread();
+        final ClassLoader previous = thread.getContextClassLoader();
+        thread.setContextClassLoader(classLoader);
+        try {
+            return Objects.requireNonNull(addon.prepareDisable(), "prepareDisable returned null");
+        } finally {
+            thread.setContextClassLoader(previous);
+        }
+
+    }
+
+    void cancelDisablePreparation() throws Exception {
+
+        if (enabled && instance instanceof JavaAddon addon) {
+            withContextLoader(classLoader, addon::cancelDisablePreparation);
+        }
+
     }
 
     /**

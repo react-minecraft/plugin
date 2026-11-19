@@ -4,10 +4,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
-public sealed interface StorageMutation permits StorageMutation.Violation, StorageMutation.Inference, StorageMutation.Bypass {
+/**
+ * A queued change to persistent player data.
+ */
+public sealed interface StorageMutation permits
+        StorageMutation.Violation,
+        StorageMutation.Inference,
+        StorageMutation.Bypass {
 
     @NotNull UUID playerUuid();
 
+    /**
+     * Stores a check's violation level.
+     */
     record Violation(
             @NotNull UUID playerUuid,
             @NotNull String check,
@@ -16,6 +25,9 @@ public sealed interface StorageMutation permits StorageMutation.Violation, Stora
     ) implements StorageMutation {
     }
 
+    /**
+     * Appends an inference result to player history.
+     */
     record Inference(
             @NotNull UUID playerUuid,
             @NotNull UUID id,

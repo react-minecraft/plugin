@@ -6,6 +6,9 @@ import com.g4vrk.schedula.bukkit.impl.task.runner.factory.PaperSchedulerFactory;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Supplies React with the Paper scheduler factory.
+ */
 public final class PaperReactAPI implements ReactAPI {
 
     private final SchedulaAPI api;
@@ -13,13 +16,18 @@ public final class PaperReactAPI implements ReactAPI {
     public PaperReactAPI(
             final @NotNull Plugin plugin
     ) {
+
         this.api = SchedulaAPI.builder()
                 .factory(new PaperSchedulerFactory(plugin))
                 .build();
+
     }
 
     @Override
     public @NotNull SchedulaAPI schedulaAPI() {
+
         return api;
+
     }
+
 }

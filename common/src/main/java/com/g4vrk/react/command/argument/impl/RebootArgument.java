@@ -9,6 +9,8 @@ import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.reboot.PluginReboot;
+import com.g4vrk.schedula.task.TickSchedule;
+import com.g4vrk.schedula.task.scheduler.Scheduler;
 import com.g4vrk.text.LegacySerializerRegistry;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -16,6 +18,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.Command;
+import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
@@ -32,9 +35,12 @@ import java.util.List;
  */
 public final class RebootArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
+    private static final CloudKey<String> TARGET = CloudKey.of("target", String.class);
+
     private final CommandBuilderFactory builderFactory;
     private final ActionParser<Audience> actionParser;
     private final ExtensionManager extensions;
+    private final Scheduler scheduler;
 
     private ExecutableActionList<? super Audience> starting;
     private ExecutableActionList<? super Audience> cancelled;
@@ -47,11 +53,13 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull ActionParser<Audience> actionParser,
             final @NotNull ActionsConfig config,
-            final @NotNull ExtensionManager extensions
+            final @NotNull ExtensionManager extensions,
+            final @NotNull Scheduler scheduler
     ) {
         this.builderFactory = builderFactory;
         this.actionParser = actionParser;
         this.extensions = extensions;
+        this.scheduler = scheduler;
         this.onReload(config);
     }
 
@@ -73,14 +81,14 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                 .literal("reboot")
                 .permission("react.command.reboot")
                 .optional(
-                        "target",
+                        TARGET,
                         StringParser.stringParser(),
                         SuggestionProvider.blocking((context, input) ->
                                 extensions.targets().stream().map(Suggestion::suggestion).toList())
                 )
                 .handler(context -> {
                     final CommandSender sender = context.sender();
-                    final String target = context.getOrDefault("target", null);
+                    final String target = context.getOrDefault(TARGET, null);
                     if (target != null) {
                         rebootExtensions(sender, target);
                         return;
@@ -109,21 +117,23 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
     private void rebootExtensions(final @NotNull CommandSender sender, final @NotNull String target) {
         extensionsStarting.run(sender, text -> text.replace("<target>", target));
         extensions.reboot(target).whenComplete((result, failure) -> {
-            if (failure != null) {
-                React.INSTANCE.logger().error("Could not reboot '{}'", target, failure);
-                return;
-            }
-            if (result.empty()) {
-                extensionsUnknown.run(sender, text -> text.replace("<target>", target));
-                return;
-            }
-            extensionsDone.run(
-                    sender,
-                    text -> text
-                            .replace("<loaded>", names(result.loaded()))
-                            .replace("<unloaded>", names(result.unloaded()))
-                            .replace("<failed>", names(result.failed()))
-            );
+            scheduler.schedule(() -> {
+                if (failure != null) {
+                    React.INSTANCE.logger().error("Could not reboot '{}'", target, failure);
+                    return;
+                }
+                if (result.empty()) {
+                    extensionsUnknown.run(sender, text -> text.replace("<target>", target));
+                    return;
+                }
+                extensionsDone.run(
+                        sender,
+                        text -> text
+                                .replace("<loaded>", names(result.loaded()))
+                                .replace("<unloaded>", names(result.unloaded()))
+                                .replace("<failed>", names(result.failed()))
+                );
+            }, TickSchedule.instant());
         });
     }
 

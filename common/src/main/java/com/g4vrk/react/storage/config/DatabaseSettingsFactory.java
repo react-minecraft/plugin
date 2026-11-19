@@ -13,8 +13,24 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.*;
+import static com.g4vrk.react.storage.constant.StorageConstants.DATA_DIRECTORY;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_BATCH_SIZE;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_CLEANUP_INTERVAL;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_EXECUTOR_QUEUE_CAPACITY;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_EXECUTOR_THREADS;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_FLUSH_INTERVAL;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_PENDING_WRITE_CAPACITY;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_RETENTION;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_RETRY_INITIAL_DELAY;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_RETRY_MAXIMUM_DELAY;
+import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_SHUTDOWN_TIMEOUT;
+import static com.g4vrk.react.storage.constant.StorageConstants.H2_DRIVER;
+import static com.g4vrk.react.storage.constant.StorageConstants.MYSQL_DRIVER;
+import static com.g4vrk.react.storage.constant.StorageConstants.SQLITE_DRIVER;
 
+/**
+ * Builds validated database settings from the configuration tree.
+ */
 public final class DatabaseSettingsFactory {
 
     public @NotNull DatabaseSettings create(

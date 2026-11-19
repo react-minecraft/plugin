@@ -22,19 +22,23 @@ public final class ScopedPlaceholders implements PlaceholderRegistry, AutoClosea
 
     private final PlaceholderRegistry delegate;
     private final Set<String> owned = ConcurrentHashMap.newKeySet();
+    private boolean closed;
 
     public ScopedPlaceholders(final @NotNull PlaceholderRegistry delegate) {
         this.delegate = delegate;
     }
 
     @Override
-    public void register(final @NotNull String key, final @NotNull PlaceholderResolver resolver) {
+    public synchronized void register(final @NotNull String key, final @NotNull PlaceholderResolver resolver) {
+        if (closed) {
+            throw new IllegalStateException("The extension placeholder registry is closed");
+        }
         this.delegate.register(key, resolver);
         this.owned.add(key);
     }
 
     @Override
-    public @Nullable PlaceholderResolver unregister(final @NotNull String key) {
+    public synchronized @Nullable PlaceholderResolver unregister(final @NotNull String key) {
         return this.owned.remove(key) ? this.delegate.unregister(key) : null;
     }
 
@@ -94,7 +98,8 @@ public final class ScopedPlaceholders implements PlaceholderRegistry, AutoClosea
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
+        this.closed = true;
         this.owned.forEach(this.delegate::unregister);
         this.owned.clear();
     }

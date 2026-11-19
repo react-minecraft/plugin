@@ -1,7 +1,5 @@
 package com.g4vrk.react.update;
 
-import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.config.ConfigMigrationChain;
 import com.g4vrk.react.api.event.plugin.UpdateDownloadedEvent;
 import com.g4vrk.react.api.extension.GitHubSource;
 import com.g4vrk.react.api.rcp.RCPAPI;
@@ -11,14 +9,11 @@ import com.g4vrk.react.extension.ExtensionKind;
 import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.extension.InvalidExtensionException;
 import com.g4vrk.react.extension.StagedUpdates;
+import com.g4vrk.react.update.config.UpdateConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurateException;
-import org.spongepowered.configurate.ConfigurationNode;
-import org.spongepowered.configurate.objectmapping.ConfigSerializable;
-import org.spongepowered.configurate.yaml.NodeStyle;
-import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -54,19 +49,20 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     private final Path dataFolder;
     private final Path folder;
-    private final String language;
+    private final UpdateConfiguration configuration;
     private final Logger logger;
     private final ReleaseClient client;
     private final Plugin plugin;
     private final Supplier<MainConfig> main;
     private final Consumer<UpdateDownloadedEvent> notifier;
 
-    private final ConfigFile<UpdateSettings> settingsFile;
+
     private final Map<String, Status> statuses = new ConcurrentHashMap<>();
     private final Map<String, UpdateDownloadedEvent> downloaded = new ConcurrentHashMap<>();
 
     private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), false, true);
     private volatile @Nullable ScheduledExecutorService timer;
+    private boolean closed;
 
     /**
      * Where the running plugin jar is and where its update goes.
@@ -96,16 +92,6 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     }
 
-    @ConfigSerializable
-    record ReactRCPSettings(Settings settings) {
-
-        @ConfigSerializable
-        record Settings(boolean enabled) {
-
-        }
-
-    }
-
     private record Component(
             @NotNull UpdateDownloadedEvent.Kind kind,
             @NotNull String name,
@@ -128,17 +114,13 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     ) {
         this.dataFolder = dataFolder;
         this.folder = dataFolder.resolve("update");
-        this.language = language;
+        this.configuration = new UpdateConfiguration(dataFolder, folder, language, logger);
         this.logger = logger;
         this.client = new ReleaseClient(logger);
         this.plugin = plugin;
         this.main = main;
         this.notifier = notifier;
-        this.settingsFile = ConfigFile.builder(UpdateSettings.class)
-                .path(folder.resolve("settings.yml"))
-                .defaults(UpdateService.class.getClassLoader(), language + "/update/settings.yml")
-                .logger(logger)
-                .build();
+
     }
 
     /**
@@ -146,9 +128,9 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * downloads the official addons that are missing and stages every update.
      */
     public synchronized void onStart() {
-        loadSettings();
+        settings = configuration.reload(settings);
         reactRCP();
-        officialAddons();
+        externalAddons();
         checkAll();
     }
 
@@ -157,7 +139,10 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      *
      * @param manager rebooted after a download when {@code auto-reboot} is on
      */
-    public void start(final @NotNull ExtensionManager manager) {
+    public synchronized void start(final @NotNull ExtensionManager manager) {
+        if (closed || timer != null) {
+            return;
+        }
         final Duration interval = settings.interval() == null || settings.interval().compareTo(MIN_INTERVAL) < 0
                 ? MIN_INTERVAL
                 : settings.interval();
@@ -172,7 +157,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     private void tick(final @NotNull ExtensionManager manager) {
         try {
-            loadSettings();
+            settings = configuration.reload(settings);
             final List<Component> staged = checkAll();
             if (!settings.autoReboot()) {
                 return;
@@ -251,27 +236,10 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         }
     }
 
-    private void loadSettings() {
-        try {
-            settings = settingsFile.load();
-        } catch (final ConfigurateException failure) {
-            logger.error("Could not read {}, using the defaults", settingsFile.path(), failure);
-        }
-    }
-
     private void reactRCP() {
-        final Path rcpFolder = ExtensionKind.RCP.data(dataFolder);
         final boolean enabled;
         try {
-            enabled = ConfigFile.builder(ReactRCPSettings.class)
-                    .path(rcpFolder.resolve("react-rcp.yml"))
-                    .defaults(UpdateService.class.getClassLoader(), language + "/react-rcp.yml")
-                    .migrations(rcpMigrations(rcpFolder))
-                    .logger(logger)
-                    .build()
-                    .load()
-                    .settings()
-                    .enabled();
+            enabled = configuration.reactRcpEnabled();
         } catch (final ConfigurateException failure) {
             logger.error("Could not read react-rcp.yml, the React RCP is not loaded", failure);
             removeReactRCP();
@@ -289,7 +257,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             }
         }
 
-        final ComponentSettings component = componentSettings(ExtensionKind.RCP, "React");
+        final ComponentSettings component = configuration.component(ExtensionKind.RCP, "React");
         install(
                 "React RCP",
                 ReleaseClient.REACT_RCP,
@@ -298,47 +266,6 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                 component.pinned(),
                 ExtensionKind.RCP.jars(dataFolder)
         );
-    }
-
-    /**
-     * Version 2 moved {@code auto-update} and {@code channel} to {@code update/rcp/React.yml}.
-     */
-    private @NotNull ConfigMigrationChain rcpMigrations(final @NotNull Path rcpFolder) {
-        return ConfigMigrationChain.builder()
-                .step(root -> {
-                })
-                .step(root -> {
-                    final ConfigurationNode settings = root.node("settings");
-                    if ("all".equalsIgnoreCase(settings.node("channel").getString())) {
-                        writePrerelease(folder.resolve("rcp").resolve("React.yml"));
-                    }
-                    settings.removeChild("auto-update");
-                    settings.removeChild("channel");
-                })
-                .build();
-    }
-
-    private void writePrerelease(final @NotNull Path file) {
-        if (Files.exists(file)) {
-            return;
-        }
-        try {
-            final ConfigurationNode node = ConfigFile.builder(ConfigurationNode.class)
-                    .path(file)
-                    .defaults(UpdateService.class.getClassLoader(), language + "/update/component.yml")
-                    .logger(logger)
-                    .build()
-                    .loadNode();
-            node.node("channel").set("prerelease");
-            Files.createDirectories(file.getParent());
-            YamlConfigurationLoader.builder()
-                    .path(file)
-                    .nodeStyle(NodeStyle.BLOCK)
-                    .build()
-                    .save(node);
-        } catch (final IOException failure) {
-            logger.warn("Could not move the React RCP channel to {}", file, failure);
-        }
     }
 
     private void removeReactRCP() {
@@ -375,14 +302,14 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     }
 
-    private void officialAddons() {
-        final Map<String, MainConfig.OfficialAddon> addons = main.get().officialAddons();
+    private void externalAddons() {
+        final Map<String, MainConfig.ExternalAddon> addons = main.get().externalAddons();
         if (addons == null || addons.isEmpty()) {
             return;
         }
         final List<ExtensionDescriptor> present = scan(ExtensionKind.ADDON);
-        for (final Map.Entry<String, MainConfig.OfficialAddon> entry : addons.entrySet()) {
-            final MainConfig.OfficialAddon addon = entry.getValue();
+        for (final Map.Entry<String, MainConfig.ExternalAddon> entry : addons.entrySet()) {
+            final MainConfig.ExternalAddon addon = entry.getValue();
             if (addon == null || !addon.downloadNextStart() || addon.repository() == null) {
                 continue;
             }
@@ -493,8 +420,8 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      */
     private boolean check(final @NotNull Component component) {
         final ComponentSettings settings = component.extension() == null
-                ? componentSettings(null, component.name())
-                : componentSettings(component.extension(), component.name());
+                ? configuration.component(null, component.name())
+                : configuration.component(component.extension(), component.name());
         final UpdateChannel channel = settings.effectiveChannel();
         if (!settings.enabled()) {
             statuses.put(key(component.repository()), new Status(null, channel, null, "disabled"));
@@ -559,23 +486,6 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         return false;
     }
 
-    private @NotNull ComponentSettings componentSettings(final @Nullable ExtensionKind kind, final @NotNull String name) {
-        final Path file = kind == null
-                ? folder.resolve("plugin.yml")
-                : folder.resolve(kind == ExtensionKind.RCP ? "rcp" : "addons").resolve(name + ".yml");
-        try {
-            return ConfigFile.builder(ComponentSettings.class)
-                    .path(file)
-                    .defaults(UpdateService.class.getClassLoader(), language + "/update/component.yml")
-                    .logger(logger)
-                    .build()
-                    .load();
-        } catch (final ConfigurateException failure) {
-            logger.error("Could not read {}, not updating {}", file, name, failure);
-            return new ComponentSettings(false, UpdateChannel.RELEASE, "");
-        }
-    }
-
     private @NotNull List<ExtensionDescriptor> scan(final @NotNull ExtensionKind kind) {
         final List<ExtensionDescriptor> descriptors = new ArrayList<>();
         for (final Path jar : jars(kind.jars(dataFolder))) {
@@ -627,7 +537,8 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * Stops the periodic checks.
      */
     @Override
-    public void close() {
+    public synchronized void close() {
+        closed = true;
         final ScheduledExecutorService timer = this.timer;
         if (timer != null) {
             timer.shutdownNow();

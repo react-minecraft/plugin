@@ -54,6 +54,7 @@ public final class InferenceHistory {
      * @return a number that grows with every change
      */
     public long revision() {
+        this.pruneExpired();
         return this.revision;
     }
 

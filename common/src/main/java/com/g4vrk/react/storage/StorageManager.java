@@ -225,15 +225,17 @@ public final class StorageManager {
         }
 
         for (final Check check : player.checkManager.checks()) {
-            enqueue(
-                    new StorageMutation.Violation(
-                            player.uniqueId(),
-                            check.id(),
-                            check.violations(),
-                            System.currentTimeMillis()
-                    ),
-                    allowClosing
-            );
+            synchronized (check) {
+                enqueue(
+                        new StorageMutation.Violation(
+                                player.uniqueId(),
+                                check.id(),
+                                check.violations(),
+                                System.currentTimeMillis()
+                        ),
+                        allowClosing
+                );
+            }
         }
 
     }

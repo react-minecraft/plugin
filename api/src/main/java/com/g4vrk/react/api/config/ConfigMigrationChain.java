@@ -62,6 +62,13 @@ public final class ConfigMigrationChain {
     int apply(final @NotNull ConfigurationNode root) throws SerializationException {
         final int current = version(root);
 
+        if (current < LEGACY_VERSION) {
+            throw new SerializationException(
+                    root.node(VERSION_KEY),
+                    Integer.class,
+                    "File version cannot be negative: " + current
+            );
+        }
         if (current > latest) {
             throw new SerializationException(
                     root.node(VERSION_KEY),

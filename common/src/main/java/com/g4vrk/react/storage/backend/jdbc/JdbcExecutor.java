@@ -28,16 +28,13 @@ public final class JdbcExecutor {
                 final T result = transaction.apply(connection);
                 connection.commit();
                 return result;
-            } catch (final Throwable throwable) {
+            } catch (final SQLException | RuntimeException | Error throwable) {
                 try {
                     connection.rollback();
                 } catch (final SQLException rollbackFailure) {
                     throwable.addSuppressed(rollbackFailure);
                 }
-                if (throwable instanceof final SQLException sqlException) {
-                    throw sqlException;
-                }
-                throw new SQLException("JDBC transaction failed", throwable);
+                throw throwable;
             } finally {
                 connection.setAutoCommit(previousAutoCommit);
             }

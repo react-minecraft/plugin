@@ -90,7 +90,7 @@ public final class CommandService {
         final AlertsArgument alerts = new AlertsArgument(builderFactory, parser);
         final MonitorArgument monitor = new MonitorArgument(builderFactory, parser);
         final ReloadArgument reload = new ReloadArgument(builderFactory, scheduler, parser);
-        final RebootArgument reboot = new RebootArgument(builderFactory, parser, actions, extensions);
+        final RebootArgument reboot = new RebootArgument(builderFactory, parser, actions, extensions, scheduler);
         final RCPListArgument rcps = new RCPListArgument(builderFactory, parser, actions, host, updates);
         final DebugArgument debug = new DebugArgument(builderFactory, parser);
         final BypassArgument bypass = new BypassArgument(builderFactory, parser, actions, playerRegistry);

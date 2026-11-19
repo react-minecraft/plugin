@@ -14,6 +14,9 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Common implementation of one player's configured check and violation state.
+ */
 @Accessors(fluent = true)
 public abstract class Check implements com.g4vrk.react.api.check.Check {
 
@@ -69,13 +72,22 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
             final double amount,
             final @NotNull String details
     ) {
+        if (!Double.isFinite(amount) || amount <= 0.0D) {
+            throw new IllegalArgumentException("Violation amount must be finite and positive");
+        }
+
         final CheckFlagEvent event = React.INSTANCE.events().post(new CheckFlagEvent(this, amount, details));
 
         if (event.cancelled()) {
             return false;
         }
 
-        this.apply(event.amount());
+        final double adjustedAmount = event.amount();
+        if (!Double.isFinite(adjustedAmount) || adjustedAmount <= 0.0D) {
+            throw new IllegalArgumentException("Adjusted violation amount must be finite and positive");
+        }
+
+        this.apply(adjustedAmount);
         return true;
     }
 
@@ -83,8 +95,12 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
             final double amount
     ) {
         final double previous = this.violations;
+        final double updated = previous + amount;
+        if (!Double.isFinite(updated)) {
+            throw new IllegalArgumentException("Violation level must remain finite");
+        }
 
-        this.violations += amount;
+        this.violations = updated;
         this.persistViolations();
 
         final PunishmentManager punishmentManager = React.INSTANCE.punishmentManager();

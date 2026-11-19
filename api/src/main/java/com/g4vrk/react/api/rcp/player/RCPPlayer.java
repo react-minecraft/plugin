@@ -9,7 +9,8 @@ import java.util.UUID;
 /**
  * A player as the plugin tracks it, seen from an RCP.
  *
- * <p>Every method is safe to call from any thread.</p>
+ * <p>The snapshot methods are safe to call from any thread. The {@link #bukkit()} handle must
+ * only be used on the thread that owns the player's entity.</p>
  */
 @ApiStatus.AvailableSince("2.0")
 public interface RCPPlayer {
@@ -18,6 +19,14 @@ public interface RCPPlayer {
 
     @NotNull String name();
 
+    /**
+     * Gives the Bukkit player handle.
+     *
+     * <p>Use it only on the thread that owns the player's entity. This method may be called from
+     * any thread, but most Bukkit operations on the returned player are not thread-safe.</p>
+     *
+     * @return the Bukkit player
+     */
     @NotNull Player bukkit();
 
     /**

@@ -8,7 +8,6 @@ import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableClassToInstanceMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ public final class CheckManager {
                 .put(AimAI.class, new AimAI(player))
                 .build();
 
-        this.checksValues = new ObjectArrayList<>(this.checks.values());
+        this.checksValues = List.copyOf(this.checks.values());
 
         this.reload();
 

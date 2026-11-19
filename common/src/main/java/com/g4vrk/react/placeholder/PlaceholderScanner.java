@@ -13,7 +13,8 @@ import java.util.Arrays;
  * resolves through the plugin's own {@link Lookup} instead of a placeholder set. It handles
  * {@code %key%}, {@code %key_query%}, <code>{key}</code> and <code>{key:query}</code>, nested
  * placeholders such as {@code %key_%other%%}, and stops after {@value #MAX_DEPTH} passes over
- * one spot so a placeholder that expands to itself cannot hang the server thread.</p>
+ * one spot so a placeholder that expands to itself cannot hang the server thread. A bounded
+ * work budget also limits deeply nested or malformed inputs; the remainder stays unchanged.</p>
  *
  * <p>Unlike a regex pass this allocates nothing but the buffer it writes into and the value it
  * puts there.</p>
@@ -50,10 +51,12 @@ public final class PlaceholderScanner {
 
     private final Buffer buffer;
     private final Lookup lookup;
+    private long remainingWork;
 
     private PlaceholderScanner(final @NotNull String source, final @NotNull Lookup lookup) {
         this.buffer = new Buffer(source);
         this.lookup = lookup;
+        this.remainingWork = (long) source.length() * (MAX_DEPTH + 1);
     }
 
     /**
@@ -79,7 +82,7 @@ public final class PlaceholderScanner {
         int index = 0;
         int depth = 0;
 
-        while (index < this.buffer.size) {
+        while (index < this.buffer.size && this.remainingWork > 0) {
             final char current = this.buffer.chars[index];
 
             if (current != PAPI && current != BRACKET) {
@@ -127,11 +130,14 @@ public final class PlaceholderScanner {
         boolean found = false;
         String key = null;
 
-        while (index < this.buffer.size) {
+        while (index < this.buffer.size && this.remainingWork-- > 0) {
             char current = this.buffer.chars[index++];
 
             if ((current == BRACKET || current == PAPI) && depth < MAX_DEPTH) {
                 if (this.resolveAt(index - 1, depth + 1)) {
+                    if (index - 1 >= this.buffer.size) {
+                        return false;
+                    }
                     current = this.buffer.chars[index - 1];
                 }
             }
@@ -139,13 +145,9 @@ public final class PlaceholderScanner {
             if (current == closeChar) {
                 if (!found) {
                     key = content.toString();
-
-                    if (this.lookup.resolve(key, "", bracket) == null) {
-                        return false;
-                    }
                 }
 
-                final String value = this.lookup.resolve(key, content.toString(), bracket);
+                final String value = this.lookup.resolve(key, found ? content.toString() : "", bracket);
 
                 if (value == null) {
                     return false;
@@ -158,12 +160,7 @@ public final class PlaceholderScanner {
 
             if (current == separator && !found) {
                 key = content.toString();
-                found = this.lookup.resolve(key, "", bracket) != null;
-
-                if (!found) {
-                    return false;
-                }
-
+                found = true;
                 content.setLength(0);
                 continue;
             }

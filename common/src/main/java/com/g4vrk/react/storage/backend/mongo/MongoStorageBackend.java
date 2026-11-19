@@ -169,7 +169,7 @@ public final class MongoStorageBackend implements StorageBackend {
         }
 
         if (!violationWrites.isEmpty()) {
-            violations.bulkWrite(violationWrites, new BulkWriteOptions().ordered(false));
+            violations.bulkWrite(violationWrites);
         }
         if (!inferenceWrites.isEmpty()) {
             inference.bulkWrite(inferenceWrites, new BulkWriteOptions().ordered(false));

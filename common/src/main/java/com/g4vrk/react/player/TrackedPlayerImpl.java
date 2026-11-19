@@ -282,9 +282,9 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     public void applyStorageData(final @NotNull PlayerStorageData data) {
 
-        applyViolations(data, false);
+        applyViolations(data, true);
         loadBypasses(data);
-        inferenceHistory.replace(mapHistory(data));
+        inferenceHistory.merge(mapHistory(data));
 
     }
 

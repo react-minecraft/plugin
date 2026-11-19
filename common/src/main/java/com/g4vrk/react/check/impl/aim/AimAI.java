@@ -53,7 +53,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
     public void onRotation(final float @NotNull [] sample) {
         final RCPHost host = React.INSTANCE.rcpHost();
-        if (host != null && active()) {
+        if (host != null && player.dataReady() && !player.rotationBypassed(id())) {
             host.rotation(player, sample);
         }
     }

@@ -56,6 +56,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     private volatile @Nullable HistorySnapshot historySnapshot;
     private volatile boolean bypassesLoaded;
     private volatile boolean dataReady;
+    private volatile boolean rotationPermissionBypass = true;
 
     public TrackedPlayerImpl(
             final @NotNull UUID uniqueId,
@@ -177,6 +178,27 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
         return bypassActive(StorageConstants.ALL_CHECKS)
                 || bypassActive(id)
                 || Permissions.hasBypassForCheck(bukkitPlayer, id);
+
+    }
+
+    /**
+     * Refreshes the aim permission on the player's owning server thread.
+     */
+    public void refreshRotationPermission() {
+
+        rotationPermissionBypass = Permissions.hasBypassForCheck(bukkitPlayer, "aim-ai");
+
+    }
+
+    /**
+     * Checks the cached permission and temporary bypasses without accessing Bukkit.
+     *
+     * @param check the check id
+     * @return whether rotation processing is bypassed
+     */
+    public boolean rotationBypassed(final @NotNull String check) {
+
+        return rotationPermissionBypass || bypassActive(StorageConstants.ALL_CHECKS) || bypassActive(check);
 
     }
 

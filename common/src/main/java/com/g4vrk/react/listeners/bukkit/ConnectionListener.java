@@ -7,6 +7,7 @@ import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.storage.StorageManager;
 import com.g4vrk.react.storage.model.PlayerStorageData;
+import com.g4vrk.schedula.task.TickSchedule;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -103,6 +104,13 @@ public class ConnectionListener implements Listener {
 
         if (entity != null) {
             playerRegistry.register(uniqueId, entity);
+            React.INSTANCE.scheduler().scheduleEntity(bukkitPlayer, task -> {
+                if (playerRegistry.get(uniqueId) != entity) {
+                    task.cancel();
+                    return;
+                }
+                entity.refreshRotationPermission();
+            }, TickSchedule.repeating(1, 1));
             storageManager.loadPlayer(uniqueId).whenComplete((data, failure) -> {
                 try {
                     if (playerRegistry.get(uniqueId) != entity) {

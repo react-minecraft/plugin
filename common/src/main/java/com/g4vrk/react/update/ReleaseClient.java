@@ -142,7 +142,7 @@ public final class ReleaseClient {
             final @NotNull Path target
     ) throws IOException, InterruptedException, VerificationException {
         Files.createDirectories(target.toAbsolutePath().getParent());
-        final Path part = target.resolveSibling(target.getFileName() + ".part");
+        final Path part = Files.createTempFile(target.toAbsolutePath().getParent(), target.getFileName() + ".", ".part");
         try {
             get(release.base() + jar.getKey(), part);
             if (!matches(part, jar.getValue())) {
@@ -228,9 +228,12 @@ public final class ReleaseClient {
                 .header("User-Agent", "React-Updater")
                 .GET()
                 .build();
-        final HttpResponse<Path> response = http.send(request, HttpResponse.BodyHandlers.ofFile(target));
-        if (response.statusCode() != 200) {
-            throw new IOException("HTTP " + response.statusCode() + " for " + url);
+        final HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        try (final InputStream body = response.body()) {
+            if (response.statusCode() != 200) {
+                throw new IOException("HTTP " + response.statusCode() + " for " + url);
+            }
+            Files.copy(body, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

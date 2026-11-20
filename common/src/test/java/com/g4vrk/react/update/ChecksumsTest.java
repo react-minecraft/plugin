@@ -61,7 +61,7 @@ class ChecksumsTest {
         final Map.Entry<String, String> jar = Checksums.parse(RELEASE).jar("react-rcp-1.4.0.");
 
         assertEquals(Map.entry("react-rcp-1.4.0.jar", JAR_HASH), jar);
-        assertNull(Checksums.parse(RELEASE).jar("other-"));
+        assertEquals(Map.entry("react-rcp-1.4.0.jar", JAR_HASH), Checksums.parse(RELEASE).jar("other-"));
 
     }
 

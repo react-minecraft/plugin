@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * The signed {@code checksums.txt} of a release.
@@ -15,6 +16,11 @@ import java.util.Map;
  * followed by {@code sha256sum} lines.</p>
  */
 public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String, String> files) {
+
+    /**
+     * Plain file names only: no paths, so a release cannot point a download outside its folder.
+     */
+    private static final Pattern SAFE_NAME = Pattern.compile("[A-Za-z0-9._+-]+");
 
     /**
      * Reads the file.
@@ -39,7 +45,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
                 continue;
             }
             final String[] parts = line.split("\\s+\\*?", 2);
-            if (parts.length == 2 && parts[0].length() == 64) {
+            if (parts.length == 2 && parts[0].length() == 64 && SAFE_NAME.matcher(parts[1].strip()).matches()) {
                 files.put(parts[1].strip(), parts[0].toLowerCase(Locale.ROOT));
             }
         }
@@ -84,7 +90,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
         Map.Entry<String, String> only = null;
         int jars = 0;
         for (final Map.Entry<String, String> entry : files.entrySet()) {
-            if (!entry.getKey().endsWith(".jar")) {
+            if (!entry.getKey().endsWith(".jar") || entry.getKey().endsWith("-sources.jar") || entry.getKey().endsWith("-javadoc.jar")) {
                 continue;
             }
             if (entry.getKey().startsWith(prefix)) {

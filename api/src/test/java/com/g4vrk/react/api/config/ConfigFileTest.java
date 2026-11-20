@@ -106,4 +106,17 @@ class ConfigFileTest {
         assertThrows(ConfigurateException.class, () -> file(path, RENAME).loadNode());
     }
 
+    @Test
+    void malformedVersionsLeaveTheFileUntouched() throws IOException {
+        final Path path = directory.resolve("config.yml");
+        for (final String version : new String[]{"broken", "2147483648", "1.5"}) {
+            final String original = "config-version: " + version + "\nmax: 9\n";
+            Files.writeString(path, original);
+
+            assertThrows(ConfigurateException.class, () -> file(path, RENAME).loadNode());
+            assertEquals(original, Files.readString(path));
+            assertFalse(Files.exists(directory.resolve("config.yml.v0.bak")));
+        }
+    }
+
 }

@@ -60,6 +60,17 @@ public final class ConfigMigrationChain {
      * @return the version the file had before, or {@code -1} if it was already current
      */
     int apply(final @NotNull ConfigurationNode root) throws SerializationException {
+        final ConfigurationNode versionNode = root.node(VERSION_KEY);
+        if (!versionNode.virtual()) {
+            final Object raw = versionNode.raw();
+            if (!(raw instanceof Integer) && !(raw instanceof Long)) {
+                throw new SerializationException(versionNode, Integer.class, "File version must be an integer");
+            }
+            final long value = ((Number) raw).longValue();
+            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+                throw new SerializationException(versionNode, Integer.class, "File version is outside the integer range: " + value);
+            }
+        }
         final int current = version(root);
 
         if (current < LEGACY_VERSION) {

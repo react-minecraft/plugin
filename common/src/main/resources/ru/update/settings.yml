@@ -20,4 +20,4 @@ auto-reboot: true
 notify: true
 
 # Не меняйте / Do not change
-config-version: 1
+config-version: 2

@@ -41,7 +41,7 @@ public final class UpdateConfiguration {
         this.folder = folder;
         this.language = language;
         this.logger = logger;
-        this.settingsFile = ConfigFile.builder(UpdateSettings.class).path(folder.resolve("settings.yml")).defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/settings.yml").logger(logger).build();
+        this.settingsFile = ConfigFile.builder(UpdateSettings.class).path(folder.resolve("settings.yml")).defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/settings.yml").migrations(settingsMigrations()).logger(logger).build();
 
     }
 
@@ -83,6 +83,19 @@ public final class UpdateConfiguration {
             logger.error("Could not read {}, not updating {}", file, name, failure);
             return new ComponentSettings(false, UpdateChannel.RELEASE, "");
         }
+
+    }
+
+    /**
+     * Version 2 turned {@code auto-reboot} on, as updated addons and RCPs apply by default now.
+     */
+    private static @NotNull ConfigMigrationChain settingsMigrations() {
+
+        return ConfigMigrationChain.builder()
+                .step(root -> {
+                })
+                .step(root -> root.node("auto-reboot").set(true))
+                .build();
 
     }
 

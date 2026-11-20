@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.yaml.NodeStyle;
 import org.spongepowered.configurate.yaml.YamlConfigurationLoader;
 
@@ -109,8 +110,10 @@ public final class UpdateConfiguration {
                 })
                 .step(root -> {
                     final ConfigurationNode settings = root.node("settings");
-                    if ("all".equalsIgnoreCase(settings.node("channel").getString())) {
-                        writePrerelease(folder.resolve("rcp").resolve("React.yml"));
+                    final boolean prerelease = "all".equalsIgnoreCase(settings.node("channel").getString());
+                    final boolean disabled = !settings.node("auto-update").getBoolean(true);
+                    if (prerelease || disabled) {
+                        writeComponent(folder.resolve("rcp").resolve("React.yml"), prerelease, disabled);
                     }
                     settings.removeChild("auto-update");
                     settings.removeChild("channel");
@@ -119,7 +122,11 @@ public final class UpdateConfiguration {
 
     }
 
-    private void writePrerelease(final @NotNull Path file) {
+    private void writeComponent(
+            final @NotNull Path file,
+            final boolean prerelease,
+            final boolean disabled
+    ) throws SerializationException {
 
         if (Files.exists(file)) {
             return;
@@ -131,7 +138,12 @@ public final class UpdateConfiguration {
                     .logger(logger)
                     .build()
                     .loadNode();
-            node.node("channel").set("prerelease");
+            if (prerelease) {
+                node.node("channel").set("prerelease");
+            }
+            if (disabled) {
+                node.node("enabled").set(false);
+            }
             Files.createDirectories(file.getParent());
             YamlConfigurationLoader.builder()
                     .path(file)
@@ -139,7 +151,8 @@ public final class UpdateConfiguration {
                     .build()
                     .save(node);
         } catch (final IOException failure) {
-            logger.warn("Could not move the React RCP channel to {}", file, failure);
+            logger.error("Could not move the React RCP update settings to {}", file, failure);
+            throw new SerializationException(failure);
         }
 
     }

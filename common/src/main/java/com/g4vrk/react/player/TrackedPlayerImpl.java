@@ -5,6 +5,7 @@ import com.g4vrk.react.React;
 import com.g4vrk.react.api.event.player.PlayerBypassEvent;
 import com.g4vrk.react.api.player.HistoryEntry;
 import com.g4vrk.react.api.player.TrackedPlayer;
+import com.g4vrk.react.api.rcp.verdict.InferenceResult;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.check.manager.CheckManager;
@@ -52,6 +53,9 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     private final Map<String, Long> bypasses = new ConcurrentHashMap<>();
     private final Object bypassLock = new Object();
+    private final Object inferenceLock = new Object();
+    private volatile long inferenceGeneration;
+    private volatile int inferenceResets;
     private final long sessionStartedAt = System.currentTimeMillis();
     private volatile @Nullable HistorySnapshot historySnapshot;
     private volatile boolean bypassesLoaded;
@@ -151,10 +155,46 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     public void clearTransientState() {
 
-        rotationData.clear();
-        combatActivity.reset();
-        if (React.INSTANCE.rcpHost() != null) {
-            React.INSTANCE.rcpHost().reset(uniqueId);
+        synchronized (inferenceLock) {
+            inferenceResets++;
+            inferenceGeneration++;
+        }
+        try {
+            rotationData.clear();
+            combatActivity.reset();
+            if (React.INSTANCE.rcpHost() != null) {
+                React.INSTANCE.rcpHost().reset(uniqueId);
+            }
+        } finally {
+            synchronized (inferenceLock) {
+                inferenceResets--;
+            }
+        }
+
+    }
+
+    public long inferenceGeneration() {
+
+        return inferenceGeneration;
+
+    }
+
+    public boolean inferenceResetting() {
+
+        return inferenceResets != 0;
+
+    }
+
+    public void applyInference(final long generation, final @NotNull InferenceResult result) {
+
+        synchronized (inferenceLock) {
+            if (inferenceResets != 0 || inferenceGeneration != generation) {
+                return;
+            }
+            final AimAI check = checkManager.getCheck(AimAI.class);
+            if (check != null) {
+                check.onResult(result);
+            }
         }
 
     }

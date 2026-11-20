@@ -6,7 +6,6 @@ import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.registry.RCPPlayerRegistry;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
-import com.g4vrk.react.check.impl.aim.AimAI;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.schedula.task.TickSchedule;
@@ -58,13 +57,13 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
         if (closed || !(player instanceof TrackedPlayerImpl reactPlayer)) {
             return;
         }
+        final long generation = reactPlayer.inferenceGeneration();
+        if (reactPlayer.inferenceResetting()) {
+            return;
+        }
         scheduler().scheduleEntity(reactPlayer.bukkitPlayer, () -> {
-            if (closed) {
-                return;
-            }
-            final AimAI check = reactPlayer.checkManager.getCheck(AimAI.class);
-            if (check != null) {
-                check.onResult(result);
+            if (!closed) {
+                reactPlayer.applyInference(generation, result);
             }
         }, TickSchedule.instant());
     }

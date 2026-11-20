@@ -61,7 +61,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     private final Map<String, UpdateDownloadedEvent> downloaded = new ConcurrentHashMap<>();
     private final Map<String, String> warned = new ConcurrentHashMap<>();
 
-    private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), false, true);
+    private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), true, true);
     private volatile @Nullable ScheduledExecutorService timer;
     private volatile boolean closed;
 

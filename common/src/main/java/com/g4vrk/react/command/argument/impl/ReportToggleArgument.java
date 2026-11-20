@@ -99,11 +99,10 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
                         return;
                     }
 
-                    if (this.channel.remove(sender)) {
-                        this.disabledActions.run(sender);
-                    } else {
-                        this.channel.subscribe(sender);
+                    if (this.channel.toggle(sender)) {
                         this.enabledActions.run(sender);
+                    } else {
+                        this.disabledActions.run(sender);
                     }
                 });
     }
@@ -115,11 +114,10 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
     ) {
 
         final Set<UUID> uuids = players == null ? null : players.stream().map(Player::getUniqueId).collect(Collectors.toSet());
-        if (this.channel.follows(sender, uuids, check) && this.channel.remove(sender)) {
+        if (!this.channel.toggle(sender, uuids, check)) {
             this.disabledActions.run(sender);
             return;
         }
-        this.channel.subscribe(sender, uuids, check);
 
         final String names = players == null ? "*" : players.stream().map(Player::getName).collect(Collectors.joining(", "));
         final String checkName = check == null ? "*" : check;

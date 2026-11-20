@@ -77,6 +77,34 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
 
     }
 
+    /**
+     * Removes any subscription or subscribes to reports of every player.
+     *
+     * @return whether the recipient is subscribed after the change
+     */
+    public boolean toggle(final @NotNull Audience recipient) {
+
+        return subscriptions.compute(recipient, (ignored, current) -> current == null ? new Subscription(null, null) : null) != null;
+
+    }
+
+    /**
+     * Removes a matching subscription or replaces it with the requested filter.
+     *
+     * @return whether the recipient is subscribed after the change
+     */
+    public boolean toggle(
+            final @NotNull Audience recipient,
+            final @Nullable Set<UUID> players,
+            final @Nullable String checkId
+    ) {
+
+        final Subscription requested = new Subscription(players == null ? null : Set.copyOf(players), checkId);
+        return subscriptions.compute(recipient, (ignored, current) ->
+                current != null && current.matches(requested.players(), requested.checkId()) ? null : requested) != null;
+
+    }
+
     @Override
     public @NotNull Set<Audience> recipients() {
 
@@ -104,8 +132,7 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
     ) {
 
         final Subscription subscription = subscriptions.get(recipient);
-        return subscription != null && Objects.equals(subscription.players(), players)
-                && (subscription.checkId() == null ? checkId == null : subscription.checkId().equalsIgnoreCase(checkId));
+        return subscription != null && subscription.matches(players, checkId);
 
     }
 
@@ -135,6 +162,12 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
      * The complete report filter published by one subscription change.
      */
     private record Subscription(@Nullable Set<UUID> players, @Nullable String checkId) {
+
+        private boolean matches(final @Nullable Set<UUID> targets, final @Nullable String check) {
+
+            return Objects.equals(players, targets) && (checkId == null ? check == null : checkId.equalsIgnoreCase(check));
+
+        }
 
     }
 

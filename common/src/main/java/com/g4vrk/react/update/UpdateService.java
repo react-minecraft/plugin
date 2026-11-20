@@ -60,6 +60,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     private final Map<String, Status> statuses = new ConcurrentHashMap<>();
     private final Map<String, UpdateDownloadedEvent> downloaded = new ConcurrentHashMap<>();
     private final Map<String, String> warned = new ConcurrentHashMap<>();
+    private final Object checks = new Object();
 
     private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), true, true);
     private volatile @Nullable ScheduledExecutorService timer;
@@ -249,18 +250,32 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             return jar;
         }
         final Path target = jar.resolveSibling(files.get(0).getFileName());
+        final Path backup = jar.resolveSibling(jar.getFileName() + ".bak");
+        boolean parked = false;
         try {
-            Files.move(files.get(0), target, StandardCopyOption.REPLACE_EXISTING);
             if (!target.equals(jar)) {
-                Files.deleteIfExists(jar);
+                Files.move(jar, backup, StandardCopyOption.REPLACE_EXISTING);
+                parked = true;
+            }
+            Files.move(files.get(0), target, StandardCopyOption.REPLACE_EXISTING);
+            if (parked) {
+                Files.deleteIfExists(backup);
             }
             Files.deleteIfExists(directory);
             downloaded.remove(key(kind, name));
             logger.info("Updated {} '{}' to {}", kind.displayName(), name, target.getFileName());
             return target;
         } catch (final IOException failure) {
-            logger.error("Could not put the update of {} '{}' in place", kind.displayName(), name, failure);
-            return Files.exists(jar) ? jar : target;
+            logger.error("Could not put the update of {} '{}' in place, keeping the old jar", kind.displayName(), name, failure);
+            try {
+                if (parked) {
+                    Files.deleteIfExists(target);
+                    Files.move(backup, jar, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (final IOException restore) {
+                logger.error("Could not restore {}, it is kept as {}", jar.getFileName(), backup.getFileName(), restore);
+            }
+            return jar;
         }
 
     }
@@ -406,15 +421,37 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     }
 
-    private synchronized @NotNull List<Component> checkAll() {
+    private @NotNull List<Component> checkAll() {
 
         final List<Component> staged = new ArrayList<>();
-        for (final Component component : components()) {
-            if (check(component)) {
-                staged.add(component);
+        synchronized (checks) {
+            for (final Component component : components()) {
+                if (check(component)) {
+                    staged.add(component);
+                }
             }
         }
         return staged;
+
+    }
+
+    /**
+     * Drops a jar staged by an earlier check, so a pin or a disabled update is not bypassed by
+     * the next restart or reboot.
+     */
+    private void discard(final @NotNull Component component) {
+
+        try {
+            if (component.extension() == null) {
+                Files.deleteIfExists(component.target());
+                downloaded.remove("plugin");
+            } else {
+                clear(component.target());
+                downloaded.remove(key(component.extension(), component.name()));
+            }
+        } catch (final IOException failure) {
+            logger.warn("Could not remove the staged update of {}: {}", component.name(), failure.getMessage());
+        }
 
     }
 
@@ -469,6 +506,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         final UpdateChannel channel = settings.effectiveChannel();
         if (!settings.enabled()) {
             statuses.put(key(component.repository()), new Status(null, channel, null, "disabled"));
+            discard(component);
             return false;
         }
 
@@ -495,6 +533,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             }
             if (ReleaseClient.matches(component.current(), jar.getValue())) {
                 statuses.put(key(component.repository()), new Status(release.version(), channel, now, "up to date"));
+                discard(component);
                 return false;
             }
 
@@ -594,7 +633,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             return "Restart the server to apply it.";
         }
         if (settings.autoReboot()) {
-            return "It is applied on the next check, auto-reboot is on.";
+            return "Auto-reboot is on, it is applied right away.";
         }
         return "Run '/react reboot " + component.name() + "' to apply it, or set auto-reboot: true in update/settings.yml.";
 

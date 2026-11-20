@@ -1,11 +1,11 @@
+import util.expandPluginDescriptor
+
 plugins {
     id("java")
     id("react.base-conventions")
     id("react.shadow-conventions")
     id("react.runtime-libraries")
 }
-
-val mainClass = "com.g4vrk.react.paper.PaperReactPlugin"
 
 dependencies {
 
@@ -29,21 +29,7 @@ tasks {
 
     named<ProcessResources>("processResources") {
 
-        notCompatibleWithConfigurationCache(
-            "Uses Groovy template expansion for plugin.yml"
-        )
-
-        inputs.properties(
-            "version" to rootProject.version.toString(),
-            "mainClass" to mainClass
-        )
-
-        filesMatching("plugin.yml") {
-            expand(
-                "version" to rootProject.version.toString(),
-                "mainClass" to mainClass
-            )
-        }
+        expandPluginDescriptor(rootProject.version.toString(), "com.g4vrk.react.paper.PaperReactPlugin")
     }
 
     named<Jar>("jar") {

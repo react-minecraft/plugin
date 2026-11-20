@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Loads, enables, reboots and closes addons and RCPs.
@@ -61,6 +62,7 @@ public final class ExtensionManager implements AutoCloseable {
     });
 
     private final List<LoadedExtension> loaded = new CopyOnWriteArrayList<>();
+    private final AtomicBoolean stopping = new AtomicBoolean();
 
     public ExtensionManager(final @NotNull ExtensionContext context, final @NotNull StagedUpdates updates) {
         this.context = context;
@@ -226,12 +228,18 @@ public final class ExtensionManager implements AutoCloseable {
             final @NotNull DescriptorFilter filter,
             final @NotNull RebootResult result
     ) {
+        if (stopping.get()) {
+            return;
+        }
         final Map<ExtensionId, LoadedExtension> available = new LinkedHashMap<>();
         loaded.forEach(extension -> available.put(extension.plan().id(), extension));
         final Map<ExtensionId, Candidate> pending = new LinkedHashMap<>();
         final Set<ExtensionId> duplicates = new HashSet<>();
         for (final ExtensionKind kind : ExtensionKind.values()) {
             for (final ExtensionDescriptor installed : scan(kind)) {
+                if (stopping.get()) {
+                    return;
+                }
                 if (!filter.accepts(installed) || loaded.stream().anyMatch(extension ->
                         extension.descriptor().kind() == kind && extension.descriptor().name().equalsIgnoreCase(installed.name()))) {
                     continue;
@@ -260,6 +268,9 @@ public final class ExtensionManager implements AutoCloseable {
         }
 
         while (!pending.isEmpty()) {
+            if (stopping.get()) {
+                return;
+            }
             Candidate ready = null;
             for (final Candidate candidate : pending.values()) {
                 final Map<ExtensionId, ExtensionPlan.Dependency> dependencies = candidate.plan().dependencies();
@@ -303,6 +314,10 @@ public final class ExtensionManager implements AutoCloseable {
         LoadedExtension extension = null;
         try {
             extension = LoadedExtension.load(context, candidate.descriptor(), candidate.plan(), dependencies);
+            if (stopping.get() || !context.plugin().isEnabled()) {
+                extension.close();
+                return;
+            }
             extension.enable();
             loaded.add(extension);
             available.put(candidate.plan().id(), extension);
@@ -370,10 +385,18 @@ public final class ExtensionManager implements AutoCloseable {
     }
 
     /**
+     * Prevents further extension activation as soon as shutdown begins.
+     */
+    public void stopLoading() {
+        stopping.set(true);
+    }
+
+    /**
      * Disables every extension in reverse load order and stops the extension thread.
      */
     @Override
     public void close() {
+        stopLoading();
         final CompletableFuture<Void> closing = CompletableFuture.runAsync(() -> {
             final List<LoadedExtension> extensions = new ArrayList<>(loaded);
             loaded.clear();

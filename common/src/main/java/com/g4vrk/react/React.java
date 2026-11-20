@@ -251,6 +251,9 @@ public class React {
     public void terminate() {
         logger.info("Terminating the plugin...");
 
+        if (extensions != null) {
+            extensions.stopLoading();
+        }
         if (updates != null) {
             updates.close();
         }

@@ -16,5 +16,6 @@ dependencies {
     testImplementation(libs.cloud.core)
     testImplementation(libs.schedula.common)
     testImplementation(libs.configurate.yaml)
+    testRuntimeOnly(libs.actions)
 
 }

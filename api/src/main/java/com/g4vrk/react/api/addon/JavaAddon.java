@@ -10,11 +10,13 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.LinkOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -156,11 +158,12 @@ public abstract class JavaAddon implements Addon {
             throw new IllegalArgumentException("The resource name is empty");
         }
 
-        final Path target = directory().resolve(resource).normalize();
-        if (!target.startsWith(directory())) {
+        final Path base = directory().toAbsolutePath().normalize();
+        final Path target = base.resolve(resource).normalize();
+        if (!target.startsWith(base) || target.equals(base)) {
             throw new IllegalArgumentException("The resource " + resource + " is outside the addon folder");
         }
-        if (Files.exists(target) && !replace) {
+        if (Files.exists(target, LinkOption.NOFOLLOW_LINKS) && !replace) {
             return;
         }
 
@@ -168,8 +171,25 @@ public abstract class JavaAddon implements Addon {
             if (in == null) {
                 throw new IllegalArgumentException("The addon jar has no resource " + resource);
             }
-            Files.createDirectories(target.getParent());
-            Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+            Path parent = base;
+            for (final Path part : base.relativize(target.getParent())) {
+                parent = parent.resolve(part);
+                if (Files.isSymbolicLink(parent)) {
+                    throw new IOException("Resource folder is a symbolic link: " + parent);
+                }
+                if (Files.notExists(parent, LinkOption.NOFOLLOW_LINKS)) {
+                    Files.createDirectory(parent);
+                }
+            }
+            try (OutputStream out = Files.newOutputStream(
+                    target,
+                    replace ? StandardOpenOption.CREATE : StandardOpenOption.CREATE_NEW,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE,
+                    LinkOption.NOFOLLOW_LINKS
+            )) {
+                in.transferTo(out);
+            }
         } catch (final IOException ex) {
             logger().error("Could not save {} to {}", resource, target, ex);
         }

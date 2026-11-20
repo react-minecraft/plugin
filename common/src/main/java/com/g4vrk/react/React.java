@@ -302,9 +302,16 @@ public class React {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             prefix = "react-folia";
         } catch (final ClassNotFoundException ignored) {
-            // Not Folia.
+            /*
+             * Not Folia.
+             */
         }
-        return new UpdateService.Plugin(jar, plugin.getServer().getUpdateFolderFile().toPath(), prefix);
+        return new UpdateService.Plugin(
+                jar,
+                plugin.getServer().getUpdateFolderFile().toPath(),
+                prefix,
+                plugin.getDescription().getVersion()
+        );
     }
 
     private void loadConfigs() {

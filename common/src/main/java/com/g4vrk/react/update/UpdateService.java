@@ -59,6 +59,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     private final Map<String, Status> statuses = new ConcurrentHashMap<>();
     private final Map<String, UpdateDownloadedEvent> downloaded = new ConcurrentHashMap<>();
+    private final Map<String, String> warned = new ConcurrentHashMap<>();
 
     private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), false, true);
     private volatile @Nullable ScheduledExecutorService timer;
@@ -70,8 +71,14 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @param jar          the running jar, or {@code null} when it cannot be found
      * @param updateFolder the server's update folder, applied on restart
      * @param prefix       the start of the release jar name for this server
+     * @param version      the version of the running plugin, for the console notice
      */
-    public record Plugin(@Nullable Path jar, @NotNull Path updateFolder, @NotNull String prefix) {
+    public record Plugin(
+            @Nullable Path jar,
+            @NotNull Path updateFolder,
+            @NotNull String prefix,
+            @NotNull String version
+    ) {
 
     }
 
@@ -99,7 +106,8 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             @NotNull String prefix,
             @NotNull Path current,
             @NotNull Path target,
-            @Nullable ExtensionKind extension
+            @Nullable ExtensionKind extension,
+            @NotNull String version
     ) {
 
     }
@@ -112,6 +120,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             final @NotNull Supplier<MainConfig> main,
             final @NotNull Consumer<UpdateDownloadedEvent> notifier
     ) {
+
         this.dataFolder = dataFolder;
         this.folder = dataFolder.resolve("update");
         this.configuration = new UpdateConfiguration(dataFolder, folder, language, logger);
@@ -128,10 +137,12 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * downloads the official addons that are missing and stages every update.
      */
     public synchronized void onStart() {
+
         settings = configuration.reload(settings);
         reactRCP();
         externalAddons();
         checkAll();
+
     }
 
     /**
@@ -140,6 +151,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @param manager rebooted after a download when {@code auto-reboot} is on
      */
     public synchronized void start(final @NotNull ExtensionManager manager) {
+
         if (closed || timer != null) {
             return;
         }
@@ -153,9 +165,11 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         });
         this.timer = timer;
         timer.scheduleWithFixedDelay(() -> tick(manager), interval.toSeconds(), interval.toSeconds(), TimeUnit.SECONDS);
+
     }
 
     private void tick(final @NotNull ExtensionManager manager) {
+
         try {
             settings = configuration.reload(settings);
             final List<Component> staged = checkAll();
@@ -170,6 +184,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         } catch (final RuntimeException failure) {
             logger.error("Could not check for updates", failure);
         }
+
     }
 
     /**
@@ -179,7 +194,9 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @return the status, or {@code null} when it was never checked
      */
     public @Nullable Status status(final @NotNull String repository) {
+
         return statuses.get(repository.toLowerCase(Locale.ROOT));
+
     }
 
     /**
@@ -188,7 +205,9 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @return the status, or {@code null} when it was never checked
      */
     public @Nullable Status reactRCPStatus() {
+
         return status(ReleaseClient.REACT_RCP);
+
     }
 
     /**
@@ -197,7 +216,9 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @return the updates
      */
     public @NotNull Collection<UpdateDownloadedEvent> pending() {
+
         return List.copyOf(downloaded.values());
+
     }
 
     /**
@@ -206,7 +227,9 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @return the {@code notify} setting
      */
     public boolean notifies() {
+
         return settings.notifications();
+
     }
 
     @Override
@@ -215,6 +238,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             final @NotNull String name,
             final @NotNull Path jar
     ) {
+
         final Path directory = stagedFolder(kind, name);
         final List<Path> files = jars(directory);
         if (files.size() != 1) {
@@ -234,9 +258,11 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             logger.error("Could not put the update of {} '{}' in place", kind.displayName(), name, failure);
             return Files.exists(jar) ? jar : target;
         }
+
     }
 
     private void reactRCP() {
+
         final boolean enabled;
         try {
             enabled = configuration.reactRcpEnabled();
@@ -266,9 +292,11 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                 component.pinned(),
                 ExtensionKind.RCP.jars(dataFolder)
         );
+
     }
 
     private void removeReactRCP() {
+
         for (final ExtensionDescriptor descriptor : scan(ExtensionKind.RCP)) {
             if (isReactRCP(descriptor)) {
                 try {
@@ -279,6 +307,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                 }
             }
         }
+
     }
 
     private static boolean isReactRCP(final @NotNull ExtensionDescriptor descriptor) {
@@ -303,6 +332,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     }
 
     private void externalAddons() {
+
         final Map<String, MainConfig.ExternalAddon> addons = main.get().externalAddons();
         if (addons == null || addons.isEmpty()) {
             return;
@@ -327,6 +357,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                 );
             }
         }
+
     }
 
     private void install(
@@ -337,6 +368,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             final @Nullable String pinned,
             final @NotNull Path into
     ) {
+
         try {
             final ReleaseClient.Release release = client.release(repository, channel, pinned);
             if (release.checksums().apiVersion() != RCPAPI.VERSION) {
@@ -367,9 +399,11 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         } catch (final InterruptedException failure) {
             Thread.currentThread().interrupt();
         }
+
     }
 
     private synchronized @NotNull List<Component> checkAll() {
+
         final List<Component> staged = new ArrayList<>();
         for (final Component component : components()) {
             if (check(component)) {
@@ -377,9 +411,11 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             }
         }
         return staged;
+
     }
 
     private @NotNull List<Component> components() {
+
         final List<Component> components = new ArrayList<>();
         final Path pluginJar = plugin.jar();
         if (pluginJar != null) {
@@ -390,7 +426,8 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                     plugin.prefix(),
                     pluginJar,
                     plugin.updateFolder().resolve(pluginJar.getFileName()),
-                    null
+                    null,
+                    plugin.version()
             ));
         }
         for (final ExtensionKind kind : ExtensionKind.values()) {
@@ -406,11 +443,13 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                         ReleaseClient.REACT_RCP.equalsIgnoreCase(github.repository()) ? REACT_RCP_PREFIX : prefix(github.repository()),
                         descriptor.jar(),
                         stagedFolder(kind, descriptor.name()),
-                        kind
+                        kind,
+                        descriptor.version()
                 ));
             }
         }
         return components;
+
     }
 
     /**
@@ -419,6 +458,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      * @return {@code true} when a new jar was downloaded
      */
     private boolean check(final @NotNull Component component) {
+
         final ComponentSettings settings = component.extension() == null
                 ? configuration.component(null, component.name())
                 : configuration.component(component.extension(), component.name());
@@ -441,6 +481,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                                 "needs api-version " + release.checksums().apiVersion()
                         )
                 );
+                needsNewerPlugin(component, release);
                 return false;
             }
             final Map.Entry<String, String> jar = release.checksums().jar(component.prefix());
@@ -458,6 +499,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                     : component.target().resolve(jar.getKey());
             if (ReleaseClient.matches(target, jar.getValue())) {
                 statuses.put(key(component.repository()), new Status(release.version(), channel, now, "staged"));
+                announce(component, release.version(), true);
                 return false;
             }
             if (component.extension() != null) {
@@ -465,7 +507,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             }
             client.download(release, jar, target);
             statuses.put(key(component.repository()), new Status(release.version(), channel, now, "staged"));
-            logger.info("Downloaded {} {} {}", component.kind().name().toLowerCase(Locale.ROOT), component.name(), release.version());
+            announce(component, release.version(), false);
 
             final UpdateDownloadedEvent event = new UpdateDownloadedEvent(component.kind(), component.name(), release.version());
             downloaded.put(component.extension() == null ? "plugin" : key(component.extension(), component.name()), event);
@@ -484,21 +526,100 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             logger.error("Could not update {}", component.name(), failure);
         }
         return false;
+
+    }
+
+    /**
+     * Tells the console that a release is downloaded, what version runs now, how to apply it and
+     * where to download it by hand. A reminder repeats with every check until the update is applied.
+     *
+     * @param component the component that was updated
+     * @param version   the downloaded version
+     * @param reminder  {@code true} when the jar was already downloaded by an earlier check
+     */
+    private void announce(
+            final @NotNull Component component,
+            final @NotNull String version,
+            final boolean reminder
+    ) {
+
+        if (reminder && !downloaded.containsKey(component.extension() == null ? "plugin" : key(component.extension(), component.name()))) {
+            return;
+        }
+        logger.info(
+                "{} {} {} is downloaded, running {}. {}",
+                reminder ? "Waiting to apply:" : "Update:",
+                component.kind().name().toLowerCase(Locale.ROOT),
+                component.name() + " " + version,
+                component.version(),
+                applyHint(component)
+        );
+        logger.info("Release notes and manual download: {}", releasesUrl(component));
+
+    }
+
+    /**
+     * Warns once per version that an extension release exists but needs a newer plugin.
+     *
+     * @param component the extension
+     * @param release   the release that needs a newer plugin
+     */
+    private void needsNewerPlugin(
+            final @NotNull Component component,
+            final @NotNull ReleaseClient.Release release
+    ) {
+
+        final String previous = warned.put(key(component.repository()), release.version());
+        if (release.version().equals(previous)) {
+            return;
+        }
+        logger.warn(
+                "{} {} is released but needs api-version {}, this plugin provides {}. Update React first, then it follows: {}",
+                component.name(),
+                release.version(),
+                release.checksums().apiVersion(),
+                RCPAPI.VERSION,
+                releasesUrl(component)
+        );
+
+    }
+
+    private @NotNull String applyHint(final @NotNull Component component) {
+
+        if (component.extension() == null) {
+            return "Restart the server to apply it.";
+        }
+        if (settings.autoReboot()) {
+            return "It is applied on the next check, auto-reboot is on.";
+        }
+        return "Run '/react reboot " + component.name() + "' to apply it, or set auto-reboot: true in update/settings.yml.";
+
+    }
+
+    private static @NotNull String releasesUrl(final @NotNull Component component) {
+
+        return "https://github.com/" + component.repository() + "/releases";
+
     }
 
     private @NotNull List<ExtensionDescriptor> scan(final @NotNull ExtensionKind kind) {
+
         final List<ExtensionDescriptor> descriptors = new ArrayList<>();
         for (final Path jar : jars(kind.jars(dataFolder))) {
             try {
                 descriptors.add(ExtensionDescriptor.read(kind, jar));
             } catch (final IOException | InvalidExtensionException | RuntimeException ignored) {
-                // The extension manager reports unreadable jars when it loads them.
+                /*
+                 * The extension manager reports unreadable jars when it loads them.
+                 */
             }
         }
         return descriptors;
+
     }
 
     private static @NotNull List<Path> jars(final @NotNull Path directory) {
+
         final List<Path> jars = new ArrayList<>();
         if (!Files.isDirectory(directory)) {
             return jars;
@@ -506,31 +627,44 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.jar")) {
             stream.forEach(jars::add);
         } catch (final IOException ignored) {
-            // An unreadable folder holds no jars.
+            /*
+             * An unreadable folder holds no jars.
+             */
         }
         return jars;
+
     }
 
     private static void clear(final @NotNull Path directory) throws IOException {
+
         for (final Path jar : jars(directory)) {
             Files.deleteIfExists(jar);
         }
+
     }
 
     private @NotNull Path stagedFolder(final @NotNull ExtensionKind kind, final @NotNull String name) {
+
         return folder.resolve("staged").resolve(kind.name().toLowerCase(Locale.ROOT)).resolve(name.toLowerCase(Locale.ROOT));
+
     }
 
     private static @NotNull String prefix(final @NotNull String repository) {
+
         return repository.substring(repository.indexOf('/') + 1);
+
     }
 
     private static @NotNull String key(final @NotNull String repository) {
+
         return repository.toLowerCase(Locale.ROOT);
+
     }
 
     private static @NotNull String key(final @NotNull ExtensionKind kind, final @NotNull String name) {
+
         return kind.name().toLowerCase(Locale.ROOT) + ":" + name.toLowerCase(Locale.ROOT);
+
     }
 
     /**
@@ -538,11 +672,13 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      */
     @Override
     public synchronized void close() {
+
         closed = true;
         final ScheduledExecutorService timer = this.timer;
         if (timer != null) {
             timer.shutdownNow();
         }
+
     }
 
 }

@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +31,13 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Flow;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 /**
@@ -53,6 +61,9 @@ public final class ReleaseClient {
     private static final Pattern VERSION = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.+-]{0,39}");
     private static final Pattern REPOSITORY = Pattern.compile("[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}");
     private static final Duration TIMEOUT = Duration.ofSeconds(15);
+    private static final Duration DOWNLOAD_TIMEOUT = Duration.ofMinutes(2);
+    private static final long MAX_METADATA_BYTES = 1024 * 1024;
+    private static final long MAX_JAR_BYTES = 128L * 1024 * 1024;
 
     private final Logger logger;
     private final HttpClient http = HttpClient.newBuilder()
@@ -215,7 +226,7 @@ public final class ReleaseClient {
                 .header("User-Agent", "React-Updater")
                 .GET()
                 .build();
-        final HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
+        final HttpResponse<byte[]> response = send(request, HttpResponse.BodySubscribers.ofByteArray(), MAX_METADATA_BYTES, TIMEOUT);
         if (response.statusCode() != 200) {
             throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
@@ -228,13 +239,78 @@ public final class ReleaseClient {
                 .header("User-Agent", "React-Updater")
                 .GET()
                 .build();
-        final HttpResponse<InputStream> response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
-        try (final InputStream body = response.body()) {
-            if (response.statusCode() != 200) {
-                throw new IOException("HTTP " + response.statusCode() + " for " + url);
-            }
-            Files.copy(body, target, StandardCopyOption.REPLACE_EXISTING);
+        final HttpResponse<Path> response = send(request, HttpResponse.BodySubscribers.ofFile(target), MAX_JAR_BYTES, DOWNLOAD_TIMEOUT);
+        if (response.statusCode() != 200) {
+            throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
+    }
+
+    private <T> @NotNull HttpResponse<T> send(
+            final @NotNull HttpRequest request,
+            final HttpResponse.@NotNull BodySubscriber<T> body,
+            final long limit,
+            final @NotNull Duration timeout
+    ) throws IOException, InterruptedException {
+        final CompletableFuture<HttpResponse<T>> future = http.sendAsync(request, ignored -> new LimitedBodySubscriber<>(body, limit));
+        try {
+            return future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (final TimeoutException failure) {
+            future.cancel(true);
+            throw new IOException("HTTP response timed out", failure);
+        } catch (final InterruptedException failure) {
+            future.cancel(true);
+            throw failure;
+        } catch (final ExecutionException failure) {
+            throw new IOException("HTTP response failed", failure.getCause());
+        }
+    }
+
+    private static final class LimitedBodySubscriber<T> implements HttpResponse.BodySubscriber<T> {
+
+        private final HttpResponse.BodySubscriber<T> delegate;
+        private final long limit;
+        private long received;
+        private Flow.Subscription subscription;
+
+        private LimitedBodySubscriber(final HttpResponse.@NotNull BodySubscriber<T> delegate, final long limit) {
+            this.delegate = delegate;
+            this.limit = limit;
+        }
+
+        @Override
+        public @NotNull CompletionStage<T> getBody() {
+            return delegate.getBody();
+        }
+
+        @Override
+        public void onSubscribe(final Flow.@NotNull Subscription subscription) {
+            this.subscription = subscription;
+            delegate.onSubscribe(subscription);
+        }
+
+        @Override
+        public void onNext(final @NotNull List<ByteBuffer> buffers) {
+            for (final ByteBuffer buffer : buffers) {
+                received += buffer.remaining();
+                if (received > limit) {
+                    subscription.cancel();
+                    delegate.onError(new IOException("HTTP response exceeds size limit"));
+                    return;
+                }
+            }
+            delegate.onNext(buffers);
+        }
+
+        @Override
+        public void onError(final @NotNull Throwable failure) {
+            delegate.onError(failure);
+        }
+
+        @Override
+        public void onComplete() {
+            delegate.onComplete();
+        }
+
     }
 
     private static byte[] digest(final @NotNull Path file) throws IOException {

@@ -8,6 +8,7 @@ import com.g4vrk.react.storage.config.DatabaseSettings;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
 import com.g4vrk.react.storage.model.StoredInference;
+import com.g4vrk.react.storage.model.StoredViolation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -17,7 +18,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -31,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
@@ -58,7 +60,7 @@ public final class StorageManager {
     private final AtomicLong reconnectDelayMillis;
     private final AtomicLong lastFailureLog = new AtomicLong();
     private final ReentrantReadWriteLock backendLock = new ReentrantReadWriteLock();
-    private final ReentrantLock flushLock = new ReentrantLock();
+    private final ReentrantReadWriteLock flushLock = new ReentrantReadWriteLock();
     private final Object availabilityMonitor = new Object();
 
     private volatile @Nullable StorageBackend backend;
@@ -140,13 +142,67 @@ public final class StorageManager {
             return CompletableFuture.failedFuture(new IllegalStateException("Database is unavailable"));
         }
 
-        return readiness.thenCompose(ignored -> supplyAsync(() -> withBackend(storage ->
-                storage.loadPlayer(playerUuid, historyCutoff())
-        ))).whenComplete((ignored, failure) -> {
+        return readiness.thenCompose(ignored -> supplyAsync(() -> loadWithPendingWrites(playerUuid))).whenComplete((ignored, failure) -> {
             if (failure != null && backendFailure(failure)) {
                 markUnavailable(failure);
             }
         });
+
+    }
+
+    private @NotNull PlayerStorageData loadWithPendingWrites(final @NotNull UUID playerUuid) throws Exception {
+
+        /*
+         * A queued write may be newer than the database row. Exclude the flush while
+         * reading so that in-flight writes cannot disappear between the two reads.
+         */
+        flushLock.readLock().lock();
+        try {
+            final PlayerStorageData stored = withBackend(storage -> storage.loadPlayer(playerUuid, historyCutoff()));
+            return applyPendingWrites(playerUuid, stored);
+        } finally {
+            flushLock.readLock().unlock();
+        }
+
+    }
+
+    private @NotNull PlayerStorageData applyPendingWrites(
+            final @NotNull UUID playerUuid,
+            final @NotNull PlayerStorageData stored
+    ) {
+
+        Map<String, StoredViolation> violations = null;
+        Map<String, Long> bypasses = null;
+        synchronized (pendingWriteLock) {
+            for (final StorageMutation mutation : pendingWrites) {
+                if (mutation instanceof final StorageMutation.Violation violation && violation.playerUuid().equals(playerUuid)) {
+                    if (violations == null) {
+                        violations = new HashMap<>(stored.violations());
+                    }
+                    final StoredViolation previous = violations.get(violation.check());
+                    if (previous == null || violation.updatedAt() >= previous.updatedAt()) {
+                        violations.put(violation.check(), new StoredViolation(violation.violations(), violation.updatedAt()));
+                    }
+                } else if (mutation instanceof final StorageMutation.Bypass bypass && bypass.playerUuid().equals(playerUuid)) {
+                    if (bypasses == null) {
+                        bypasses = new HashMap<>(stored.bypasses());
+                    }
+                    if (bypass.lifted()) {
+                        bypasses.remove(bypass.check());
+                    } else {
+                        bypasses.put(bypass.check(), bypass.until());
+                    }
+                }
+            }
+        }
+        if (violations == null && bypasses == null) {
+            return stored;
+        }
+        return new PlayerStorageData(
+                violations == null ? stored.violations() : violations,
+                stored.inferenceHistory(),
+                bypasses == null ? stored.bypasses() : bypasses
+        );
 
     }
 
@@ -383,7 +439,7 @@ public final class StorageManager {
 
     private boolean flushOneBatch() {
 
-        flushLock.lock();
+        flushLock.writeLock().lock();
         try {
             final List<StorageMutation> batch = drainBatch();
             if (batch.isEmpty()) {
@@ -402,7 +458,7 @@ public final class StorageManager {
                 return false;
             }
         } finally {
-            flushLock.unlock();
+            flushLock.writeLock().unlock();
         }
 
     }

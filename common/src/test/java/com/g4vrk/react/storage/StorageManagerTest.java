@@ -29,25 +29,7 @@ final class StorageManagerTest {
     @Test
     void keepsNewWritesWhenFailedBatchReturnsToFullQueue() throws Exception {
 
-        final Duration retryDelay = Duration.ofMillis(10);
-        final Duration timeout = Duration.ofSeconds(5);
-        final DatabaseSettings settings = new DatabaseSettings(
-                true,
-                DatabaseType.H2,
-                Duration.ofDays(1),
-                Duration.ofHours(1),
-                1,
-                10,
-                2,
-                2,
-                retryDelay,
-                retryDelay,
-                timeout,
-                2,
-                timeout,
-                null,
-                null
-        );
+        final DatabaseSettings settings = settings(Duration.ofMillis(10));
         final CountDownLatch writing = new CountDownLatch(1);
         final CountDownLatch failWrite = new CountDownLatch(1);
         final BlockingQueue<List<StorageMutation>> written = new ArrayBlockingQueue<>(1);
@@ -78,6 +60,51 @@ final class StorageManagerTest {
             storage.close(List.of());
         }
 
+    }
+
+    @Test
+    void reconnectingPlayerSeesPendingViolationsAndBypassesBeforeFlush() throws Exception {
+
+        final StorageBackend backend = new TestBackend(false, new CountDownLatch(0), new CountDownLatch(0), new ArrayBlockingQueue<>(1));
+        final StorageManager storage = new StorageManager(NOPLogger.NOP_LOGGER, settings(Duration.ofDays(1)), ignored -> backend);
+        final UUID player = UUID.randomUUID();
+
+        try {
+            storage.start().get(5, TimeUnit.SECONDS);
+            storage.saveViolation(player, "aim", 7.0);
+            storage.saveBypass(player, "aim", Long.MAX_VALUE);
+            final PlayerStorageData loaded = storage.loadPlayer(player).get(5, TimeUnit.SECONDS);
+
+            assertEquals(7.0, loaded.violations().get("aim").value());
+            assertEquals(Long.MAX_VALUE, loaded.bypasses().get("aim"));
+            assertEquals(PlayerStorageData.EMPTY, storage.loadPlayer(UUID.randomUUID()).get(5, TimeUnit.SECONDS));
+        } finally {
+            storage.close(List.of());
+        }
+
+    }
+
+    private static @NotNull DatabaseSettings settings(final @NotNull Duration flushInterval) {
+
+        final Duration retryDelay = Duration.ofMillis(10);
+        final Duration timeout = Duration.ofSeconds(5);
+        return new DatabaseSettings(
+                true,
+                DatabaseType.H2,
+                flushInterval,
+                Duration.ofHours(1),
+                1,
+                10,
+                2,
+                2,
+                retryDelay,
+                retryDelay,
+                timeout,
+                2,
+                timeout,
+                null,
+                null
+        );
     }
 
     /**

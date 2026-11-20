@@ -14,7 +14,7 @@
 interval: 6h
 
 # Reboot an RCP or addon right after its update is downloaded
-auto-reboot: false
+auto-reboot: true
 
 # Tell alert recipients and players with react.notify.update about downloads
 notify: true

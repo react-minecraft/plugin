@@ -14,7 +14,7 @@
 interval: 6h
 
 # Перезагружать RCP или аддон сразу после скачивания обновления
-auto-reboot: false
+auto-reboot: true
 
 # Сообщать получателям алертов и игрокам с react.notify.update о скачанных обновлениях
 notify: true

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Posted before an addon is disabled and unloaded.
+ * Posted after an addon's disable hook and before its resources are unloaded.
  */
 @ApiStatus.AvailableSince("2.0")
 public final class AddonDisableEvent extends Event {

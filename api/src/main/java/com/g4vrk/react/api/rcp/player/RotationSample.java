@@ -51,10 +51,15 @@ public final class RotationSample {
      * @param index   which rotation, counted from {@code 0}
      * @param field   one of the field constants of this class
      * @return the value
-     * @throws IndexOutOfBoundsException when the rotation is not in the array
+     * @throws IndexOutOfBoundsException when the rotation or field is outside the array layout
      */
     public static float value(final float @NotNull [] samples, final int index, final int field) {
+
+        if (index < 0 || index >= count(samples) || field < 0 || field >= STRIDE) {
+            throw new IndexOutOfBoundsException("Invalid rotation index " + index + " or field " + field);
+        }
         return samples[index * STRIDE + field];
+
     }
 
     /**

@@ -52,7 +52,9 @@ public abstract class RegistryView<K, T, V extends T> implements Registry<K, T> 
     @Override
     @SuppressWarnings("unchecked")
     public @NotNull Set<Map.Entry<K, T>> entrySet() {
-        // Registries hand out read-only entries, so widening the value type is safe.
+        /*
+         * Registries hand out read-only entries, so widening the value type is safe.
+         */
         return (Set<Map.Entry<K, T>>) (Set<?>) this.delegate.entrySet();
     }
 

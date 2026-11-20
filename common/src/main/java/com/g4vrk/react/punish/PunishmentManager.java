@@ -28,15 +28,18 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
  * Runs the rules of {@code punishments.yml} when a check's violations grow.
  *
  * <p>{@code at: {N: [...]}} runs once when the level crosses {@code N}. {@code every: {M: [...]}}
- * runs at each multiple of {@code M}, and {@code every: {"N;M": [...]}} at {@code N}, then every
- * {@code M}. Lines use the common actions with {@code <player>}, {@code <check>} and {@code <vl>};
+ * runs when a multiple of {@code M} is crossed, and {@code every: {"N;M": [...]}} at {@code N}, then every
+ * {@code M}. One increase triggers a rule at most once, at the highest crossed level. Lines use
+ * the common actions with {@code <player>}, {@code <check>} and {@code <vl>};
  * {@code [alert]}, {@code [log]}, {@code [reset-vl]} and {@code [console]} are handled here.
+ * Actions start in configuration order; console commands are scheduled and may finish later.
  * A cancelled {@link CheckPunishEvent} skips a rule.</p>
  */
 public final class PunishmentManager implements PunishmentRegistry, ReloadObserver<ConfigurationNode> {
@@ -127,12 +130,7 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
                 continue;
             }
             final List<String> lines = strings(entry.getValue());
-            final List<String> special = new ObjectArrayList<>();
-            final List<String> common = new ObjectArrayList<>();
-            for (final String line : lines) {
-                (isSpecial(line) ? special : common).add(line);
-            }
-            out.add(new Rule(start, period, List.copyOf(lines), List.copyOf(special), parser.parseAll(common)));
+            out.add(new Rule(start, period, List.copyOf(lines), compileActions(lines, parser)));
         }
     }
 
@@ -151,6 +149,44 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             case "alert", "log", "reset-vl", "reset", "console", "cmd" -> true;
             default -> false;
         };
+    }
+
+    static @NotNull List<ActionStep> compileActions(
+            final @NotNull List<String> lines,
+            final @NotNull ActionParser<Audience> parser
+    ) {
+        final List<ActionStep> steps = new ObjectArrayList<>();
+        final List<String> common = new ObjectArrayList<>();
+        for (final String line : lines) {
+            if (isSpecial(line)) {
+                if (!common.isEmpty()) {
+                    steps.add(new ActionStep(null, parser.parseAll(common)));
+                    common.clear();
+                }
+                steps.add(new ActionStep(line, null));
+            } else {
+                common.add(line);
+            }
+        }
+        if (!common.isEmpty()) {
+            steps.add(new ActionStep(null, parser.parseAll(common)));
+        }
+        return List.copyOf(steps);
+    }
+
+    static void runActions(
+            final @NotNull List<ActionStep> steps,
+            final @NotNull Audience audience,
+            final @NotNull UnaryOperator<String> placeholders,
+            final @NotNull Consumer<String> special
+    ) {
+        for (final ActionStep step : steps) {
+            if (step.special() != null) {
+                special.accept(step.special());
+            } else {
+                step.actions().run(audience, placeholders);
+            }
+        }
     }
 
     private static @NotNull String tag(final @NotNull String line) {
@@ -227,11 +263,9 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
                 .replace("<check>", check.name())
                 .replace("<vl>", level);
         try {
-            for (final String line : rule.special()) {
-                runSpecial(check, line, placeholders.apply(line.substring(line.indexOf(']') + 1).trim()), level);
-            }
             final Audience audience = check.player().bukkitPlayer;
-            rule.actions().run(audience, placeholders::apply);
+            runActions(rule.actions(), audience, placeholders, line ->
+                    runSpecial(check, line, placeholders.apply(line.substring(line.indexOf(']') + 1).trim()), level));
         } catch (final Throwable th) {
             logger.error("Could not run a punishment for {} ({}, VL {})", player, check.name(), vl, th);
         }
@@ -277,8 +311,7 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             int start,
             int period,
             @NotNull List<String> lines,
-            @NotNull List<String> special,
-            @NotNull ExecutableActionList<? super Audience> actions
+            @NotNull List<ActionStep> actions
     ) {
 
         private int trigger(final double oldVl, final double newVl) {
@@ -292,6 +325,9 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             return oldVl < point ? (int) point : -1;
         }
 
+    }
+
+    record ActionStep(@Nullable String special, @Nullable ExecutableActionList<? super Audience> actions) {
     }
 
 }

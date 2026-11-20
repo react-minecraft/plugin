@@ -56,7 +56,6 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     private final Object inferenceLock = new Object();
     private volatile long inferenceGeneration;
     private volatile int inferenceResets;
-    private final long sessionStartedAt = System.currentTimeMillis();
     private volatile @Nullable HistorySnapshot historySnapshot;
     private volatile boolean bypassesLoaded;
     private volatile boolean dataReady;
@@ -344,15 +343,6 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     public void applyStorageData(final @NotNull PlayerStorageData data) {
 
-        applyViolations(data, true);
-        loadBypasses(data);
-        inferenceHistory.merge(mapHistory(data));
-
-    }
-
-    public void mergeStorageData(final @NotNull PlayerStorageData data) {
-
-        applyViolations(data, true);
         loadBypasses(data);
         inferenceHistory.merge(mapHistory(data));
 
@@ -370,26 +360,6 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
             bypasses.values().removeIf(until -> until <= now);
             bypassesLoaded = true;
         }
-
-    }
-
-    private void applyViolations(final @NotNull PlayerStorageData data, final boolean merge) {
-
-        data.violations().forEach((configId, stored) -> {
-            final Check check = checkManager.getCheck(configId);
-            if (check == null) {
-                return;
-            }
-            if (!merge) {
-                check.restoreViolations(stored.value());
-            } else if (stored.updatedAt() < sessionStartedAt) {
-                check.mergeViolations(
-                        stored.value(),
-                        stored.updatedAt(),
-                        sessionStartedAt
-                );
-            }
-        });
 
     }
 

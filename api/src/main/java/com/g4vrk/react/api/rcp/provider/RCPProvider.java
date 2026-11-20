@@ -27,11 +27,15 @@ public abstract class RCPProvider implements RCPLifecycle {
 
     @Override
     public void onEnable() throws Exception {
-        // pass by default
+        /*
+         * pass by default
+         */
     }
 
     @Override
     public void onDisable() throws Exception {
-        // pass by default
+        /*
+         * pass by default
+         */
     }
 }

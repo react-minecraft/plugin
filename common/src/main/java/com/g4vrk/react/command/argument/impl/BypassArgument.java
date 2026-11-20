@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -159,11 +160,11 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         if (!validCheck(sender, check)) {
             return;
         }
-        if (duration != null && (duration.isNegative() || duration.isZero())) {
+        final Instant until = duration == null ? null : expiration(Instant.now(), duration);
+        if (duration != null && until == null) {
             invalidDuration.run(sender);
             return;
         }
-        final Instant until = duration == null ? null : Instant.now().plus(duration);
         final List<String> names = new ArrayList<>(players.size());
         for (final Player player : players) {
             final TrackedPlayerImpl tracked = playerRegistry.get(player.getUniqueId());
@@ -186,6 +187,20 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                         .replace("<check>", checkName)
                         .replace("<duration>", time)
         );
+    }
+
+    static @Nullable Instant expiration(final @NotNull Instant now, final @NotNull Duration duration) {
+
+        if (duration.isNegative() || duration.isZero()) {
+            return null;
+        }
+        try {
+            final Instant until = now.plus(duration);
+            return until.toEpochMilli() == Long.MAX_VALUE ? null : until;
+        } catch (final DateTimeException | ArithmeticException ignored) {
+            return null;
+        }
+
     }
 
     private void remove(

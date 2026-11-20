@@ -2,25 +2,32 @@ package com.g4vrk.react.listeners.bukkit;
 
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.BuiltinChannels;
+import com.g4vrk.react.check.Check;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.storage.StorageManager;
-import com.g4vrk.react.storage.model.PlayerStorageData;
+import com.g4vrk.react.storage.ViolationLevel;
 import com.g4vrk.schedula.task.TickSchedule;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
-import java.util.UUID;
-import java.util.function.Consumer;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+
+/**
+ * Registers players and loads their persistent data for the lifetime of each session.
+ */
 public class ConnectionListener implements Listener {
 
     private final Logger logger = React.INSTANCE.logger();
@@ -58,27 +65,34 @@ public class ConnectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onUserDisconnect(final @NotNull PlayerQuitEvent event) {
+
+        final Player bukkitPlayer = event.getPlayer();
+        final UUID uniqueId = bukkitPlayer.getUniqueId();
+
         try {
-
-            final Player bukkitPlayer = event.getPlayer();
-            final UUID uniqueId = bukkitPlayer.getUniqueId();
-
             final TrackedPlayerImpl player = playerRegistry.get(uniqueId);
             if (player != null) {
-                storageManager.saveSnapshot(player);
+                storageManager.detachPlayer(player);
             }
+        } catch (final Exception ex) {
+            logger.error("Could not store violation levels on disconnect", ex);
+        }
 
+        try {
             playerRegistry.unregister(uniqueId);
+        } catch (final Exception ex) {
+            logger.error("Could not unregister a disconnected player", ex);
+        }
 
+        try {
             BuiltinChannels.ALERTS.remove(bukkitPlayer);
             BuiltinChannels.MONITOR.remove(bukkitPlayer);
             BuiltinChannels.DEBUG.remove(bukkitPlayer);
-
             onQuit.accept(bukkitPlayer);
-
         } catch (final Exception ex) {
             logger.error("Could not handle disconnect of a player", ex);
         }
+
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -103,45 +117,76 @@ public class ConnectionListener implements Listener {
         final TrackedPlayerImpl entity = playerFactory.create(uniqueId, bukkitPlayer.getName(), bukkitPlayer);
 
         if (entity != null) {
+            final TrackedPlayerImpl previous = playerRegistry.get(uniqueId);
+            if (previous != null) {
+                storageManager.detachPlayer(previous);
+            }
             playerRegistry.register(uniqueId, entity);
+            final Hydration hydration = new Hydration(entity);
+            hydration.load();
             React.INSTANCE.scheduler().scheduleEntity(bukkitPlayer, task -> {
                 if (playerRegistry.get(uniqueId) != entity) {
                     task.cancel();
                     return;
                 }
                 entity.refreshRotationPermission();
+                hydration.retryIfAvailable();
             }, TickSchedule.repeating(1, 1));
-            storageManager.loadPlayer(uniqueId).whenComplete((data, failure) -> {
+
+            onJoin.accept(bukkitPlayer);
+        }
+    }
+
+    /**
+     * Retries failed reads only while the player's entity task is active.
+     */
+    private final class Hydration {
+
+        private final TrackedPlayerImpl entity;
+        private final List<ViolationLevel> levels;
+
+        private volatile boolean retry;
+        private long nextAttempt;
+
+        private Hydration(final @NotNull TrackedPlayerImpl entity) {
+
+            this.entity = entity;
+            this.levels = entity.checks().stream().map(Check::violationLevel).toList();
+
+        }
+
+        private void retryIfAvailable() {
+
+            if (retry && storageManager.available() && System.nanoTime() - nextAttempt >= 0) {
+                load();
+            }
+
+        }
+
+        private void load() {
+
+            retry = false;
+            nextAttempt = System.nanoTime() + TimeUnit.SECONDS.toNanos(1L);
+            storageManager.loadPlayer(entity.uniqueId(), levels).whenComplete((data, failure) -> {
+                if (playerRegistry.get(entity.uniqueId()) != entity) {
+                    return;
+                }
                 try {
-                    if (playerRegistry.get(uniqueId) != entity) {
-                        return;
-                    }
-                    if (failure == null) {
-                        entity.applyStorageData(data == null ? PlayerStorageData.EMPTY : data);
+                    if (failure != null) {
+                        if (!entity.dataReady()) {
+                            logger.debug("Could not load stored data for {}; checks will continue in fail-open mode", entity.name(), failure);
+                        }
+                        retry = true;
                     } else {
-                        logger.debug("Could not load stored data for {}; checks will continue in fail-open mode", entity.name(), failure);
-                        retryHydration(entity);
+                        entity.applyStorageData(data);
                     }
                 } finally {
                     entity.markDataReady();
                 }
             });
 
-            onJoin.accept(bukkitPlayer);
         }
+
     }
 
-    private void retryHydration(final @NotNull TrackedPlayerImpl entity) {
-        storageManager.loadPlayerWhenAvailable(entity.uniqueId())
-                .whenComplete((data, failure) -> {
-                    if (playerRegistry.get(entity.uniqueId()) != entity) {
-                        return;
-                    }
-                    if (failure != null) {
-                        return;
-                    }
-                    entity.mergeStorageData(data == null ? PlayerStorageData.EMPTY : data);
-                    storageManager.saveSnapshot(entity);
-                });
-    }
 }

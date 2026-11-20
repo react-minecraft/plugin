@@ -13,7 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-// realization like in GrimAC
+/*
+ * realization like in GrimAC
+ */
 public final class CheckManager {
 
     private final ClassToInstanceMap<Check> checks;

@@ -65,9 +65,11 @@ public final class ExtensionManager implements AutoCloseable {
     private final AtomicBoolean stopping = new AtomicBoolean();
 
     public ExtensionManager(final @NotNull ExtensionContext context, final @NotNull StagedUpdates updates) {
+
         this.context = context;
         this.updates = updates;
         this.logger = context.logger();
+
     }
 
     /**
@@ -77,6 +79,7 @@ public final class ExtensionManager implements AutoCloseable {
      * @return done once every extension is enabled or failed
      */
     public @NotNull CompletableFuture<Void> start(final @NotNull Runnable beforeLoad) {
+
         return CompletableFuture.runAsync(() -> {
             try {
                 beforeLoad.run();
@@ -86,6 +89,7 @@ public final class ExtensionManager implements AutoCloseable {
             final RebootResult result = new RebootResult();
             loadAll(descriptor -> true, result);
         }, executor);
+
     }
 
     /**
@@ -96,6 +100,7 @@ public final class ExtensionManager implements AutoCloseable {
      * @return what was unloaded, loaded and what failed
      */
     public @NotNull CompletableFuture<RebootResult> reboot(final @NotNull String target) {
+
         return CompletableFuture.supplyAsync(() -> {
             final RebootResult result = new RebootResult();
             final String key = target.toLowerCase(Locale.ROOT);
@@ -167,6 +172,7 @@ public final class ExtensionManager implements AutoCloseable {
             }
             return result;
         }, executor);
+
     }
 
     /**
@@ -175,6 +181,7 @@ public final class ExtensionManager implements AutoCloseable {
      * @return done once every RCP reloaded
      */
     public @NotNull CompletableFuture<Void> reload() {
+
         return CompletableFuture.runAsync(() -> {
             for (final LoadedExtension extension : loaded) {
                 try {
@@ -184,6 +191,7 @@ public final class ExtensionManager implements AutoCloseable {
                 }
             }
         }, executor);
+
     }
 
     /**
@@ -192,7 +200,9 @@ public final class ExtensionManager implements AutoCloseable {
      * @return a copy of the list
      */
     public @NotNull List<LoadedExtension> extensions() {
+
         return List.copyOf(loaded);
+
     }
 
     /**
@@ -202,12 +212,14 @@ public final class ExtensionManager implements AutoCloseable {
      * @return the extension, or {@code null}
      */
     public @Nullable LoadedExtension extension(final @NotNull String name) {
+
         for (final LoadedExtension extension : loaded) {
             if (extension.descriptor().name().equalsIgnoreCase(name)) {
                 return extension;
             }
         }
         return null;
+
     }
 
     /**
@@ -216,18 +228,21 @@ public final class ExtensionManager implements AutoCloseable {
      * @return the targets
      */
     public @NotNull List<String> targets() {
+
         final List<String> targets = new ArrayList<>(List.of(ALL, RCP, ADDONS));
         loaded.forEach(extension -> {
             targets.add(extension.descriptor().name());
             targets.add(extension.plan().id().toString());
         });
         return targets;
+
     }
 
     private void loadAll(
             final @NotNull DescriptorFilter filter,
             final @NotNull RebootResult result
     ) {
+
         if (stopping.get()) {
             return;
         }
@@ -292,10 +307,15 @@ public final class ExtensionManager implements AutoCloseable {
             pending.remove(ready.plan().id());
             enable(ready, available, pending, result);
         }
+
     }
 
-    private void enable(final Candidate candidate, final Map<ExtensionId, LoadedExtension> available,
-                        final Map<ExtensionId, Candidate> pending, final RebootResult result) {
+    private void enable(
+            final @NotNull Candidate candidate,
+            final @NotNull Map<ExtensionId, LoadedExtension> available,
+            final @NotNull Map<ExtensionId, Candidate> pending,
+            final @NotNull RebootResult result
+    ) {
 
         final Map<ExtensionId, LoadedExtension> dependencies = new LinkedHashMap<>();
         for (final Map.Entry<ExtensionId, ExtensionPlan.Dependency> entry : candidate.plan().dependencies().entrySet()) {
@@ -336,7 +356,11 @@ public final class ExtensionManager implements AutoCloseable {
 
     }
 
-    private void fail(final Candidate candidate, final String reason, final RebootResult result) {
+    private void fail(
+            final @NotNull Candidate candidate,
+            final @NotNull String reason,
+            final @NotNull RebootResult result
+    ) {
 
         logger.error("Could not enable {}: {}", candidate.plan().id(), reason);
         result.failed().add(candidate.descriptor().name());
@@ -350,6 +374,7 @@ public final class ExtensionManager implements AutoCloseable {
     }
 
     private @NotNull Collection<ExtensionDescriptor> scan(final @NotNull ExtensionKind kind) {
+
         final Path folder = kind.jars(context.dataFolder());
         final List<ExtensionDescriptor> descriptors = new ArrayList<>();
         final Set<String> names = new HashSet<>();
@@ -382,13 +407,16 @@ public final class ExtensionManager implements AutoCloseable {
 
         descriptors.sort((first, second) -> first.name().compareToIgnoreCase(second.name()));
         return descriptors;
+
     }
 
     /**
      * Prevents further extension activation as soon as shutdown begins.
      */
     public void stopLoading() {
+
         stopping.set(true);
+
     }
 
     /**
@@ -396,6 +424,7 @@ public final class ExtensionManager implements AutoCloseable {
      */
     @Override
     public void close() {
+
         stopLoading();
         final CompletableFuture<Void> closing = CompletableFuture.runAsync(() -> {
             final List<LoadedExtension> extensions = new ArrayList<>(loaded);
@@ -416,6 +445,7 @@ public final class ExtensionManager implements AutoCloseable {
         } finally {
             executor.shutdownNow();
         }
+
     }
 
     @FunctionalInterface
@@ -439,7 +469,9 @@ public final class ExtensionManager implements AutoCloseable {
     ) {
 
         RebootResult() {
+
             this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
         }
 
         /**
@@ -448,7 +480,9 @@ public final class ExtensionManager implements AutoCloseable {
          * @return {@code true} when all three lists are empty
          */
         public boolean empty() {
+
             return unloaded.isEmpty() && loaded.isEmpty() && failed.isEmpty();
+
         }
 
     }

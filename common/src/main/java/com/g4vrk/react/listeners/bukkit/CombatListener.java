@@ -44,7 +44,9 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final EntityDamageByEntityEvent event) {
 
-        if (!(event.getDamager() instanceof Player damager) || !CombatTarget.isSupported(event.getEntity())) return;
+        if (!(event.getDamager() instanceof Player damager) || !CombatTarget.isSupported(event.getEntity())) {
+            return;
+        }
 
         final TrackedPlayerImpl localDamager = playerRegistry.get(damager.getUniqueId());
 
@@ -58,7 +60,9 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
 
         final CombatActivity damagerCombatActivity = localDamager != null ? localDamager.combatActivity : null;
 
-        if (damagerCombatActivity == null) return;
+        if (damagerCombatActivity == null) {
+            return;
+        }
 
         damagerCombatActivity.extend(combatTicks);
     }

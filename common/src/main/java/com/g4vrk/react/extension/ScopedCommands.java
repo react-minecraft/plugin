@@ -66,8 +66,10 @@ public final class ScopedCommands implements CommandRegistrar, AutoCloseable {
             if (owned == null) {
                 return false;
             }
-            // Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
-            // original Command objects of the plugin and other extensions, including their aliases.
+            /*
+             * Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
+             * original Command objects of the plugin and other extensions, including their aliases.
+             */
             final List<Command<CommandSender>> original = this.manager.commands().stream()
                     .filter(command -> command.rootComponent().name().equals(label))
                     .toList();

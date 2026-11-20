@@ -1,14 +1,17 @@
 package com.g4vrk.react.storage.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.function.DoubleUnaryOperator;
 
 /**
  * A queued change to persistent player data.
  */
 public sealed interface StorageMutation permits
         StorageMutation.Violation,
+        StorageMutation.PendingViolation,
         StorageMutation.Inference,
         StorageMutation.Bypass {
 
@@ -23,6 +26,27 @@ public sealed interface StorageMutation permits
             double violations,
             long updatedAt
     ) implements StorageMutation {
+    }
+
+    /**
+     * Changes a violation level whose stored base has not been read yet.
+     */
+    record PendingViolation(
+            @NotNull UUID playerUuid,
+            @NotNull String check,
+            @NotNull DoubleUnaryOperator change,
+            long updatedAt
+    ) implements StorageMutation {
+
+        public @NotNull Violation materialize(final @Nullable StoredViolation stored) {
+
+            final double base = stored == null ? 0.0D : Math.max(0.0D, stored.value());
+            final double changed = Math.max(0.0D, change.applyAsDouble(base));
+            final long timestamp = stored == null ? updatedAt : Math.max(updatedAt, stored.updatedAt());
+            return new Violation(playerUuid, check, Double.isFinite(changed) ? changed : base, timestamp);
+
+        }
+
     }
 
     /**

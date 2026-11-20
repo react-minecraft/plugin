@@ -21,6 +21,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -65,7 +66,6 @@ public final class StorageManager {
 
     private volatile @Nullable StorageBackend backend;
     private volatile CompletableFuture<Void> initialization = CompletableFuture.completedFuture(null);
-    private volatile CompletableFuture<Void> availabilitySignal;
 
     public StorageManager(
             final @NotNull Logger logger,
@@ -84,9 +84,6 @@ public final class StorageManager {
         this.logger = logger;
         this.settings = settings;
         this.backendFactory = backendFactory;
-        this.availabilitySignal = settings.enabled()
-                ? new CompletableFuture<>()
-                : CompletableFuture.completedFuture(null);
         this.reconnectDelayMillis = new AtomicLong(settings.retryInitialDelay().toMillis());
         this.executor = new ThreadPoolExecutor(
                 settings.executorThreads(),
@@ -129,8 +126,20 @@ public final class StorageManager {
 
     public @NotNull CompletableFuture<PlayerStorageData> loadPlayer(final @NotNull UUID playerUuid) {
 
+        return loadPlayer(playerUuid, List.of());
+
+    }
+
+    public @NotNull CompletableFuture<PlayerStorageData> loadPlayer(
+            final @NotNull UUID playerUuid,
+            final @NotNull List<ViolationLevel> levels
+    ) {
+
         if (!settings.enabled()) {
             return CompletableFuture.completedFuture(PlayerStorageData.EMPTY);
+        }
+        if (closing.get()) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Database storage is closed"));
         }
 
         final CompletableFuture<Void> readiness;
@@ -142,7 +151,7 @@ public final class StorageManager {
             return CompletableFuture.failedFuture(new IllegalStateException("Database is unavailable"));
         }
 
-        return readiness.thenCompose(ignored -> supplyAsync(() -> loadWithPendingWrites(playerUuid))).whenComplete((ignored, failure) -> {
+        return readiness.thenCompose(ignored -> supplyAsync(() -> loadWithPendingWrites(playerUuid, levels))).whenComplete((ignored, failure) -> {
             if (failure != null && backendFailure(failure)) {
                 markUnavailable(failure);
             }
@@ -150,7 +159,10 @@ public final class StorageManager {
 
     }
 
-    private @NotNull PlayerStorageData loadWithPendingWrites(final @NotNull UUID playerUuid) throws Exception {
+    private @NotNull PlayerStorageData loadWithPendingWrites(
+            final @NotNull UUID playerUuid,
+            final @NotNull List<ViolationLevel> levels
+    ) throws Exception {
 
         /*
          * A queued write may be newer than the database row. Exclude the flush while
@@ -159,7 +171,13 @@ public final class StorageManager {
         flushLock.readLock().lock();
         try {
             final PlayerStorageData stored = withBackend(storage -> storage.loadPlayer(playerUuid, historyCutoff()));
-            return applyPendingWrites(playerUuid, stored);
+            synchronized (pendingWriteLock) {
+                final PlayerStorageData loaded = applyPendingWrites(playerUuid, stored);
+                for (final ViolationLevel level : levels) {
+                    level.load(loaded.violations().get(level.check()));
+                }
+                return loaded;
+            }
         } finally {
             flushLock.readLock().unlock();
         }
@@ -173,25 +191,29 @@ public final class StorageManager {
 
         Map<String, StoredViolation> violations = null;
         Map<String, Long> bypasses = null;
-        synchronized (pendingWriteLock) {
-            for (final StorageMutation mutation : pendingWrites) {
-                if (mutation instanceof final StorageMutation.Violation violation && violation.playerUuid().equals(playerUuid)) {
-                    if (violations == null) {
-                        violations = new HashMap<>(stored.violations());
-                    }
-                    final StoredViolation previous = violations.get(violation.check());
-                    if (previous == null || violation.updatedAt() >= previous.updatedAt()) {
-                        violations.put(violation.check(), new StoredViolation(violation.violations(), violation.updatedAt()));
-                    }
-                } else if (mutation instanceof final StorageMutation.Bypass bypass && bypass.playerUuid().equals(playerUuid)) {
-                    if (bypasses == null) {
-                        bypasses = new HashMap<>(stored.bypasses());
-                    }
-                    if (bypass.lifted()) {
-                        bypasses.remove(bypass.check());
-                    } else {
-                        bypasses.put(bypass.check(), bypass.until());
-                    }
+        for (final StorageMutation mutation : pendingWrites) {
+            if (!mutation.playerUuid().equals(playerUuid)) {
+                continue;
+            }
+            if (mutation instanceof final StorageMutation.Violation violation) {
+                if (violations == null) {
+                    violations = new HashMap<>(stored.violations());
+                }
+                putViolation(violations, violation);
+            } else if (mutation instanceof final StorageMutation.PendingViolation pending) {
+                if (violations == null) {
+                    violations = new HashMap<>(stored.violations());
+                }
+                final StorageMutation.Violation violation = pending.materialize(violations.get(pending.check()));
+                putViolation(violations, violation);
+            } else if (mutation instanceof final StorageMutation.Bypass bypass) {
+                if (bypasses == null) {
+                    bypasses = new HashMap<>(stored.bypasses());
+                }
+                if (bypass.lifted()) {
+                    bypasses.remove(bypass.check());
+                } else {
+                    bypasses.put(bypass.check(), bypass.until());
                 }
             }
         }
@@ -206,36 +228,9 @@ public final class StorageManager {
 
     }
 
-    public @NotNull CompletableFuture<PlayerStorageData> loadPlayerWhenAvailable(final @NotNull UUID playerUuid) {
+    @NotNull Object pendingWriteLock() {
 
-        if (closing.get()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Database storage is closed"));
-        }
-        return whenAvailable()
-                .thenCompose(ignored -> loadPlayer(playerUuid))
-                .handle((data, failure) -> {
-                    if (failure == null) {
-                        return CompletableFuture.completedFuture(data);
-                    }
-                    if (closing.get()) {
-                        return CompletableFuture.<PlayerStorageData>failedFuture(failure);
-                    }
-                    return retryDelay().thenCompose(ignored -> loadPlayerWhenAvailable(playerUuid));
-                })
-                .thenCompose(future -> future);
-
-    }
-
-    public void saveViolation(
-            final @NotNull UUID playerUuid,
-            final @NotNull String check,
-            final double violations
-    ) {
-
-        if (!settings.enabled()) {
-            return;
-        }
-        enqueue(new StorageMutation.Violation(playerUuid, check, violations, System.currentTimeMillis()), false);
+        return pendingWriteLock;
 
     }
 
@@ -268,30 +263,18 @@ public final class StorageManager {
 
     }
 
-    public void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
+    public void detachPlayer(final @NotNull TrackedPlayerImpl player) {
 
-        saveSnapshot(player, false);
+        for (final Check check : player.checks()) {
+            check.violationLevel().detach();
+        }
 
     }
 
-    private void saveSnapshot(final @NotNull TrackedPlayerImpl player, final boolean allowClosing) {
+    private void saveSnapshot(final @NotNull TrackedPlayerImpl player) {
 
-        if (!settings.enabled() || !player.dataReady()) {
-            return;
-        }
-
-        for (final Check check : player.checkManager.checks()) {
-            synchronized (check) {
-                enqueue(
-                        new StorageMutation.Violation(
-                                player.uniqueId(),
-                                check.id(),
-                                check.violations(),
-                                System.currentTimeMillis()
-                        ),
-                        allowClosing
-                );
-            }
+        for (final Check check : player.checks()) {
+            check.violationLevel().saveSnapshot(true);
         }
 
     }
@@ -326,14 +309,6 @@ public final class StorageManager {
 
     }
 
-    public @NotNull CompletableFuture<Void> whenAvailable() {
-
-        synchronized (availabilityMonitor) {
-            return availabilitySignal;
-        }
-
-    }
-
     public void close(final @NotNull Collection<TrackedPlayerImpl> players) {
 
         if (!closing.compareAndSet(false, true)) {
@@ -341,7 +316,7 @@ public final class StorageManager {
         }
 
         if (settings.enabled()) {
-            players.forEach(player -> saveSnapshot(player, true));
+            players.forEach(this::saveSnapshot);
             final CompletableFuture<Void> flush = initialization
                     .handle((ignored, failure) -> null)
                     .thenCompose(ignored -> runAsync(this::flushAll));
@@ -367,7 +342,6 @@ public final class StorageManager {
         try {
             synchronized (availabilityMonitor) {
                 available.set(false);
-                availabilitySignal.completeExceptionally(new IllegalStateException("Database storage is closed"));
             }
             if (backend != null) {
                 backend.close();
@@ -381,7 +355,7 @@ public final class StorageManager {
 
     }
 
-    private void enqueue(final @NotNull StorageMutation mutation, final boolean allowClosing) {
+    void enqueue(final @NotNull StorageMutation mutation, final boolean allowClosing) {
 
         if (!settings.enabled()) {
             return;
@@ -441,14 +415,17 @@ public final class StorageManager {
 
         flushLock.writeLock().lock();
         try {
-            final List<StorageMutation> batch = drainBatch();
-            if (batch.isEmpty()) {
+            final List<StorageMutation> drained = drainBatch();
+            if (drained.isEmpty()) {
                 return false;
             }
 
+            List<StorageMutation> batch = drained;
             try {
+                batch = materializeBatch(drained);
+                final List<StorageMutation> writes = batch;
                 withBackend(storage -> {
-                    storage.writeBatch(batch);
+                    storage.writeBatch(writes);
                     return null;
                 });
                 return true;
@@ -459,6 +436,79 @@ public final class StorageManager {
             }
         } finally {
             flushLock.writeLock().unlock();
+        }
+
+    }
+
+    private @NotNull List<StorageMutation> materializeBatch(final @NotNull List<StorageMutation> batch) throws Exception {
+
+        Map<UUID, Map<String, BatchViolation>> levels = null;
+        for (final StorageMutation mutation : batch) {
+            if (mutation instanceof final StorageMutation.PendingViolation pending) {
+                if (levels == null) {
+                    levels = new HashMap<>();
+                }
+                if (!levels.containsKey(pending.playerUuid())) {
+                    final PlayerStorageData stored = withBackend(storage -> storage.loadPlayer(pending.playerUuid(), Long.MAX_VALUE));
+                    final Map<String, BatchViolation> base = new HashMap<>();
+                    stored.violations().forEach((check, value) -> base.put(check, new BatchViolation(value, -1)));
+                    levels.put(pending.playerUuid(), base);
+                }
+            }
+        }
+        if (levels == null) {
+            return batch;
+        }
+
+        /*
+         * Keep the latest materialized write per check at its original position in the batch.
+         */
+        final List<StorageMutation> materialized = new ArrayList<>(batch);
+        for (int index = 0; index < batch.size(); index++) {
+            final StorageMutation mutation = batch.get(index);
+            final Map<String, BatchViolation> current = levels.get(mutation.playerUuid());
+            if (current == null) {
+                continue;
+            }
+            final StorageMutation.Violation violation;
+            if (mutation instanceof final StorageMutation.PendingViolation pending) {
+                final BatchViolation previous = current.get(pending.check());
+                violation = pending.materialize(previous == null ? null : previous.value());
+            } else if (mutation instanceof final StorageMutation.Violation absolute) {
+                violation = absolute;
+            } else {
+                continue;
+            }
+            final BatchViolation previous = current.get(violation.check());
+            if (previous == null || violation.updatedAt() >= previous.value().updatedAt()) {
+                if (previous != null && previous.index() >= 0) {
+                    materialized.set(previous.index(), null);
+                }
+                current.put(violation.check(), new BatchViolation(new StoredViolation(violation.violations(), violation.updatedAt()), index));
+                materialized.set(index, violation);
+            } else {
+                materialized.set(index, null);
+            }
+        }
+        materialized.removeIf(Objects::isNull);
+        return materialized;
+
+    }
+
+    /**
+     * A recovered check level and the position of its pending absolute write, if any.
+     */
+    private record BatchViolation(@NotNull StoredViolation value, int index) {
+    }
+
+    private static void putViolation(
+            final @NotNull Map<String, StoredViolation> levels,
+            final @NotNull StorageMutation.Violation violation
+    ) {
+
+        final StoredViolation previous = levels.get(violation.check());
+        if (previous == null || violation.updatedAt() >= previous.updatedAt()) {
+            levels.put(violation.check(), new StoredViolation(violation.violations(), violation.updatedAt()));
         }
 
     }
@@ -550,7 +600,6 @@ public final class StorageManager {
             synchronized (availabilityMonitor) {
                 available.set(true);
                 reconnectDelayMillis.set(settings.retryInitialDelay().toMillis());
-                availabilitySignal.complete(null);
             }
             if (previous != null) {
                 try {
@@ -572,9 +621,6 @@ public final class StorageManager {
                 return;
             }
             available.set(false);
-            if (availabilitySignal.isDone()) {
-                availabilitySignal = new CompletableFuture<>();
-            }
         }
         logFailure("Database operation failed; continuing in fail-open mode", failure);
         scheduleReconnect();
@@ -633,22 +679,6 @@ public final class StorageManager {
             action.run();
             return null;
         });
-
-    }
-
-    private @NotNull CompletableFuture<Void> retryDelay() {
-
-        final CompletableFuture<Void> delay = new CompletableFuture<>();
-        try {
-            scheduler.schedule(
-                    () -> delay.complete(null),
-                    settings.retryInitialDelay().toMillis(),
-                    TimeUnit.MILLISECONDS
-            );
-        } catch (final RejectedExecutionException ex) {
-            delay.completeExceptionally(ex);
-        }
-        return delay;
 
     }
 

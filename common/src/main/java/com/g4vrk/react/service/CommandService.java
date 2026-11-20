@@ -66,7 +66,9 @@ public final class CommandService {
                         .suggestionsExecutor(this::withCommandLock)
                         .build()
         );
-        // Addons and RCPs register and delete their commands after the server has started.
+        /*
+         * Addons and RCPs register and delete their commands after the server has started.
+         */
         this.manager.settings().set(ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);
         this.builderFactory = new CommandBuilderFactory(
                 manager,

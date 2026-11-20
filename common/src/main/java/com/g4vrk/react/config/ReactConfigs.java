@@ -105,7 +105,9 @@ public final class ReactConfigs {
                     addons.node(addon[0], "download-next-start").set(Boolean.parseBoolean(addon[2]));
                 }
             })
-            // collect-addon is private and no longer an official addon.
+            /*
+             * collect-addon is private and no longer an official addon.
+             */
             .step(root -> root.node("official-addons").removeChild("collect"))
             .step(root -> {
                 final ConfigurationNode legacy = root.node("official-addons");

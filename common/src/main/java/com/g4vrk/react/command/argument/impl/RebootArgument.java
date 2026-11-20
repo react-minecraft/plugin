@@ -71,7 +71,9 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
         this.extensionsStarting = actionParser.parseAll(reboot.extensionsStarting());
         this.extensionsDone = actionParser.parseAll(reboot.extensionsDone());
         this.extensionsUnknown = actionParser.parseAll(reboot.extensionsUnknown());
-        // Sent after the class loader closed: turned into plain legacy strings now.
+        /*
+         * Sent after the class loader closed: turned into plain legacy strings now.
+         */
         this.messages = new PluginReboot.Messages(legacy(reboot.unloaded()), legacy(reboot.loaded()), legacy(reboot.failed()));
     }
 
@@ -109,7 +111,9 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                                     .replace("<jar>", reboot.jar().getName())
                                     .replace("<version>", reboot.newVersion())
                     );
-                    // Run outside the command dispatch: disabling React tears down this command manager.
+                    /*
+                     * Run outside the command dispatch: disabling React tears down this command manager.
+                     */
                     Bukkit.getScheduler().runTask(plugin, reboot);
                 });
     }

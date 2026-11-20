@@ -10,6 +10,7 @@ import com.g4vrk.react.check.decay.DecayStrategy;
 import com.g4vrk.react.check.info.CheckInfo;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.punish.PunishmentManager;
+import com.g4vrk.react.storage.ViolationLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,7 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
     @Getter
     private final boolean experimental;
 
-    @Getter
-    private volatile double violations;
+    private final ViolationLevel violationLevel;
 
     protected Check(
             final @NotNull TrackedPlayerImpl player
@@ -49,6 +49,7 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
         this.experimental = info.experimental();
 
         this.player = player;
+        this.violationLevel = new ViolationLevel(React.INSTANCE.storageManager(), player.uniqueId(), id);
     }
 
     @Override
@@ -94,19 +95,11 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
     private synchronized void apply(
             final double amount
     ) {
-        final double previous = this.violations;
-        final double updated = previous + amount;
-        if (!Double.isFinite(updated)) {
-            throw new IllegalArgumentException("Violation level must remain finite");
-        }
-
-        this.violations = updated;
-        this.persistViolations();
-
+        final double previous = violationLevel.add(amount);
         final PunishmentManager punishmentManager = React.INSTANCE.punishmentManager();
 
         if (punishmentManager != null) {
-            punishmentManager.handleFail(this, previous, this.violations);
+            punishmentManager.handleFail(this, previous, previous + amount);
         }
     }
 
@@ -172,27 +165,26 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
     }
 
     public final @NotNull CheckReport report(final @NotNull String details) {
-        return new CheckReport(player.uniqueId(), player.name(), name(), id(), violations, details);
+        return new CheckReport(player.uniqueId(), player.name(), name(), id(), violations(), details);
     }
 
     protected final synchronized void reward() {
-        final double updated = Math.max(0, decayStrategy().decay(violations));
-        if (Double.compare(updated, violations) == 0) {
-            return;
-        }
-        violations = updated;
-        this.persistViolations();
+
+        violationLevel.decay(decayStrategy());
+
     }
 
-    public final synchronized void mergeViolations(
-            final double storedViolations,
-            final long storedUpdatedAt,
-            final long sessionStartedAt
-    ) {
-        if (storedUpdatedAt >= sessionStartedAt) {
-            return;
-        }
-        this.violations += storedViolations;
+    @Override
+    public final double violations() {
+
+        return violationLevel.value();
+
+    }
+
+    public final @NotNull ViolationLevel violationLevel() {
+
+        return violationLevel;
+
     }
 
     @Override
@@ -202,22 +194,9 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
 
     @Override
     public final synchronized void resetViolations() {
-        violations = 0D;
-        this.persistViolations();
-    }
 
-    public final synchronized void restoreViolations(final double violations) {
-        this.violations = Math.max(0.0D, violations);
-    }
+        violationLevel.reset();
 
-    private void persistViolations() {
-        if (React.INSTANCE.storageManager() != null) {
-            React.INSTANCE.storageManager().saveViolation(
-                    player.uniqueId(),
-                    id(),
-                    violations
-            );
-        }
     }
 
     public abstract @NotNull DecayStrategy decayStrategy();

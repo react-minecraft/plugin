@@ -2,6 +2,7 @@ package com.g4vrk.react.extension;
 
 import com.g4vrk.react.api.extension.ExtensionId;
 import com.g4vrk.react.api.extension.ExtensionServices;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,11 @@ final class ScopedExtensionServices implements ExtensionServices {
     private volatile boolean enabled;
     private volatile Thread publisher;
 
-    ScopedExtensionServices(final ExtensionPlan plan, final ClassLoader loader, final Map<ExtensionId, LoadedExtension> dependencies) {
+    ScopedExtensionServices(
+            final @NotNull ExtensionPlan plan,
+            final @NotNull ClassLoader loader,
+            final @NotNull Map<ExtensionId, LoadedExtension> dependencies
+    ) {
 
         this.plan = plan;
         this.loader = loader;

@@ -63,7 +63,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), false, true);
     private volatile @Nullable ScheduledExecutorService timer;
-    private boolean closed;
+    private volatile boolean closed;
 
     /**
      * Where the running plugin jar is and where its update goes.
@@ -164,6 +164,10 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             return thread;
         });
         this.timer = timer;
+        if (closed) {
+            timer.shutdownNow();
+            return;
+        }
         timer.scheduleWithFixedDelay(() -> tick(manager), interval.toSeconds(), interval.toSeconds(), TimeUnit.SECONDS);
 
     }
@@ -668,10 +672,11 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     }
 
     /**
-     * Stops the periodic checks.
+     * Stops the periodic checks. Not synchronized on purpose: a running check holds the monitor
+     * while it downloads, and shutting the server down must not wait for it.
      */
     @Override
-    public synchronized void close() {
+    public void close() {
 
         closed = true;
         final ScheduledExecutorService timer = this.timer;

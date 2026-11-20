@@ -10,7 +10,7 @@
 #   update/addons/<name>.yml - an addon, applied with /react reboot <name>
 #
 
-# How often to check for updates (at least 10m)
+# How often to check for updates (not more often than every 10m)
 interval: 6h
 
 # Reboot an RCP or addon right after its update is downloaded

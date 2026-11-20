@@ -31,7 +31,7 @@ public final class DurationSerializer implements TypeSerializer<Duration> {
         }
         try {
             return TimeParser.parse(raw);
-        } catch (final IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException | ArithmeticException ex) {
             throw new SerializationException(node, type, ex.getMessage());
         }
     }
@@ -46,7 +46,7 @@ public final class DurationSerializer implements TypeSerializer<Duration> {
 
         try {
             node.set(TimeParser.format(duration));
-        } catch (final IllegalArgumentException ex) {
+        } catch (final IllegalArgumentException | ArithmeticException ex) {
             throw new SerializationException(node, type, ex.getMessage());
         }
     }

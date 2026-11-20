@@ -11,7 +11,7 @@ import java.util.Objects;
  * @param modelId     stable model id, for example {@code flower/baseline}
  * @param displayName the name players and staff see, for example {@code Flower Baseline}
  * @param probability probability of cheating, from 0 to 1
- * @param threshold   probability at which the player is flagged; {@link Double#NaN} leaves
+ * @param threshold   probability from 0 to 1 at which the player is flagged; {@link Double#NaN} leaves
  *                    the decision to the alert threshold of the plugin's check config
  * @param enforcement false when the result is only observed: it is shown and stored,
  *                    but never flags or rewards the player
@@ -30,6 +30,9 @@ public record InferenceResult(
         Objects.requireNonNull(displayName, "displayName");
         if (!(probability >= 0.0D && probability <= 1.0D)) {
             throw new IllegalArgumentException("probability must be within [0, 1], got " + probability);
+        }
+        if (!Double.isNaN(threshold) && !(threshold >= 0.0D && threshold <= 1.0D)) {
+            throw new IllegalArgumentException("threshold must be NaN or within [0, 1], got " + threshold);
         }
     }
 

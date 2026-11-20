@@ -168,7 +168,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             timer.shutdownNow();
             return;
         }
-        timer.scheduleWithFixedDelay(() -> tick(manager), interval.toSeconds(), interval.toSeconds(), TimeUnit.SECONDS);
+        timer.scheduleWithFixedDelay(() -> tick(manager), 30L, interval.toSeconds(), TimeUnit.SECONDS);
 
     }
 

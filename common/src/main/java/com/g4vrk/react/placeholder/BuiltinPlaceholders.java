@@ -28,6 +28,7 @@ public final class BuiltinPlaceholders {
      * @param registry the registry to fill
      */
     public static void register(final @NotNull PlaceholderRegistry registry) {
+
         registry.register("vl", (player, query) -> {
             if (query.isEmpty()) {
                 return number(player.checks().stream().mapToDouble(Check::violations).sum());
@@ -54,12 +55,15 @@ public final class BuiltinPlaceholders {
                         ? Integer.toString(impl.inferenceHistory.size())
                         : null
         );
+
     }
 
     private static @NotNull String number(final double value) {
+
         return value == Math.rint(value)
                 ? Long.toString((long) value)
                 : String.format(Locale.ROOT, "%.2f", value);
+
     }
 
 }

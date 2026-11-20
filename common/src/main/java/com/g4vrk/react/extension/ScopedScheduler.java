@@ -19,7 +19,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
     private boolean closed;
 
     public ScopedScheduler(final @NotNull Scheduler delegate) {
+
         this.delegate = delegate;
+
     }
 
     @Override
@@ -27,7 +29,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Runnable runnable,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return submit(task -> runnable.run(), tickSchedule, delegate::schedule);
+
     }
 
     @Override
@@ -35,7 +39,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Consumer<Task> consumer,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return submit(consumer, tickSchedule, delegate::schedule);
+
     }
 
     @Override
@@ -43,7 +49,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Runnable runnable,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return submit(task -> runnable.run(), tickSchedule, delegate::scheduleAsync);
+
     }
 
     @Override
@@ -51,7 +59,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Consumer<Task> consumer,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return submit(consumer, tickSchedule, delegate::scheduleAsync);
+
     }
 
     @Override
@@ -60,7 +70,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Runnable runnable,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return scheduleEntity(entity, task -> runnable.run(), tickSchedule);
+
     }
 
     @Override
@@ -69,7 +81,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Consumer<Task> consumer,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return submit(consumer, tickSchedule, (task, schedule) -> delegate.scheduleEntity(entity, task, schedule));
+
     }
 
     @Override
@@ -78,7 +92,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Runnable runnable,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return scheduleLocation(location, task -> runnable.run(), tickSchedule);
+
     }
 
     @Override
@@ -87,7 +103,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull Consumer<Task> consumer,
             final @NotNull TickSchedule tickSchedule
     ) {
+
         return submit(consumer, tickSchedule, (task, schedule) -> delegate.scheduleLocation(location, task, schedule));
+
     }
 
     private @NotNull Task submit(
@@ -95,6 +113,7 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             final @NotNull TickSchedule schedule,
             final @NotNull TaskScheduler scheduler
     ) {
+
         final ScopedTask task = new ScopedTask(action, schedule.isRepeating());
         synchronized (tasks) {
             if (closed) {
@@ -109,10 +128,12 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             task.cancel();
             throw failure;
         }
+
     }
 
     @Override
     public void close() {
+
         final List<ScopedTask> running;
         synchronized (tasks) {
             closed = true;
@@ -120,6 +141,7 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             tasks.clear();
         }
         running.forEach(ScopedTask::cancel);
+
     }
 
     @FunctionalInterface
@@ -143,21 +165,26 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
                 final @NotNull Consumer<Task> action,
                 final boolean repeating
         ) {
+
             this.action = action;
             this.repeating = repeating;
+
         }
 
         private void attach(final @NotNull Task task) {
+
             this.task = task;
             if (cancelled) {
                 task.cancel();
             } else if (task.isCancelled()) {
                 release();
             }
+
         }
 
         @Override
         public void accept(final @NotNull Task task) {
+
             attach(task);
             if (isCancelled()) {
                 return;
@@ -172,10 +199,12 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
                     release();
                 }
             }
+
         }
 
         @Override
         public void cancel() {
+
             cancelled = true;
             final Task task = this.task;
             try {
@@ -185,24 +214,31 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             } finally {
                 release();
             }
+
         }
 
         @Override
         public boolean isCancelled() {
+
             final Task task = this.task;
             return cancelled || task != null && task.isCancelled();
+
         }
 
         @Override
         public boolean sync() {
+
             final Task task = this.task;
             return task != null && task.sync();
+
         }
 
         private void release() {
+
             synchronized (tasks) {
                 tasks.remove(this);
             }
+
         }
 
     }

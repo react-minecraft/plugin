@@ -31,12 +31,14 @@ public final class RotationData {
     private int size;
 
     public RotationData(final int capacity) {
+
         if (capacity <= 0) {
             throw new IllegalArgumentException("capacity must be higher than 0");
         }
 
         this.capacity = capacity;
         this.history = new float[capacity * RotationSample.STRIDE];
+
     }
 
     /**
@@ -46,6 +48,7 @@ public final class RotationData {
      * @param pitch the pitch of the movement packet, in degrees
      */
     public synchronized void push(final float yaw, final float pitch) {
+
         final float normalizedYaw = AngleMath.normalizeAngle(yaw);
         final float normalizedPitch = AngleMath.normalizeAngle(pitch);
 
@@ -85,6 +88,7 @@ public final class RotationData {
         if (this.size < this.capacity) {
             this.size++;
         }
+
     }
 
     /**
@@ -96,7 +100,9 @@ public final class RotationData {
      * @return the current sample, or {@code null} before the first rotation
      */
     public synchronized float @Nullable [] current() {
+
         return this.hasCurrent ? this.current : null;
+
     }
 
     /**
@@ -105,7 +111,9 @@ public final class RotationData {
      * @return the previous sample, or {@code null} when there is none
      */
     public synchronized float @Nullable [] previous() {
+
         return this.hasPrevious ? this.previous : null;
+
     }
 
     /**
@@ -114,6 +122,7 @@ public final class RotationData {
      * @return one flat array of {@link RotationSample#STRIDE} floats per rotation
      */
     public synchronized float @NotNull [] history() {
+
         final float[] out = new float[this.size * RotationSample.STRIDE];
 
         final int start = (this.head - this.size + this.capacity) % this.capacity;
@@ -129,6 +138,7 @@ public final class RotationData {
         }
 
         return out;
+
     }
 
     /**
@@ -137,7 +147,9 @@ public final class RotationData {
      * @return how many rotations the history holds
      */
     public synchronized int historySize() {
+
         return this.size;
+
     }
 
     /**
@@ -146,13 +158,16 @@ public final class RotationData {
      * @return the capacity
      */
     public synchronized int historyCapacity() {
+
         return this.capacity;
+
     }
 
     /**
      * Drops every rotation.
      */
     public synchronized void clear() {
+
         Arrays.fill(this.history, 0F);
 
         Arrays.fill(this.current, 0F);
@@ -163,6 +178,7 @@ public final class RotationData {
 
         this.head = 0;
         this.size = 0;
+
     }
 
 }

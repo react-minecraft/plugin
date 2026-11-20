@@ -40,6 +40,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
             final @NotNull Path directory,
             final @NotNull ClassLoader classLoader
     ) {
+
         this.descriptor = descriptor;
         this.directory = directory;
         this.classLoader = classLoader;
@@ -51,6 +52,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
         this.commands = new ScopedCommands(context.commands(), logger, descriptor.name(), context.commandsChanged());
         this.listeners = new ScopedListeners(plugin, context.events(), logger);
         this.placeholders = new ScopedPlaceholders(context.placeholders());
+
     }
 
     /**
@@ -59,7 +61,9 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
      * @return the descriptor
      */
     public @NotNull ExtensionDescriptor descriptor() {
+
         return descriptor;
+
     }
 
     void attachServices(final ScopedExtensionServices services) {
@@ -84,81 +88,109 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     @Override
     public @NotNull String name() {
+
         return descriptor.name();
+
     }
 
     @Override
     public @NotNull Path directory() {
+
         return directory;
+
     }
 
     @Override
     public @NotNull Logger logger() {
+
         return logger;
+
     }
 
     @Override
     public @NotNull Plugin plugin() {
+
         return plugin;
+
     }
 
     @Override
     public @NotNull Scheduler scheduler() {
+
         return scheduler;
+
     }
 
     @Override
     public @NotNull ScopedCommands commands() {
+
         return commands;
+
     }
 
     @Override
     public @NotNull ScopedListeners listeners() {
+
         return listeners;
+
     }
 
     @Override
     public @NotNull ScopedPlaceholders placeholders() {
+
         return placeholders;
+
     }
 
     @Override
     public @NotNull TextFormatter text() {
+
         return text;
+
     }
 
     @Override
     public @NotNull ActionParser<Audience> actions() {
+
         return actions;
+
     }
 
     @Override
     public @NotNull ConfigFactory configs() {
+
         return this;
+
     }
 
     @Override
     public <T> ConfigFile.@NotNull Builder<T> file(final @NotNull String name, final @NotNull Class<T> type) {
+
         return ConfigFile.builder(type)
                 .path(directory.resolve(name))
                 .defaults(classLoader, name)
                 .logger(logger);
+
     }
 
     @Override
     public void close() {
+
         closeQuietly(commands);
         closeQuietly(listeners);
         closeQuietly(placeholders);
         closeQuietly(scheduler);
+
     }
 
     private void closeQuietly(final @NotNull AutoCloseable resource) {
+
         try {
             resource.close();
         } catch (final Exception failure) {
             logger.warn("Could not clean up after {}", name(), failure);
         }
+
     }
 
 }

@@ -22,16 +22,21 @@ public final class ReportActions implements ReportChannel.Delivery {
     private volatile ExecutableActionList<? super Audience> actions;
 
     public ReportActions(final @NotNull ActionParser<Audience> parser, final @NotNull List<String> actions) {
+
         this.parser = parser;
         this.actions(actions);
+
     }
 
     public void actions(final @NotNull List<String> actions) {
+
         this.actions = this.parser.parseAll(actions);
+
     }
 
     @Override
     public void deliver(final @NotNull Audience recipient, final @NotNull CheckReport report) {
+
         final String violations = String.valueOf(report.violations());
 
         this.actions.run(
@@ -43,6 +48,7 @@ public final class ReportActions implements ReportChannel.Delivery {
                         .replace("<vl>", violations)
                         .replace("<details>", report.details())
         );
+
     }
 
 }

@@ -23,8 +23,10 @@ public final class AddonDisableEvent extends Event {
             final @NotNull String name,
             final @NotNull String version
     ) {
+
         this.name = name;
         this.version = version;
+
     }
 
     /**
@@ -33,7 +35,9 @@ public final class AddonDisableEvent extends Event {
      * @return the addon name
      */
     public @NotNull String name() {
+
         return name;
+
     }
 
     /**
@@ -42,7 +46,9 @@ public final class AddonDisableEvent extends Event {
      * @return the addon version
      */
     public @NotNull String version() {
+
         return version;
+
     }
 
 }

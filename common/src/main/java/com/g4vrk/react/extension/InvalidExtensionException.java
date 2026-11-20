@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 public final class InvalidExtensionException extends Exception {
 
     public InvalidExtensionException(final @NotNull String message) {
+
         super(message);
+
     }
 
 }

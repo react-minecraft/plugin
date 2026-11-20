@@ -19,7 +19,9 @@ public final class InferenceHistoryEntry {
             final @NotNull Check check,
             final double probability
     ) {
+
         this(currentTimeMillis(), check, probability);
+
     }
 
     public InferenceHistoryEntry(
@@ -27,9 +29,11 @@ public final class InferenceHistoryEntry {
             final @NotNull Check check,
             final double probability
     ) {
+
         this.timestamp = timestamp;
         this.check = check;
         this.probability = probability;
+
     }
 
 }

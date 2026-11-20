@@ -20,6 +20,7 @@ public final class ProbabilityColor {
      * @return the color
      */
     public static @NotNull TextColor color(final double probability) {
+
         final double normalized = Math.min(1.0D, Math.max(probability, 0.0D));
 
         if (normalized < 0.5D) {
@@ -27,6 +28,7 @@ public final class ProbabilityColor {
         }
 
         return TextColor.color(255, (int) ((1.0D - (normalized - 0.5D) * 2.0D) * 255), 0);
+
     }
 
     /**
@@ -36,7 +38,9 @@ public final class ProbabilityColor {
      * @return the number in its color
      */
     public static @NotNull Component component(final double probability) {
+
         return Component.text(ProbabilityFormatter.format(probability), color(probability));
+
     }
 
     /**
@@ -46,9 +50,11 @@ public final class ProbabilityColor {
      * @return the number wrapped in its color tag
      */
     public static @NotNull String miniMessage(final double probability) {
+
         final String hex = color(probability).asHexString();
 
         return "<" + hex + ">" + ProbabilityFormatter.format(probability) + "</" + hex + ">";
+
     }
 
 }

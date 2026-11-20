@@ -21,7 +21,9 @@ public final class MonitorEvent extends CancellableEvent {
     public MonitorEvent(
             final @NotNull CheckReport report
     ) {
+
         this.report = report;
+
     }
 
     /**
@@ -30,7 +32,9 @@ public final class MonitorEvent extends CancellableEvent {
      * @return the monitor line
      */
     public @NotNull CheckReport report() {
+
         return report;
+
     }
 
 }

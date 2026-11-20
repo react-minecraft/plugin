@@ -29,6 +29,7 @@ public final class BracePlaceholders {
             final @NotNull ConfigurationNode root,
             final @NotNull Map<String, String> renamed
     ) throws SerializationException {
+
         rewrite(root, text -> {
             String result = text;
 
@@ -38,6 +39,7 @@ public final class BracePlaceholders {
 
             return BRACES.matcher(result).replaceAll("<$1>");
         });
+
     }
 
     /**
@@ -51,6 +53,7 @@ public final class BracePlaceholders {
             final @NotNull ConfigurationNode node,
             final @NotNull UnaryOperator<String> rewriter
     ) throws SerializationException {
+
         if (node.isMap() || node.isList()) {
             for (final ConfigurationNode child : node.childrenList()) {
                 rewrite(child, rewriter);
@@ -68,6 +71,7 @@ public final class BracePlaceholders {
                 node.set(rewritten);
             }
         }
+
     }
 
 }

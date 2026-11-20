@@ -27,11 +27,14 @@ public class MapRegistry<K, V> implements WritableRegistry<K, V> {
 
     @Override
     public @Nullable V get(final @NotNull K key) {
+
         return this.entries.get(key);
+
     }
 
     @Override
     public @Nullable K getKey(final @NotNull V value) {
+
         for (final Map.Entry<K, V> entry : this.entries.entrySet()) {
             if (entry.getValue() == value) {
                 return entry.getKey();
@@ -39,48 +42,65 @@ public class MapRegistry<K, V> implements WritableRegistry<K, V> {
         }
 
         return null;
+
     }
 
     @Override
     public @NotNull Set<K> keySet() {
+
         return this.readOnly.keySet();
+
     }
 
     @Override
     public @NotNull Set<Map.Entry<K, V>> entrySet() {
+
         return this.readOnly.entrySet();
+
     }
 
     @Override
     public @NotNull Stream<V> stream() {
+
         return this.entries.values().stream();
+
     }
 
     @Override
     public int size() {
+
         return this.entries.size();
+
     }
 
     @Override
     public void register(final @NotNull K key, final @NotNull V value) {
+
         this.entries.put(key, value);
+
     }
 
     @Override
     public @Nullable V unregister(final @NotNull K key) {
+
         return this.entries.remove(key);
+
     }
 
     /**
      * Removes every value.
      */
     public void clear() {
+
         this.entries.clear();
+
     }
 
     @Override
     public @NotNull Iterator<V> iterator() {
+
         return this.readOnly.values().iterator();
+
     }
 
 }

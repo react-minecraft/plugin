@@ -20,11 +20,13 @@ public final class CommandBuilderFactory {
     private final String[] aliases;
 
     public @NotNull Command.Builder<CommandSender> create() {
+
         return this.manager.commandBuilder(
                 this.label,
                 Description.of(this.description),
                 this.aliases
         ).permission(permission);
+
     }
 
 }

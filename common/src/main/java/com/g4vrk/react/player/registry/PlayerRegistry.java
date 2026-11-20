@@ -24,15 +24,18 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
 
     @Override
     public void register(final @NotNull UUID key, final @NotNull TrackedPlayerImpl value) {
+
         final TrackedPlayerImpl previous = this.entries.put(key, value);
 
         if (previous != null) {
             previous.clearTransientState();
         }
+
     }
 
     @Override
     public @Nullable TrackedPlayerImpl unregister(final @NotNull UUID key) {
+
         final TrackedPlayerImpl removed = super.unregister(key);
 
         if (removed != null) {
@@ -40,12 +43,15 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
         }
 
         return removed;
+
     }
 
     @Override
     public void clear() {
+
         this.entries.values().forEach(TrackedPlayerImpl::clearTransientState);
         super.clear();
+
     }
 
     /**
@@ -55,6 +61,7 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
      * @return the player, or {@code null} when no tracked player has this entity id
      */
     public @Nullable TrackedPlayerImpl byEntityId(final int entityId) {
+
         for (final TrackedPlayerImpl player : this.entries.values()) {
             if (player.bukkitPlayer.getEntityId() == entityId) {
                 return player;
@@ -62,6 +69,7 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
         }
 
         return null;
+
     }
 
     /**
@@ -71,12 +79,16 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
             implements TrackedPlayerRegistry {
 
         private View() {
+
             super(PlayerRegistry.this);
+
         }
 
         @Override
         public @Nullable TrackedPlayer byEntityId(final int entityId) {
+
             return PlayerRegistry.this.byEntityId(entityId);
+
         }
 
     }

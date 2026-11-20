@@ -24,6 +24,7 @@ class MiniTextFormatterTest {
 
     @Test
     void mixesLegacyCodesWithResolvers() {
+
         final Component component = formatter.format(
                 "<white>Page &7<page> <link>open</link>",
                 Placeholder.unparsed("page", "2 <red>"),
@@ -33,6 +34,7 @@ class MiniTextFormatterTest {
         assertEquals("Page 2 <red> open", PlainTextComponentSerializer.plainText().serialize(component));
         assertTrue(component.toString().contains("/next"));
         assertTrue(component.toString().contains(NamedTextColor.GRAY.toString()));
+
     }
 
 }

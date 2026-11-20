@@ -30,13 +30,17 @@ final class ExtensionClassLoader extends URLClassLoader {
             final @NotNull URL jar,
             final @NotNull ClassLoader parent
     ) {
+
         super(name, new URL[]{jar}, parent);
+
     }
 
     @Override
     public @Nullable URL getResource(final @NotNull String name) {
+
         final URL own = findResource(name);
         return own != null ? own : super.getResource(name);
+
     }
 
     void addLibrary(final URL library) {

@@ -29,24 +29,33 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
     private volatile HistoryConfig.Format format;
 
     public InferenceHistoryPrinter(final @NotNull TextFormatter formatter) {
+
         this.formatter = formatter;
         this.reload();
+
     }
 
     public void reload() {
+
         this.onReload(React.INSTANCE.configs().history());
+
     }
 
     @Override
     public void onReload(final @NotNull HistoryConfig config) {
+
         this.format = config.format();
+
     }
 
     public void print(final @NotNull Audience receiver, final @NotNull TrackedPlayerImpl player) {
+
         this.print(receiver, player, 1);
+
     }
 
     public void print(final @NotNull Audience receiver, final @NotNull TrackedPlayerImpl player, final int requested) {
+
         final HistoryConfig.Format format = this.format;
         final int perPage = Math.max(1, format.printEntries());
         final InferenceHistoryEntry[] history = player.inferenceHistory.entries();
@@ -58,14 +67,17 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
 
             @Override
             public boolean has(final @NotNull String name) {
+
                 return switch (name) {
                     case "player", "size", "page", "pages", "avg-probability", "avg-probability-plain" -> true;
                     default -> false;
                 };
+
             }
 
             @Override
             public String map(final @NotNull String name, final @NotNull String args) {
+
                 return switch (name) {
                     case "player" -> player.name();
                     case "size" -> Integer.toString(history.length);
@@ -75,6 +87,7 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
                     case "avg-probability-plain" -> ProbabilityFormatter.format(average);
                     default -> null;
                 };
+
             }
 
         };
@@ -99,20 +112,24 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
 
                             @Override
                             public boolean has(final @NotNull String name) {
+
                                 return common.has(name) || switch (name) {
                                     case "probability", "probability-plain", "check" -> true;
                                     default -> false;
                                 };
+
                             }
 
                             @Override
                             public String map(final @NotNull String name, final @NotNull String args) {
+
                                 return switch (name) {
                                     case "probability" -> ProbabilityColor.miniMessage(entry.getProbability());
                                     case "probability-plain" -> ProbabilityFormatter.format(entry.getProbability());
                                     case "check" -> escape(entry.getCheck().name());
                                     default -> common.map(name, args);
                                 };
+
                             }
 
                         },
@@ -123,14 +140,19 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
         }
 
         this.send(receiver, format.footer(), common, previous, next);
+
     }
 
     private static @NotNull String pageLink(final @NotNull TrackedPlayerImpl player, final int page) {
+
         return "<click:run_command:'/react history " + player.name() + " " + page + "'>";
+
     }
 
     private static @NotNull String escape(final @NotNull String text) {
+
         return text.replace("\\", "\\\\").replace("<", "\\<");
+
     }
 
     private void send(
@@ -140,6 +162,7 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
             final @NotNull String previous,
             final @NotNull String next
     ) {
+
         for (final String line : lines) {
             receiver.sendMessage(formatter.formatMapped(
                     line.replace("<prev>", previous).replace("</prev>", "</click>")
@@ -147,6 +170,7 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
                     mapper
             ));
         }
+
     }
 
 }

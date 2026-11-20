@@ -32,13 +32,16 @@ public final class HistoryArgument extends LocalArgument {
             final @NotNull InferenceHistoryPrinter printer,
             final @NotNull PlayerRegistry playerRegistry
     ) {
+
         this.builderFactory = builderFactory;
         this.printer = printer;
         this.playerRegistry = playerRegistry;
+
     }
 
     @Override
     public @NotNull Command.Builder<CommandSender> build() {
+
         return builderFactory.create()
                 .literal("history")
                 .permission("react.command.history")
@@ -73,5 +76,6 @@ public final class HistoryArgument extends LocalArgument {
 
                     }
                 });
+
     }
 }

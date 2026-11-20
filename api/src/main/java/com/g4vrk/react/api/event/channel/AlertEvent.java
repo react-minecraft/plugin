@@ -21,7 +21,9 @@ public final class AlertEvent extends CancellableEvent {
     public AlertEvent(
             final @NotNull CheckReport report
     ) {
+
         this.report = report;
+
     }
 
     /**
@@ -30,7 +32,9 @@ public final class AlertEvent extends CancellableEvent {
      * @return the alert
      */
     public @NotNull CheckReport report() {
+
         return report;
+
     }
 
 }

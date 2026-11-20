@@ -11,16 +11,21 @@ public final class JdbcExecutor {
     private final DataSource dataSource;
 
     public JdbcExecutor(final @NotNull DataSource dataSource) {
+
         this.dataSource = dataSource;
+
     }
 
     public <T> T query(final @NotNull ConnectionFunction<T> query) throws SQLException {
+
         try (final Connection connection = dataSource.getConnection()) {
             return query.apply(connection);
         }
+
     }
 
     public <T> T transaction(final @NotNull ConnectionFunction<T> transaction) throws SQLException {
+
         try (final Connection connection = dataSource.getConnection()) {
             final boolean previousAutoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
@@ -39,6 +44,7 @@ public final class JdbcExecutor {
                 connection.setAutoCommit(previousAutoCommit);
             }
         }
+
     }
 
     @FunctionalInterface

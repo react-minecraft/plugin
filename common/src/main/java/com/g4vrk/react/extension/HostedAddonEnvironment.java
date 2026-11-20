@@ -23,25 +23,33 @@ public final class HostedAddonEnvironment extends ScopedEnvironment implements A
             final @NotNull Path directory,
             final @NotNull ClassLoader classLoader
     ) {
+
         super(context, descriptor, directory, classLoader);
         this.metadata = descriptor.addonMetadata();
         this.players = context.players().view();
         this.punishments = context.punishments();
+
     }
 
     @Override
     public @NotNull AddonMetadata metadata() {
+
         return metadata;
+
     }
 
     @Override
     public @NotNull TrackedPlayerRegistry players() {
+
         return players;
+
     }
 
     @Override
     public @NotNull PunishmentRegistry punishments() {
+
         return punishments;
+
     }
 
 }

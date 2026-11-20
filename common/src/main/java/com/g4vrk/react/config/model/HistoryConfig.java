@@ -8,7 +8,9 @@ import java.util.List;
 public record HistoryConfig(History history) {
 
     public Format format() {
+
         return history.inference().format();
+
     }
 
     @ConfigSerializable

@@ -14,6 +14,7 @@ public final class MonitorArgument extends ReportToggleArgument {
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull ActionParser<Audience> actionParser
     ) {
+
         super(
                 builderFactory,
                 actionParser,
@@ -24,6 +25,7 @@ public final class MonitorArgument extends ReportToggleArgument {
                 "monitor",
                 "verbose"
         );
+
     }
 
 }

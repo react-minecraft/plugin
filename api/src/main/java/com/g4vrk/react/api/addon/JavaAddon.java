@@ -47,11 +47,13 @@ public abstract class JavaAddon implements Addon {
      */
     @ApiStatus.Internal
     public final void init(final @NotNull AddonEnvironment environment, final @NotNull ClassLoader classLoader) {
+
         if (this.environment != null) {
             throw new IllegalStateException("Addon " + environment.name() + " is already initialized");
         }
         this.environment = Objects.requireNonNull(environment, "environment");
         this.classLoader = Objects.requireNonNull(classLoader, "classLoader");
+
     }
 
     /**
@@ -62,6 +64,7 @@ public abstract class JavaAddon implements Addon {
      */
     @ApiStatus.Internal
     public final void enabled(final boolean enabled) {
+
         if (this.enabled == enabled) {
             return;
         }
@@ -71,36 +74,49 @@ public abstract class JavaAddon implements Addon {
         } else {
             onDisable();
         }
+
     }
 
     @Override
     public final @NotNull AddonEnvironment environment() {
+
         return Objects.requireNonNull(environment, "The environment is set before onLoad");
+
     }
 
     @Override
     public final @NotNull Path directory() {
+
         return environment().directory();
+
     }
 
     @Override
     public final @NotNull String name() {
+
         return environment().name();
+
     }
 
     @Override
     public final @NotNull AddonMetadata metadata() {
+
         return environment().metadata();
+
     }
 
     @Override
     public final @NotNull Logger logger() {
+
         return environment().logger();
+
     }
 
     @Override
     public final boolean enabled() {
+
         return enabled;
+
     }
 
     /**
@@ -133,11 +149,14 @@ public abstract class JavaAddon implements Addon {
      * @return the class loader
      */
     public final @NotNull ClassLoader classLoader() {
+
         return classLoader;
+
     }
 
     @Override
     public @Nullable InputStream getResource(final @NotNull String fileName) {
+
         try {
             final URL url = classLoader.getResource(fileName);
             if (url == null) {
@@ -149,10 +168,12 @@ public abstract class JavaAddon implements Addon {
         } catch (final IOException ex) {
             return null;
         }
+
     }
 
     @Override
     public void saveResource(final @NotNull String fileName, final boolean replace) {
+
         final String resource = fileName.replace(File.separatorChar, '/');
         if (resource.isEmpty()) {
             throw new IllegalArgumentException("The resource name is empty");
@@ -193,6 +214,7 @@ public abstract class JavaAddon implements Addon {
         } catch (final IOException ex) {
             logger().error("Could not save {} to {}", resource, target, ex);
         }
+
     }
 
 }

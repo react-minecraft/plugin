@@ -64,20 +64,26 @@ public final class ConfigFile<T> {
     private final Logger logger;
 
     private ConfigFile(final @NotNull Builder<T> builder) {
+
         this.path = Objects.requireNonNull(builder.path, "path");
         this.type = builder.type;
         this.defaults = Objects.requireNonNull(builder.defaults, "defaults");
         this.migrations = builder.migrations;
         this.fillMissing = builder.fillMissing;
         this.logger = Objects.requireNonNull(builder.logger, "logger");
+
     }
 
     public static <T> @NotNull Builder<T> builder(final @NotNull Class<T> type) {
+
         return new Builder<>(type);
+
     }
 
     public @NotNull Path path() {
+
         return path;
+
     }
 
     /**
@@ -86,12 +92,14 @@ public final class ConfigFile<T> {
      * @throws ConfigurateException when the file cannot be read or does not fit {@code T}
      */
     public @NotNull T load() throws ConfigurateException {
+
         final CommentedConfigurationNode root = loadNode();
         final T value = root.get(type);
         if (value == null) {
             throw new ConfigurateException(root, "Could not map " + path.getFileName() + " onto " + type.getSimpleName());
         }
         return value;
+
     }
 
     /**
@@ -100,6 +108,7 @@ public final class ConfigFile<T> {
      * <p>For files whose keys are the owner's own names, such as punishment groups.</p>
      */
     public @NotNull CommentedConfigurationNode loadNode() throws ConfigurateException {
+
         try {
             if (Files.notExists(path)) {
                 Files.createDirectories(path.toAbsolutePath().getParent());
@@ -125,6 +134,7 @@ public final class ConfigFile<T> {
         } catch (final IOException ex) {
             throw new ConfigurateException("Could not read " + path, ex);
         }
+
     }
 
     private void persistMigration(
@@ -132,6 +142,7 @@ public final class ConfigFile<T> {
             final @NotNull CommentedConfigurationNode before,
             final int previous
     ) throws IOException {
+
         before.node(ConfigMigrationChain.VERSION_KEY).set(migrated.node(ConfigMigrationChain.VERSION_KEY).raw());
 
         if (before.equals(migrated)) {
@@ -149,9 +160,11 @@ public final class ConfigFile<T> {
                 migrations.latest(),
                 backup.getFileName()
         );
+
     }
 
     private void stampVersion(final int version) throws IOException {
+
         final String text = Files.readString(path, StandardCharsets.UTF_8);
         final String line = ConfigMigrationChain.VERSION_KEY + ": " + version;
         final Matcher matcher = VERSION_LINE.matcher(text);
@@ -165,9 +178,11 @@ public final class ConfigFile<T> {
             updated = body + separator + line + separator;
         }
         Files.writeString(path, updated, StandardCharsets.UTF_8);
+
     }
 
     private @NotNull CommentedConfigurationNode loadDefaults() throws IOException {
+
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(openDefaults(), StandardCharsets.UTF_8))) {
             return YamlConfigurationLoader.builder()
                     .defaultOptions(OPTIONS)
@@ -175,23 +190,28 @@ public final class ConfigFile<T> {
                     .build()
                     .load();
         }
+
     }
 
     private @NotNull InputStream openDefaults() throws IOException {
+
         final InputStream in = defaults.get();
         if (in == null) {
             throw new IOException("Bundled default for " + path.getFileName() + " is missing");
         }
         return in;
+
     }
 
     private static @NotNull YamlConfigurationLoader loader(final @NotNull Path path) {
+
         return YamlConfigurationLoader.builder()
                 .path(path)
                 .defaultOptions(OPTIONS)
                 .nodeStyle(NodeStyle.BLOCK)
                 .indent(INDENT)
                 .build();
+
     }
 
     public static final class Builder<T> {
@@ -204,12 +224,16 @@ public final class ConfigFile<T> {
         private Logger logger;
 
         private Builder(final @NotNull Class<T> type) {
+
             this.type = type;
+
         }
 
         public @NotNull Builder<T> path(final @NotNull Path path) {
+
             this.path = path;
             return this;
+
         }
 
         /**
@@ -218,8 +242,10 @@ public final class ConfigFile<T> {
          * <p>It is copied on first start and fills keys the owner's file lacks.</p>
          */
         public @NotNull Builder<T> defaults(final @NotNull Supplier<InputStream> defaults) {
+
             this.defaults = defaults;
             return this;
+
         }
 
         /**
@@ -228,12 +254,16 @@ public final class ConfigFile<T> {
          * @param resource the resource path, e.g. {@code ru/actions.yml}
          */
         public @NotNull Builder<T> defaults(final @NotNull ClassLoader loader, final @NotNull String resource) {
+
             return defaults(() -> loader.getResourceAsStream(resource));
+
         }
 
         public @NotNull Builder<T> migrations(final @NotNull ConfigMigrationChain migrations) {
+
             this.migrations = migrations;
             return this;
+
         }
 
         /**
@@ -243,17 +273,23 @@ public final class ConfigFile<T> {
          * groups, where an entry the owner removed must stay removed.</p>
          */
         public @NotNull Builder<T> keepMissing() {
+
             this.fillMissing = false;
             return this;
+
         }
 
         public @NotNull Builder<T> logger(final @NotNull Logger logger) {
+
             this.logger = logger;
             return this;
+
         }
 
         public @NotNull ConfigFile<T> build() {
+
             return new ConfigFile<>(this);
+
         }
 
     }

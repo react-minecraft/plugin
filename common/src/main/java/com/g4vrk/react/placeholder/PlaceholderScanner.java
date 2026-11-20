@@ -54,9 +54,11 @@ public final class PlaceholderScanner {
     private long remainingWork;
 
     private PlaceholderScanner(final @NotNull String source, final @NotNull Lookup lookup) {
+
         this.buffer = new Buffer(source);
         this.lookup = lookup;
         this.remainingWork = (long) source.length() * (MAX_DEPTH + 1);
+
     }
 
     /**
@@ -67,6 +69,7 @@ public final class PlaceholderScanner {
      * @return the text with the known placeholders replaced
      */
     public static @NotNull String apply(final @NotNull String source, final @NotNull Lookup lookup) {
+
         if (source.isEmpty()) {
             return source;
         }
@@ -76,9 +79,11 @@ public final class PlaceholderScanner {
         scanner.scan();
 
         return scanner.buffer.toString();
+
     }
 
     private void scan() {
+
         int index = 0;
         int depth = 0;
 
@@ -102,9 +107,11 @@ public final class PlaceholderScanner {
             index++;
             depth = 0;
         }
+
     }
 
     private boolean resolveAt(final int offset, final int depth) {
+
         final int start = offset;
         int index = offset + 1;
 
@@ -173,6 +180,7 @@ public final class PlaceholderScanner {
         }
 
         return false;
+
     }
 
     /**
@@ -184,12 +192,15 @@ public final class PlaceholderScanner {
         private int size;
 
         private Buffer(final @NotNull String source) {
+
             this.size = source.length();
             this.chars = new char[this.size + 15];
             source.getChars(0, this.size, this.chars, 0);
+
         }
 
         private void replace(final int start, final int length, final @NotNull String value) {
+
             final int valueLength = value.length();
             final int newSize = this.size - length + valueLength;
 
@@ -210,11 +221,14 @@ public final class PlaceholderScanner {
             }
 
             this.size = newSize;
+
         }
 
         @Override
         public String toString() {
+
             return new String(this.chars, 0, this.size);
+
         }
 
     }

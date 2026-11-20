@@ -11,6 +11,7 @@ public enum DatabaseType {
     SQLITE;
 
     public static @NotNull DatabaseType parse(final String input) {
+
         if (input == null) {
             return SQLITE;
         }
@@ -20,9 +21,12 @@ public enum DatabaseType {
         } catch (final IllegalArgumentException ignored) {
             return SQLITE;
         }
+
     }
 
     public @NotNull String configName() {
+
         return name().toLowerCase(Locale.ROOT) + ".yml";
+
     }
 }

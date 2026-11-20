@@ -42,7 +42,9 @@ public interface EventBus {
             final @NotNull Class<E> type,
             final @NotNull Consumer<? super E> handler
     ) {
+
         return subscribe(type, EventPriority.NORMAL, false, handler);
+
     }
 
     /**

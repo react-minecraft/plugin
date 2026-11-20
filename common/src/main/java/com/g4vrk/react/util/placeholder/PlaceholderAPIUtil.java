@@ -15,7 +15,9 @@ public class PlaceholderAPIUtil {
             PluginUtil.containsPlugin(PLACEHOLDER_API);
 
     public boolean apiPresent() {
+
         return PRESENT;
+
     }
 
     public @NotNull String setPlaceholders(

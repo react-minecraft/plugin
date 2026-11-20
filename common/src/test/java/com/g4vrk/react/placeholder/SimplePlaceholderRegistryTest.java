@@ -24,6 +24,7 @@ class SimplePlaceholderRegistryTest {
 
     @Test
     void resolvesTagsWithQueries() {
+
         registry.register("vl", (target, query) -> target.name() + "=" + query);
         registry.register("broken", (target, query) -> {
             throw new IllegalStateException("boom");
@@ -35,15 +36,18 @@ class SimplePlaceholderRegistryTest {
         ));
 
         assertEquals("Steve=aim Steve= <react_broken> <react_none>", text);
+
     }
 
     @Test
     void validatesKeys() {
+
         registry.register("vl", (target, query) -> "");
 
         assertThrows(IllegalArgumentException.class, () -> registry.register("vl", (target, query) -> ""));
         assertThrows(IllegalArgumentException.class, () -> registry.register("Bad_Key", (target, query) -> ""));
         assertNull(registry.resolve(player, "missing", ""));
+
     }
 
     @Test

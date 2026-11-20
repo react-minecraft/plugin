@@ -23,6 +23,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
      * @return the header and the files; unreadable lines are skipped
      */
     public static @NotNull Checksums parse(final @NotNull String text) {
+
         final Map<String, String> header = new HashMap<>();
         final Map<String, String> files = new LinkedHashMap<>();
         for (final String raw : text.split("\\R")) {
@@ -43,6 +44,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
             }
         }
         return new Checksums(header, files);
+
     }
 
     /**
@@ -51,7 +53,9 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
      * @return the version, or {@code null}
      */
     public @Nullable String version() {
+
         return header.get("version");
+
     }
 
     /**
@@ -60,11 +64,13 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
      * @return the version, {@code 0} when the header has none
      */
     public int apiVersion() {
+
         try {
             return Integer.parseInt(header.getOrDefault("api-version", "0"));
         } catch (final NumberFormatException ex) {
             return 0;
         }
+
     }
 
     /**
@@ -74,6 +80,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
      * @return the file name with its SHA-256, or {@code null}
      */
     public @Nullable Map.Entry<String, String> jar(final @NotNull String prefix) {
+
         Map.Entry<String, String> only = null;
         int jars = 0;
         for (final Map.Entry<String, String> entry : files.entrySet()) {
@@ -87,6 +94,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
             jars++;
         }
         return jars == 1 ? only : null;
+
     }
 
 }

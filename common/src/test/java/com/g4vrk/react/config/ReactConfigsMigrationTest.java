@@ -19,6 +19,7 @@ class ReactConfigsMigrationTest {
 
     @Test
     void movesLegacyFormatsIntoActions(@TempDir final Path directory) throws Exception {
+
         copy("legacy/main-config.yml", directory.resolve("main-config.yml"));
         copy("legacy/actions.yml", directory.resolve("actions.yml"));
         Files.writeString(
@@ -46,10 +47,12 @@ class ReactConfigsMigrationTest {
         assertTrue(main.contains("external-addons:"));
         assertFalse(main.contains("official-addons:"));
         assertFalse(Files.readString(directory.resolve("actions.yml")).contains("verbose:"));
+
     }
 
     @Test
     void turnsBracePlaceholdersIntoTags(@TempDir final Path directory) throws Exception {
+
         copy("legacy/history.yml", directory.resolve("history.yml"));
 
         final ReactConfigs configs = new ReactConfigs(directory, "ru", NOPLogger.NOP_LOGGER);
@@ -67,12 +70,15 @@ class ReactConfigsMigrationTest {
         assertTrue(footer.contains("</next>"));
         assertFalse(footer.contains("click:"));
         assertFalse(Files.readString(directory.resolve("history.yml")).contains("{"));
+
     }
 
     private static void copy(final String resource, final Path target) throws IOException {
+
         try (InputStream in = ReactConfigsMigrationTest.class.getClassLoader().getResourceAsStream(resource)) {
             Files.copy(in, target);
         }
+
     }
 
 }

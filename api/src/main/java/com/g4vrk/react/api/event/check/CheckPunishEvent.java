@@ -28,9 +28,11 @@ public final class CheckPunishEvent extends CancellableEvent {
             final double violations,
             final @NotNull List<String> actions
     ) {
+
         this.check = check;
         this.violations = violations;
         this.actions = List.copyOf(actions);
+
     }
 
     /**
@@ -39,7 +41,9 @@ public final class CheckPunishEvent extends CancellableEvent {
      * @return the check
      */
     public @NotNull Check check() {
+
         return check;
+
     }
 
     /**
@@ -48,7 +52,9 @@ public final class CheckPunishEvent extends CancellableEvent {
      * @return the violation level
      */
     public double violations() {
+
         return violations;
+
     }
 
     /**
@@ -57,7 +63,9 @@ public final class CheckPunishEvent extends CancellableEvent {
      * @return the unmodifiable action lines
      */
     public @NotNull List<String> actions() {
+
         return actions;
+
     }
 
 }

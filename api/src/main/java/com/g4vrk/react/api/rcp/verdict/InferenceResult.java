@@ -37,7 +37,9 @@ public record InferenceResult(
     }
 
     public boolean hasThreshold() {
+
         return Double.isFinite(threshold);
+
     }
 
 }

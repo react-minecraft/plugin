@@ -22,6 +22,7 @@ public final class TimeParser {
     }
 
     public static @NotNull Duration parse(final @NotNull String input) {
+
         final Matcher matcher = PATTERN.matcher(input.trim().toLowerCase(Locale.ROOT));
 
         if (!matcher.matches()) {
@@ -39,9 +40,11 @@ public final class TimeParser {
         };
 
         return Duration.of(value, unit);
+
     }
 
     public static @NotNull String format(final @NotNull Duration duration) {
+
         if (duration.isNegative()) {
             throw new IllegalArgumentException("Duration cannot be negative: " + duration);
         }
@@ -64,6 +67,7 @@ public final class TimeParser {
             return duration.toSeconds() + "s";
         }
         return millis + "ms";
+
     }
 
 }

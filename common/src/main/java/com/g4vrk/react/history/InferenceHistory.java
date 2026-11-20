@@ -36,16 +36,20 @@ public final class InferenceHistory {
     private volatile long lastPrune = System.currentTimeMillis();
 
     public InferenceHistory(final @NotNull Duration retention) {
+
         this(retention, ignored -> {
         });
+
     }
 
     public InferenceHistory(
             final @NotNull Duration retention,
             final @NotNull Consumer<InferenceHistoryEntry> entrySink
     ) {
+
         this.retentionMillis = retention.toMillis();
         this.entrySink = entrySink;
+
     }
 
     /**
@@ -54,13 +58,16 @@ public final class InferenceHistory {
      * @return a number that grows with every change
      */
     public long revision() {
+
         this.pruneExpired();
         return this.revision;
+
     }
 
     public void add(
             final @NotNull InferenceHistoryEntry entry
     ) {
+
         this.lock.writeLock().lock();
         try {
             final long now = System.currentTimeMillis();
@@ -74,9 +81,11 @@ public final class InferenceHistory {
             this.lock.writeLock().unlock();
         }
         this.entrySink.accept(entry);
+
     }
 
     public void replace(final @NotNull Collection<InferenceHistoryEntry> loaded) {
+
         this.lock.writeLock().lock();
         try {
             this.entries.clear();
@@ -87,9 +96,11 @@ public final class InferenceHistory {
         } finally {
             this.lock.writeLock().unlock();
         }
+
     }
 
     public void merge(final @NotNull Collection<InferenceHistoryEntry> loaded) {
+
         this.lock.writeLock().lock();
         try {
             final Set<EntryIdentity> known = new HashSet<>(this.entries.size() + loaded.size());
@@ -107,9 +118,11 @@ public final class InferenceHistory {
         } finally {
             this.lock.writeLock().unlock();
         }
+
     }
 
     public void pruneBefore(final long cutoff) {
+
         this.lock.writeLock().lock();
         try {
             this.pruneUnsafe(cutoff);
@@ -117,11 +130,13 @@ public final class InferenceHistory {
         } finally {
             this.lock.writeLock().unlock();
         }
+
     }
 
     public @Nullable InferenceHistoryEntry get(
             final int index
     ) {
+
         this.pruneExpired();
         this.lock.readLock().lock();
         try {
@@ -129,9 +144,11 @@ public final class InferenceHistory {
         } finally {
             this.lock.readLock().unlock();
         }
+
     }
 
     public @NotNull InferenceHistoryEntry[] entries() {
+
         this.pruneExpired();
         this.lock.readLock().lock();
         try {
@@ -139,6 +156,7 @@ public final class InferenceHistory {
         } finally {
             this.lock.readLock().unlock();
         }
+
     }
 
     /**
@@ -147,6 +165,7 @@ public final class InferenceHistory {
      * @param action what to do with each probability, oldest first
      */
     public void forEachProbability(final @NotNull DoubleConsumer action) {
+
         this.pruneExpired();
         this.lock.readLock().lock();
         try {
@@ -156,9 +175,11 @@ public final class InferenceHistory {
         } finally {
             this.lock.readLock().unlock();
         }
+
     }
 
     public @Nullable InferenceHistoryEntry latest() {
+
         this.pruneExpired();
         this.lock.readLock().lock();
         try {
@@ -166,9 +187,11 @@ public final class InferenceHistory {
         } finally {
             this.lock.readLock().unlock();
         }
+
     }
 
     public int size() {
+
         this.pruneExpired();
         this.lock.readLock().lock();
         try {
@@ -176,9 +199,11 @@ public final class InferenceHistory {
         } finally {
             this.lock.readLock().unlock();
         }
+
     }
 
     public void clear() {
+
         this.lock.writeLock().lock();
         try {
             this.entries.clear();
@@ -186,15 +211,19 @@ public final class InferenceHistory {
         } finally {
             this.lock.writeLock().unlock();
         }
+
     }
 
     private void pruneUnsafe(final long cutoff) {
+
         if (this.entries.removeIf(entry -> entry.getTimestamp() < cutoff)) {
             this.revision++;
         }
+
     }
 
     private void pruneExpired() {
+
         final long now = System.currentTimeMillis();
 
         if (now - this.lastPrune < PRUNE_INTERVAL_MILLIS) {
@@ -211,15 +240,20 @@ public final class InferenceHistory {
         } finally {
             this.lock.writeLock().unlock();
         }
+
     }
 
     private record EntryIdentity(long timestamp, String check, long probability) {
+
         private static @NotNull EntryIdentity of(final @NotNull InferenceHistoryEntry entry) {
+
             return new EntryIdentity(
                     entry.getTimestamp(),
                     entry.getCheck().id(),
                     Double.doubleToLongBits(entry.getProbability())
             );
+
         }
+
     }
 }

@@ -10,6 +10,7 @@ public record PlayerStorageData(
         @NotNull List<StoredInference> inferenceHistory,
         @NotNull Map<String, Long> bypasses
 ) {
+
     public static final PlayerStorageData EMPTY = new PlayerStorageData(Map.of(), List.of(), Map.of());
 
     public PlayerStorageData {
@@ -17,4 +18,5 @@ public record PlayerStorageData(
         inferenceHistory = List.copyOf(inferenceHistory);
         bypasses = Map.copyOf(bypasses);
     }
+
 }

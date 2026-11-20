@@ -41,7 +41,9 @@ public final class RotationSample {
      * @return how many rotations it holds
      */
     public static int count(final float @NotNull [] samples) {
+
         return samples.length / STRIDE;
+
     }
 
     /**
@@ -70,7 +72,9 @@ public final class RotationSample {
      * @return the pitch, in degrees
      */
     public static float pitch(final float @NotNull [] samples, final int index) {
+
         return value(samples, index, PITCH);
+
     }
 
     /**
@@ -81,7 +85,9 @@ public final class RotationSample {
      * @return the yaw, in degrees
      */
     public static float yaw(final float @NotNull [] samples, final int index) {
+
         return value(samples, index, YAW);
+
     }
 
     /**
@@ -92,7 +98,9 @@ public final class RotationSample {
      * @return the change since the previous rotation, in degrees
      */
     public static float deltaPitch(final float @NotNull [] samples, final int index) {
+
         return value(samples, index, DELTA_PITCH);
+
     }
 
     /**
@@ -103,7 +111,9 @@ public final class RotationSample {
      * @return the change since the previous rotation, in degrees
      */
     public static float deltaYaw(final float @NotNull [] samples, final int index) {
+
         return value(samples, index, DELTA_YAW);
+
     }
 
 }

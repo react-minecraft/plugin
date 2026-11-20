@@ -37,21 +37,26 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
             final @NotNull BooleanSupplier notify,
             final @NotNull Supplier<Iterable<UpdateDownloadedEvent>> pending
     ) {
+
         this.events = events;
         this.parser = parser;
         this.notify = notify;
         this.pending = pending;
         this.onReload(config);
+
     }
 
     @Override
     public void onReload(final @NotNull ActionsConfig config) {
+
         this.plugin = parser.parseAll(config.updates().plugin());
         this.extension = parser.parseAll(config.updates().extension());
+
     }
 
     @Override
     public void accept(final @NotNull UpdateDownloadedEvent event) {
+
         events.post(event);
         if (!notify.getAsBoolean()) {
             return;
@@ -59,6 +64,7 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
         for (final Audience recipient : BuiltinChannels.ALERTS.recipients()) {
             send(recipient, event);
         }
+
     }
 
     /**
@@ -67,15 +73,18 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
      * @param player the player
      */
     public void join(final @NotNull Player player) {
+
         if (!notify.getAsBoolean() || !player.hasPermission(Permissions.NOTIFY_UPDATE)) {
             return;
         }
         for (final UpdateDownloadedEvent event : pending.get()) {
             send(player, event);
         }
+
     }
 
     private void send(final @NotNull Audience audience, final @NotNull UpdateDownloadedEvent event) {
+
         final ExecutableActionList<? super Audience> actions =
                 event.kind() == UpdateDownloadedEvent.Kind.PLUGIN ? plugin : extension;
         actions.run(
@@ -84,6 +93,7 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
                         .replace("<name>", event.name())
                         .replace("<version>", event.version())
         );
+
     }
 
 }

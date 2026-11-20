@@ -26,27 +26,39 @@ public final class InferenceStatistic {
     private Result cached = Result.EMPTY;
 
     public InferenceStatistic(final @NotNull InferenceHistory history) {
+
         this.history = history;
+
     }
 
     public int size() {
+
         return this.history.size();
+
     }
 
     public double averageProbability() {
+
         return this.calculate().averageProbability();
+
     }
 
     public double maxProbability() {
+
         return this.calculate().maxProbability();
+
     }
 
     public double minProbability() {
+
         return this.calculate().minProbability();
+
     }
 
     public @Nullable InferenceHistoryEntry latest() {
+
         return this.history.latest();
+
     }
 
     /**
@@ -55,6 +67,7 @@ public final class InferenceStatistic {
      * @return the statistic of the whole history
      */
     public synchronized @NotNull Result calculate() {
+
         final long revision = this.history.revision();
 
         if (revision == this.cachedRevision) {
@@ -80,9 +93,11 @@ public final class InferenceStatistic {
         this.cachedRevision = revision;
 
         return result;
+
     }
 
     private void accept(final double probability) {
+
         this.accumulator[0] += probability;
         this.accumulator[3]++;
 
@@ -93,6 +108,7 @@ public final class InferenceStatistic {
         if (probability < this.accumulator[2]) {
             this.accumulator[2] = probability;
         }
+
     }
 
     /**

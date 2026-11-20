@@ -10,6 +10,8 @@ public final class ProbabilityFormatter {
     }
 
     public static String format(final double probability) {
+
         return BigDecimal.valueOf(probability).stripTrailingZeros().toPlainString();
+
     }
 }

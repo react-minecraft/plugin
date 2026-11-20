@@ -28,5 +28,6 @@ public final class StorageBackendFactory {
             case MONGODB -> new MongoStorageBackend(Objects.requireNonNull(settings.mongo()));
             case H2, MYSQL, SQLITE -> new JdbcStorageBackend(settings.type(), Objects.requireNonNull(settings.jdbc()));
         };
+
     }
 }

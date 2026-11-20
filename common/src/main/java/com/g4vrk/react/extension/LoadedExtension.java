@@ -42,6 +42,7 @@ public final class LoadedExtension {
             final @NotNull ScopedEnvironment environment,
             final @NotNull Object instance
     ) {
+
         this.context = context;
         this.descriptor = descriptor;
         this.classLoader = classLoader;
@@ -49,6 +50,7 @@ public final class LoadedExtension {
         this.services = services;
         this.environment = environment;
         this.instance = instance;
+
     }
 
     /**
@@ -68,6 +70,7 @@ public final class LoadedExtension {
             final @NotNull ExtensionPlan plan,
             final @NotNull Map<ExtensionId, LoadedExtension> dependencies
     ) throws Exception {
+
         final Path directory = ExtensionDataDirectory.resolve(context, descriptor);
 
         final ExtensionClassLoader classLoader = new ExtensionClassLoader(
@@ -113,6 +116,7 @@ public final class LoadedExtension {
             }
             throw failure instanceof Exception exception ? exception : new IllegalStateException(failure);
         }
+
     }
 
     ExtensionPlan plan() {
@@ -137,6 +141,7 @@ public final class LoadedExtension {
             final @NotNull Class<?> mainClass,
             final @NotNull RCPEnvironment environment
     ) throws Exception {
+
         if (!RCPLifecycle.class.isAssignableFrom(mainClass)) {
             throw new InvalidExtensionException(mainClass.getName() + " does not implement RCPLifecycle");
         }
@@ -144,20 +149,25 @@ public final class LoadedExtension {
             return (RCPLifecycle) mainClass.getConstructor(RCPEnvironment.class).newInstance(environment);
         }
         return (RCPLifecycle) mainClass.getConstructor().newInstance();
+
     }
 
     private static @NotNull JavaAddon createAddon(final @NotNull Class<?> mainClass) throws Exception {
+
         if (!JavaAddon.class.isAssignableFrom(mainClass)) {
             throw new InvalidExtensionException(mainClass.getName() + " does not extend JavaAddon");
         }
         return (JavaAddon) mainClass.getConstructor().newInstance();
+
     }
 
     private static void release(final @NotNull RCPHost host, final @NotNull ScopedEnvironment environment) {
+
         if (environment instanceof HostedRCPEnvironment rcp) {
             host.detach(rcp);
         }
         environment.close();
+
     }
 
     /**
@@ -166,7 +176,9 @@ public final class LoadedExtension {
      * @return the descriptor
      */
     public @NotNull ExtensionDescriptor descriptor() {
+
         return descriptor;
+
     }
 
     /**
@@ -175,7 +187,9 @@ public final class LoadedExtension {
      * @return the environment
      */
     public @NotNull ScopedEnvironment environment() {
+
         return environment;
+
     }
 
     /**
@@ -184,10 +198,13 @@ public final class LoadedExtension {
      * @return the state
      */
     public boolean enabled() {
+
         return enabled;
+
     }
 
     void enable() throws Exception {
+
         if (enabled) {
             return;
         }
@@ -201,12 +218,15 @@ public final class LoadedExtension {
             withContextLoader(classLoader, ((RCPLifecycle) instance)::onEnable);
             services.publish();
         }
+
     }
 
     void reload() throws Exception {
+
         if (enabled && instance instanceof RCPLifecycle lifecycle) {
             withContextLoader(classLoader, lifecycle::onReload);
         }
+
     }
 
     @NotNull CompletableFuture<Void> prepareDisable() {
@@ -238,6 +258,7 @@ public final class LoadedExtension {
      * Failures are logged, the cleanup always runs.
      */
     void close() {
+
         try {
             if (enabled) {
                 enabled = false;
@@ -259,9 +280,11 @@ public final class LoadedExtension {
                 environment.logger().warn("Could not close the class loader of {}", descriptor.name(), failure);
             }
         }
+
     }
 
     private static void withContextLoader(final @NotNull ClassLoader loader, final @NotNull Action action) throws Exception {
+
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
@@ -270,6 +293,7 @@ public final class LoadedExtension {
         } finally {
             thread.setContextClassLoader(previous);
         }
+
     }
 
     @FunctionalInterface
@@ -281,7 +305,9 @@ public final class LoadedExtension {
 
     @Override
     public String toString() {
+
         return descriptor.kind().displayName() + " " + descriptor.name() + " v" + descriptor.version();
+
     }
 
 }

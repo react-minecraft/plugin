@@ -170,6 +170,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
      * @return {@code true} when the key is usable
      */
     static boolean isValid(final @NotNull String key) {
+
         final int length = key.length();
 
         if (length == 0) {
@@ -185,6 +186,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
         }
 
         return true;
+
     }
 
     /**

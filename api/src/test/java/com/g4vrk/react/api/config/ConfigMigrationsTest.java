@@ -15,6 +15,7 @@ class ConfigMigrationsTest {
 
     @Test
     void legacyFileRunsEveryStepInOrder() throws SerializationException {
+
         final List<Integer> ran = new ArrayList<>();
         final ConfigMigrationChain chain = ConfigMigrationChain.builder()
                 .step(root -> ran.add(1))
@@ -32,10 +33,12 @@ class ConfigMigrationsTest {
         assertEquals("value", root.node("renamed").getString());
         assertEquals(true, root.node("old").virtual());
         assertEquals(2, ConfigMigrationChain.version(root));
+
     }
 
     @Test
     void stepsAlreadySeenAreSkipped() throws SerializationException {
+
         final List<Integer> ran = new ArrayList<>();
         final ConfigMigrationChain chain = ConfigMigrationChain.builder()
                 .step(root -> ran.add(1))
@@ -48,27 +51,34 @@ class ConfigMigrationsTest {
         assertEquals(1, chain.apply(root));
         assertEquals(List.of(2, 3), ran);
         assertEquals(3, ConfigMigrationChain.version(root));
+
     }
 
     @Test
     void currentFileIsLeftAlone() throws SerializationException {
+
         final ConfigurationNode root = BasicConfigurationNode.root();
         root.node(ConfigMigrationChain.VERSION_KEY).set(1);
 
         assertEquals(-1, ConfigMigrationChain.none().apply(root));
+
     }
 
     @Test
     void newerFileIsRejected() throws SerializationException {
+
         final ConfigurationNode root = BasicConfigurationNode.root();
         root.node(ConfigMigrationChain.VERSION_KEY).set(5);
 
         assertThrows(SerializationException.class, () -> ConfigMigrationChain.none().apply(root));
+
     }
 
     @Test
     void emptyChainIsRefused() {
+
         assertThrows(IllegalStateException.class, () -> ConfigMigrationChain.builder().build());
+
     }
 
 }

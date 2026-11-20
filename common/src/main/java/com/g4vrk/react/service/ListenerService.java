@@ -39,8 +39,10 @@ public final class ListenerService {
     private ReactPlaceholderExpansion placeholders;
 
     public ListenerService(final @NotNull Plugin plugin, final @NotNull Logger logger) {
+
         this.plugin = plugin;
         this.logger = logger;
+
     }
 
     public void register(
@@ -51,6 +53,7 @@ public final class ListenerService {
             final @NotNull RCPHost host,
             final @NotNull Consumer<Player> onJoin
     ) {
+
         logger.info("Registering packet listeners...");
         this.packetListeners = new PacketListenerCommon[]{
                 new RotationListener(playerRegistry, new RotationProcessor())
@@ -98,19 +101,25 @@ public final class ListenerService {
             );
             placeholders.register();
         }
+
     }
 
     public @NotNull CombatListener combat() {
+
         return combat;
+
     }
 
     public void reload() {
+
         if (combat != null) {
             combat.reload();
         }
+
     }
 
     public void close() {
+
         try {
             if (packetListeners.length > 0) {
                 logger.info("Unregistering listeners...");
@@ -139,6 +148,7 @@ public final class ListenerService {
         } catch (final Exception ex) {
             logger.error("Could not clear channel recipients", ex);
         }
+
     }
 
 }

@@ -36,23 +36,30 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
             final @NotNull Path directory,
             final @NotNull ClassLoader classLoader
     ) {
+
         super(context, descriptor, directory, classLoader);
         this.host = context.rcpHost();
         this.metadata = descriptor.rcpMetadata();
+
     }
 
     @Override
     public @NotNull RCPMetadata metadata() {
+
         return metadata;
+
     }
 
     @Override
     public @NotNull RCPPlayerRegistry players() {
+
         return host;
+
     }
 
     @Override
     public void fire(final @NotNull RCPPlayer player, final @NotNull InferenceResult result) {
+
         Objects.requireNonNull(result, "result");
         if (closed || !(player instanceof TrackedPlayerImpl reactPlayer)) {
             return;
@@ -66,21 +73,26 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
                 reactPlayer.applyInference(generation, result);
             }
         }, TickSchedule.instant());
+
     }
 
     @Override
     public synchronized void listen(final @NotNull RCPPlayerListener listener) {
+
         if (closed) {
             throw new IllegalStateException("RCP '" + name() + "' is disabled");
         }
         final List<RCPPlayerListener> updated = new ArrayList<>(playerListeners);
         updated.add(Objects.requireNonNull(listener, "listener"));
         playerListeners = List.copyOf(updated);
+
     }
 
     @Override
     public void status(final @Nullable String status) {
+
         this.status = status;
+
     }
 
     /**
@@ -89,7 +101,9 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
      * @return the status, or {@code null} once the RCP is disabled or when it set none
      */
     public @Nullable String currentStatus() {
+
         return closed ? null : status;
+
     }
 
     /**
@@ -98,15 +112,19 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
      * @return a live view of the listeners
      */
     public @NotNull List<RCPPlayerListener> playerListeners() {
+
         return playerListeners;
+
     }
 
     @Override
     public synchronized void close() {
+
         closed = true;
         playerListeners = List.of();
         status = null;
         super.close();
+
     }
 
 }

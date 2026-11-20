@@ -37,9 +37,11 @@ public final class UpdateDownloadedEvent extends Event {
             final @NotNull String name,
             final @NotNull String version
     ) {
+
         this.kind = kind;
         this.name = name;
         this.version = version;
+
     }
 
     /**
@@ -48,7 +50,9 @@ public final class UpdateDownloadedEvent extends Event {
      * @return what was updated
      */
     public @NotNull Kind kind() {
+
         return kind;
+
     }
 
     /**
@@ -57,7 +61,9 @@ public final class UpdateDownloadedEvent extends Event {
      * @return the name
      */
     public @NotNull String name() {
+
         return name;
+
     }
 
     /**
@@ -66,7 +72,9 @@ public final class UpdateDownloadedEvent extends Event {
      * @return the downloaded version
      */
     public @NotNull String version() {
+
         return version;
+
     }
 
 }

@@ -32,10 +32,12 @@ public final class PlayerBypassEvent extends CancellableEvent {
             final @Nullable Instant until,
             final boolean granted
     ) {
+
         this.uniqueId = uniqueId;
         this.check = check;
         this.until = until;
         this.granted = granted;
+
     }
 
     /**
@@ -44,7 +46,9 @@ public final class PlayerBypassEvent extends CancellableEvent {
      * @return the player unique id
      */
     public @NotNull UUID uniqueId() {
+
         return uniqueId;
+
     }
 
     /**
@@ -53,7 +57,9 @@ public final class PlayerBypassEvent extends CancellableEvent {
      * @return the check id, or {@code null} for every check
      */
     public @Nullable String check() {
+
         return check;
+
     }
 
     /**
@@ -62,7 +68,9 @@ public final class PlayerBypassEvent extends CancellableEvent {
      * @return the end, or {@code null} when it never ends
      */
     public @Nullable Instant until() {
+
         return until;
+
     }
 
     /**
@@ -71,7 +79,9 @@ public final class PlayerBypassEvent extends CancellableEvent {
      * @return whether the bypass is given
      */
     public boolean granted() {
+
         return granted;
+
     }
 
 }

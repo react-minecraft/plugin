@@ -26,20 +26,26 @@ public final class PlayerFactory implements ReloadObserver<MainConfig> {
             final @NotNull String name,
             final @NotNull Player bukkitPlayer
     ) {
+
         if (!checkBedrockPlayers && PlayerPlatformUtil.bedrockPlayer(uniqueId)) {
             return null;
         }
 
         return new TrackedPlayerImpl(uniqueId, name, bukkitPlayer);
+
     }
 
     public void reload() {
+
         this.onReload(React.INSTANCE.configs().main());
+
     }
 
     @Override
     public void onReload(final @NotNull MainConfig config) {
+
         this.checkBedrockPlayers = config.player().checkBedrockPlayers();
+
     }
 
 }

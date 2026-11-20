@@ -38,32 +38,42 @@ public final class ReactPlaceholderExpansion extends PlaceholderExpansion {
             final @NotNull PlaceholderRegistry placeholders,
             final @NotNull Function<OfflinePlayer, String> selectedModel
     ) {
+
         this.id = id;
         this.author = author;
         this.version = version;
         this.registry = registry;
         this.placeholders = placeholders;
         this.selectedModel = selectedModel;
+
     }
 
     @Override
     public @NotNull String getIdentifier() {
+
         return id;
+
     }
 
     @Override
     public @NotNull String getAuthor() {
+
         return author;
+
     }
 
     @Override
     public @NotNull String getVersion() {
+
         return version;
+
     }
 
     @Override
     public boolean persist() {
+
         return true;
+
     }
 
 
@@ -170,5 +180,6 @@ public final class ReactPlaceholderExpansion extends PlaceholderExpansion {
 
             default -> null;
         };
+
     }
 }

@@ -8,7 +8,9 @@ public final class NoDecay implements DecayStrategy {
     public double decay(
             final double violations
     ) {
+
         return violations;
+
     }
 
 }

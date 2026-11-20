@@ -22,6 +22,7 @@ class SimpleEventBusTest {
 
     @Test
     void runsHandlersByPriorityThenOrder() {
+
         final List<String> calls = new ArrayList<>();
 
         bus.subscribe(TestEvent.class, EventPriority.HIGH, false, event -> calls.add("high"));
@@ -32,10 +33,12 @@ class SimpleEventBusTest {
         bus.post(new TestEvent());
 
         assertEquals(List.of("lowest", "normal-1", "normal-2", "high"), calls);
+
     }
 
     @Test
     void skipsCancelledEventsWhenAsked() {
+
         final List<String> calls = new ArrayList<>();
 
         bus.subscribe(TestEvent.class, EventPriority.LOW, false, event -> event.cancelled(true));
@@ -44,10 +47,12 @@ class SimpleEventBusTest {
 
         assertTrue(bus.post(new TestEvent()).cancelled());
         assertEquals(List.of("monitor"), calls);
+
     }
 
     @Test
     void keepsPostingAfterAFailingHandler() {
+
         final List<String> calls = new ArrayList<>();
 
         bus.subscribe(TestEvent.class, event -> {
@@ -58,10 +63,12 @@ class SimpleEventBusTest {
         bus.post(new TestEvent());
 
         assertEquals(List.of("after"), calls);
+
     }
 
     @Test
     void removesHandlers() {
+
         final List<String> calls = new ArrayList<>();
         final Listener listener = new Listener(calls);
 
@@ -75,6 +82,7 @@ class SimpleEventBusTest {
         bus.post(new TestEvent());
 
         assertEquals(List.of("listener", "lambda"), calls);
+
     }
 
     @Test
@@ -162,7 +170,9 @@ class SimpleEventBusTest {
 
         @Subscribe
         void on(final TestEvent event) {
+
             calls.add("listener");
+
         }
 
     }

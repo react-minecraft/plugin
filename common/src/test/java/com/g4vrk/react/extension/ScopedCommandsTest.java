@@ -24,6 +24,7 @@ class ScopedCommandsTest {
 
     @Test
     void removesOnlyOwnSubcommandsUnderSharedRoot() {
+
         manager.command(manager.commandBuilder("react", "ac").literal("reload").handler(context -> { }));
         final ScopedCommands rcp = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "rcp", commandsChanged);
         final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
@@ -35,19 +36,23 @@ class ScopedCommandsTest {
         assertEquals(List.of("punish", "reload"), literals());
         assertTrue(manager.commandTree().getNamedNode("react").component().aliases().contains("ac"));
         assertFalse(rcp.unregister("react"));
+
     }
 
     @Test
     void removesOwnRoot() {
+
         final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
         addon.register("punish", addon.command("punish").handler(context -> { }));
 
         assertTrue(addon.unregister("punish"));
         assertFalse(manager.rootCommands().contains("punish"));
+
     }
 
     @Test
     void rejectsMismatchedLabelAndClosedScope() {
+
         final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
         assertThrows(
                 IllegalArgumentException.class,
@@ -58,25 +63,32 @@ class ScopedCommandsTest {
                 IllegalStateException.class,
                 () -> addon.register("punish", addon.command("punish").handler(context -> { }))
         );
+
     }
 
     private List<String> literals() {
+
         return manager.commands().stream()
                 .filter(command -> command.rootComponent().name().equals("react"))
                 .map(command -> command.components().get(1).name())
                 .sorted()
                 .toList();
+
     }
 
     private static final class TestManager extends CommandManager<CommandSender> {
         TestManager() {
+
             super(ExecutionCoordinator.simpleCoordinator(), CommandRegistrationHandler.nullCommandRegistrationHandler());
             registerCapability(CloudCapability.StandardCapabilities.ROOT_COMMAND_DELETION);
+
         }
 
         @Override
         public boolean hasPermission(final CommandSender sender, final String permission) {
+
             return true;
+
         }
     }
 }

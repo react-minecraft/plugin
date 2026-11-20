@@ -72,7 +72,9 @@ public final class ReleaseClient {
             .build();
 
     public ReleaseClient(final @NotNull Logger logger) {
+
         this.logger = logger;
+
     }
 
     /**
@@ -89,8 +91,10 @@ public final class ReleaseClient {
          * @return the version, {@code ?} when the header has none
          */
         public @NotNull String version() {
+
             final String version = checksums.version();
             return version == null ? "?" : version;
+
         }
 
     }
@@ -112,6 +116,7 @@ public final class ReleaseClient {
             final @NotNull UpdateChannel channel,
             final @Nullable String pinned
     ) throws IOException, InterruptedException, VerificationException {
+
         if (!REPOSITORY.matcher(repository).matches()) {
             throw new VerificationException("bad repository name " + repository);
         }
@@ -134,6 +139,7 @@ public final class ReleaseClient {
         }
         logger.warn("React RCP {} was revoked, using {} instead", release.version(), fallback);
         return signed(releases + "download/v" + fallback + "/");
+
     }
 
     /**
@@ -152,6 +158,7 @@ public final class ReleaseClient {
             final Map.@NotNull Entry<String, String> jar,
             final @NotNull Path target
     ) throws IOException, InterruptedException, VerificationException {
+
         Files.createDirectories(target.toAbsolutePath().getParent());
         final Path part = Files.createTempFile(target.toAbsolutePath().getParent(), target.getFileName() + ".", ".part");
         try {
@@ -168,6 +175,7 @@ public final class ReleaseClient {
             }
             throw failure;
         }
+
     }
 
     /**
@@ -179,6 +187,7 @@ public final class ReleaseClient {
      * @throws IOException when the file cannot be read
      */
     public static boolean matches(final @NotNull Path file, final @NotNull String sha256) throws IOException {
+
         if (Files.notExists(file)) {
             return false;
         }
@@ -188,6 +197,7 @@ public final class ReleaseClient {
         } catch (final IllegalArgumentException ex) {
             return false;
         }
+
     }
 
     private @NotNull Release signed(final @NotNull String base)
@@ -198,6 +208,7 @@ public final class ReleaseClient {
     }
 
     private @NotNull Map<String, String> revokedVersions() {
+
         try {
             final JsonElement revoked = JsonParser.parseString(new String(get(REVOKED_URL), StandardCharsets.UTF_8))
                     .getAsJsonObject().get("revoked");
@@ -218,9 +229,11 @@ public final class ReleaseClient {
             Thread.currentThread().interrupt();
             return Map.of();
         }
+
     }
 
     private byte[] get(final @NotNull String url) throws IOException, InterruptedException {
+
         final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(TIMEOUT)
                 .header("User-Agent", "React-Updater")
@@ -231,9 +244,11 @@ public final class ReleaseClient {
             throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
         return response.body();
+
     }
 
     private void get(final @NotNull String url, final @NotNull Path target) throws IOException, InterruptedException {
+
         final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(TIMEOUT)
                 .header("User-Agent", "React-Updater")
@@ -243,6 +258,7 @@ public final class ReleaseClient {
         if (response.statusCode() != 200) {
             throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
+
     }
 
     private <T> @NotNull HttpResponse<T> send(
@@ -251,6 +267,7 @@ public final class ReleaseClient {
             final long limit,
             final @NotNull Duration timeout
     ) throws IOException, InterruptedException {
+
         final CompletableFuture<HttpResponse<T>> future = http.sendAsync(request, ignored -> new LimitedBodySubscriber<>(body, limit));
         try {
             return future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
@@ -263,6 +280,7 @@ public final class ReleaseClient {
         } catch (final ExecutionException failure) {
             throw new IOException("HTTP response failed", failure.getCause());
         }
+
     }
 
     private static final class LimitedBodySubscriber<T> implements HttpResponse.BodySubscriber<T> {
@@ -273,23 +291,30 @@ public final class ReleaseClient {
         private Flow.Subscription subscription;
 
         private LimitedBodySubscriber(final HttpResponse.@NotNull BodySubscriber<T> delegate, final long limit) {
+
             this.delegate = delegate;
             this.limit = limit;
+
         }
 
         @Override
         public @NotNull CompletionStage<T> getBody() {
+
             return delegate.getBody();
+
         }
 
         @Override
         public void onSubscribe(final Flow.@NotNull Subscription subscription) {
+
             this.subscription = subscription;
             delegate.onSubscribe(subscription);
+
         }
 
         @Override
         public void onNext(final @NotNull List<ByteBuffer> buffers) {
+
             for (final ByteBuffer buffer : buffers) {
                 received += buffer.remaining();
                 if (received > limit) {
@@ -299,21 +324,27 @@ public final class ReleaseClient {
                 }
             }
             delegate.onNext(buffers);
+
         }
 
         @Override
         public void onError(final @NotNull Throwable failure) {
+
             delegate.onError(failure);
+
         }
 
         @Override
         public void onComplete() {
+
             delegate.onComplete();
+
         }
 
     }
 
     private static byte[] digest(final @NotNull Path file) throws IOException {
+
         final MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-256");
@@ -329,9 +360,11 @@ public final class ReleaseClient {
             }
         }
         return digest.digest();
+
     }
 
     private static void verifySignature(final byte[] data, final byte[] signatureText) throws VerificationException {
+
         final boolean valid;
         try {
             final PublicKey key = KeyFactory.getInstance("Ed25519")
@@ -346,6 +379,7 @@ public final class ReleaseClient {
         if (!valid) {
             throw new VerificationException("bad ed25519 signature on " + CHECKSUMS);
         }
+
     }
 
     /**
@@ -354,7 +388,9 @@ public final class ReleaseClient {
     public static final class VerificationException extends Exception {
 
         public VerificationException(final @NotNull String message) {
+
             super(message);
+
         }
 
     }

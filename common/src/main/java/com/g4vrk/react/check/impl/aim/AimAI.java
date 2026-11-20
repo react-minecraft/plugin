@@ -31,7 +31,9 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
     private DecayStrategy decayStrategy;
 
     public AimAI(final @NotNull TrackedPlayerImpl player) {
+
         super(player);
+
     }
 
     @Override
@@ -44,18 +46,23 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         if (host != null) {
             host.reload(player);
         }
+
     }
 
     @Override
     public @NotNull DecayStrategy decayStrategy() {
+
         return this.decayStrategy;
+
     }
 
     public void onRotation(final float @NotNull [] sample) {
+
         final RCPHost host = React.INSTANCE.rcpHost();
         if (host != null && player.dataReady() && !player.rotationBypassed(id())) {
             host.rotation(player, sample);
         }
+
     }
 
     public void onResult(final @NotNull InferenceResult result) {
@@ -87,6 +94,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         player.inferenceHistory.add(entry);
 
         React.INSTANCE.events().post(new InferenceResultEvent(this, probability, entry.getTimestamp()));
+
     }
 
 }

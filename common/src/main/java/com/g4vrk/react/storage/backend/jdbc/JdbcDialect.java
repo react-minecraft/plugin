@@ -56,34 +56,46 @@ public enum JdbcDialect {
             final @NotNull String inferenceInsert,
             final @NotNull String bypassUpsert
     ) {
+
         this.schemaStatements = schemaStatements;
         this.violationUpsert = violationUpsert;
         this.inferenceInsert = inferenceInsert;
         this.bypassUpsert = bypassUpsert;
+
     }
 
     public static @NotNull JdbcDialect forType(final @NotNull DatabaseType type) {
+
         return switch (type) {
             case SQLITE -> SQLITE;
             case H2 -> H2;
             case MYSQL -> MYSQL;
             case MONGODB -> throw new IllegalArgumentException("MongoDB has no JDBC dialect");
         };
+
     }
 
     public @NotNull List<String> schemaStatements() {
+
         return schemaStatements;
+
     }
 
     public @NotNull String violationUpsert() {
+
         return violationUpsert;
+
     }
 
     public @NotNull String inferenceInsert() {
+
         return inferenceInsert;
+
     }
 
     public @NotNull String bypassUpsert() {
+
         return bypassUpsert;
+
     }
 }

@@ -12,12 +12,16 @@ public abstract class CancellableEvent extends Event implements Cancellable {
 
     @Override
     public boolean cancelled() {
+
         return cancelled;
+
     }
 
     @Override
     public void cancelled(final boolean cancelled) {
+
         this.cancelled = cancelled;
+
     }
 
 }

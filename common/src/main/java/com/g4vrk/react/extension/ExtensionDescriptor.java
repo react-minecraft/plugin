@@ -59,6 +59,7 @@ public record ExtensionDescriptor(
             final @NotNull ExtensionKind kind,
             final @NotNull Path jar
     ) throws IOException, InvalidExtensionException {
+
         final ConfigurationNode root;
 
         try (FileSystem fileSystem = FileSystems.newFileSystem(jar, (ClassLoader) null)) {
@@ -97,6 +98,7 @@ public record ExtensionDescriptor(
                 root.node("contributors").virtual() ? null : root.node("contributors").getList(String.class),
                 repository == null ? null : new GitHubSource(repository, github.node("updatable").getBoolean(true))
         );
+
     }
 
     private static @NotNull String required(
@@ -104,11 +106,13 @@ public record ExtensionDescriptor(
             final @NotNull ConfigurationNode root,
             final @NotNull String key
     ) throws InvalidExtensionException {
+
         final String value = root.node(key).getString();
         if (value == null || value.isBlank()) {
             throw new InvalidExtensionException(jar.getFileName() + " has no '" + key + "' in its metadata");
         }
         return value;
+
     }
 
     /**
@@ -117,7 +121,9 @@ public record ExtensionDescriptor(
      * @return the RCP metadata
      */
     public @NotNull RCPMetadata rcpMetadata() {
+
         return new RCPMetadata(name, version, mainClass, apiVersion, github);
+
     }
 
     /**
@@ -126,7 +132,9 @@ public record ExtensionDescriptor(
      * @return the addon metadata
      */
     public @NotNull AddonMetadata addonMetadata() {
+
         return new AddonMetadata(name, version, mainClass, apiVersion, description, authors, contributors, github);
+
     }
 
 }

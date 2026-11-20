@@ -24,18 +24,23 @@ public final class DebugActions implements ReportChannel.Delivery {
     private volatile Map<String, ExecutableActionList<? super Audience>> actions = Map.of();
 
     public DebugActions(final @NotNull ActionParser<Audience> parser, final @NotNull Map<String, CheckConfig> checks) {
+
         this.parser = parser;
         this.checks(checks);
+
     }
 
     public void checks(final @NotNull Map<String, CheckConfig> checks) {
+
         final Map<String, ExecutableActionList<? super Audience>> parsed = new Object2ObjectOpenHashMap<>(checks.size());
         checks.forEach((id, config) -> parsed.put(id, parser.parseAll(config.debug())));
         this.actions = parsed;
+
     }
 
     @Override
     public void deliver(final @NotNull Audience recipient, final @NotNull CheckReport report) {
+
         final ExecutableActionList<? super Audience> list = this.actions.get(report.checkId());
         if (list == null) {
             return;
@@ -51,6 +56,7 @@ public final class DebugActions implements ReportChannel.Delivery {
                         .replace("<vl>", violations)
                         .replace("<details>", report.details())
         );
+
     }
 
 }

@@ -20,7 +20,9 @@ public record ComponentSettings(boolean enabled, UpdateChannel channel, String p
      * @return the channel
      */
     public @NotNull UpdateChannel effectiveChannel() {
+
         return channel == null ? UpdateChannel.RELEASE : channel;
+
     }
 
     /**
@@ -29,7 +31,9 @@ public record ComponentSettings(boolean enabled, UpdateChannel channel, String p
      * @return the version, or {@code null} when none is pinned
      */
     public @Nullable String pinned() {
+
         return pinnedVersion == null || pinnedVersion.isBlank() ? null : pinnedVersion.strip();
+
     }
 
 }

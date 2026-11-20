@@ -25,6 +25,7 @@ public final class DurationSerializer implements TypeSerializer<Duration> {
 
     @Override
     public Duration deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
+
         final String raw = node.getString();
         if (raw == null) {
             throw new SerializationException(node, type, "Missing time value");
@@ -34,6 +35,7 @@ public final class DurationSerializer implements TypeSerializer<Duration> {
         } catch (final IllegalArgumentException | ArithmeticException ex) {
             throw new SerializationException(node, type, ex.getMessage());
         }
+
     }
 
     @Override

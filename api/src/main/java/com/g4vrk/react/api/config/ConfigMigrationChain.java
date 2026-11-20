@@ -30,8 +30,10 @@ public final class ConfigMigrationChain {
     private final int latest;
 
     private ConfigMigrationChain(final @NotNull List<ConfigMigration> steps, final int latest) {
+
         this.steps = steps;
         this.latest = latest;
+
     }
 
     /**
@@ -39,19 +41,27 @@ public final class ConfigMigrationChain {
      * Its only step stamps version {@code 1} on legacy files.
      */
     public static @NotNull ConfigMigrationChain none() {
+
         return NONE;
+
     }
 
     public static @NotNull Builder builder() {
+
         return new Builder();
+
     }
 
     public int latest() {
+
         return latest;
+
     }
 
     public static int version(final @NotNull ConfigurationNode root) {
+
         return root.node(VERSION_KEY).getInt(LEGACY_VERSION);
+
     }
 
     /**
@@ -60,6 +70,7 @@ public final class ConfigMigrationChain {
      * @return the version the file had before, or {@code -1} if it was already current
      */
     int apply(final @NotNull ConfigurationNode root) throws SerializationException {
+
         final ConfigurationNode versionNode = root.node(VERSION_KEY);
         if (!versionNode.virtual()) {
             final Object raw = versionNode.raw();
@@ -96,6 +107,7 @@ public final class ConfigMigrationChain {
         }
         root.node(VERSION_KEY).set(latest);
         return current;
+
     }
 
     public static final class Builder {
@@ -109,15 +121,19 @@ public final class ConfigMigrationChain {
          * Adds the step that produces the next version. The first call produces version {@code 1}.
          */
         public @NotNull Builder step(final @NotNull ConfigMigration migration) {
+
             steps.add(migration);
             return this;
+
         }
 
         public @NotNull ConfigMigrationChain build() {
+
             if (steps.isEmpty()) {
                 throw new IllegalStateException("A migration chain needs at least the step to version 1");
             }
             return new ConfigMigrationChain(List.copyOf(steps), steps.size());
+
         }
 
     }

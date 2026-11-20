@@ -49,13 +49,16 @@ public final class JdbcStorageBackend implements StorageBackend {
             final @NotNull DatabaseType type,
             final @NotNull JdbcSettings settings
     ) {
+
         this.dialect = JdbcDialect.forType(type);
         this.dataSource = new HikariDataSource(hikariConfig(type, settings));
         this.executor = new JdbcExecutor(dataSource);
+
     }
 
     @Override
     public void initialize() throws Exception {
+
         executor.transaction(connection -> {
             try (final Statement statement = connection.createStatement()) {
                 for (final String sql : dialect.schemaStatements()) {
@@ -65,9 +68,11 @@ public final class JdbcStorageBackend implements StorageBackend {
             migrateLegacyHistory(connection);
             return null;
         });
+
     }
 
     private void migrateLegacyHistory(final @NotNull Connection connection) throws SQLException {
+
         boolean legacyExists = false;
         try (final ResultSet tables = connection.getMetaData().getTables(null, null, "%", null)) {
             while (tables.next()) {
@@ -88,6 +93,7 @@ public final class JdbcStorageBackend implements StorageBackend {
         try (final Statement statement = connection.createStatement()) {
             statement.executeUpdate(sql);
         }
+
     }
 
     @Override
@@ -95,15 +101,18 @@ public final class JdbcStorageBackend implements StorageBackend {
             final @NotNull UUID playerUuid,
             final long historyCutoff
     ) throws SQLException {
+
         return executor.query(connection -> new PlayerStorageData(
                 loadViolations(connection, playerUuid),
                 loadInference(connection, playerUuid, historyCutoff),
                 loadBypasses(connection, playerUuid)
         ));
+
     }
 
     @Override
     public void writeBatch(final @NotNull List<StorageMutation> mutations) throws Exception {
+
         if (mutations.isEmpty()) {
             return;
         }
@@ -164,10 +173,12 @@ public final class JdbcStorageBackend implements StorageBackend {
             }
             return null;
         });
+
     }
 
     @Override
     public long deleteHistoryBefore(final long cutoff) throws Exception {
+
         return executor.query(connection -> {
             try (final PreparedStatement statement = connection.prepareStatement(DELETE_OLD_INFERENCE);
                  final PreparedStatement bypasses = connection.prepareStatement(DELETE_EXPIRED_BYPASSES)) {
@@ -177,17 +188,21 @@ public final class JdbcStorageBackend implements StorageBackend {
                 return statement.executeUpdate();
             }
         });
+
     }
 
     @Override
     public void close() {
+
         dataSource.close();
+
     }
 
     private @NotNull Map<String, StoredViolation> loadViolations(
             final @NotNull Connection connection,
             final @NotNull UUID playerUuid
     ) throws SQLException {
+
         final Map<String, StoredViolation> values = new LinkedHashMap<>();
         try (final PreparedStatement statement = connection.prepareStatement(LOAD_VIOLATIONS)) {
             statement.setString(1, playerUuid.toString());
@@ -201,6 +216,7 @@ public final class JdbcStorageBackend implements StorageBackend {
             }
         }
         return values;
+
     }
 
     private @NotNull List<StoredInference> loadInference(
@@ -208,6 +224,7 @@ public final class JdbcStorageBackend implements StorageBackend {
             final @NotNull UUID playerUuid,
             final long historyCutoff
     ) throws SQLException {
+
         final List<StoredInference> values = new ArrayList<>();
         try (final PreparedStatement statement = connection.prepareStatement(LOAD_INFERENCE)) {
             statement.setString(1, playerUuid.toString());
@@ -223,12 +240,14 @@ public final class JdbcStorageBackend implements StorageBackend {
             }
         }
         return values;
+
     }
 
     private @NotNull Map<String, Long> loadBypasses(
             final @NotNull Connection connection,
             final @NotNull UUID playerUuid
     ) throws SQLException {
+
         final Map<String, Long> values = new LinkedHashMap<>();
         try (final PreparedStatement statement = connection.prepareStatement(LOAD_BYPASSES)) {
             statement.setString(1, playerUuid.toString());
@@ -240,34 +259,40 @@ public final class JdbcStorageBackend implements StorageBackend {
             }
         }
         return values;
+
     }
 
     private void bindViolation(
             final @NotNull PreparedStatement statement,
             final @NotNull StorageMutation.Violation violation
     ) throws SQLException {
+
         statement.setString(1, violation.playerUuid().toString());
         statement.setString(2, violation.check());
         statement.setDouble(3, violation.violations());
         statement.setLong(4, violation.updatedAt());
+
     }
 
     private void bindInference(
             final @NotNull PreparedStatement statement,
             final @NotNull StorageMutation.Inference inference
     ) throws SQLException {
+
         final StoredInference value = inference.value();
         statement.setString(1, inference.id().toString());
         statement.setString(2, inference.playerUuid().toString());
         statement.setString(3, value.check());
         statement.setLong(4, value.timestamp());
         statement.setDouble(5, value.probability());
+
     }
 
     private static @NotNull HikariConfig hikariConfig(
             final @NotNull DatabaseType type,
             final @NotNull JdbcSettings settings
     ) {
+
         final PoolSettings pool = settings.pool();
         final HikariConfig config = new HikariConfig();
         config.setPoolName("React-" + type.name());
@@ -284,5 +309,6 @@ public final class JdbcStorageBackend implements StorageBackend {
         config.setAutoCommit(true);
         settings.properties().forEach(config::addDataSourceProperty);
         return config;
+
     }
 }

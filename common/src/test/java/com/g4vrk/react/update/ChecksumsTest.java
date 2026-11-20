@@ -28,16 +28,19 @@ class ChecksumsTest {
 
     @Test
     void readsTheHeader() {
+
         final Checksums checksums = Checksums.parse(RELEASE);
 
         assertEquals("1.4.0", checksums.version());
         assertEquals(1, checksums.apiVersion());
         assertEquals("release", checksums.header().get("channel"));
         assertEquals("2026-11-01T10:00:00Z", checksums.header().get("date"));
+
     }
 
     @Test
     void readsBothSha256sumModesAndSkipsBrokenLines() {
+
         final Checksums checksums = Checksums.parse(RELEASE);
 
         assertEquals(
@@ -49,29 +52,36 @@ class ChecksumsTest {
                 ),
                 checksums.files()
         );
+
     }
 
     @Test
     void findsTheFirstJarWithThePrefix() {
+
         final Map.Entry<String, String> jar = Checksums.parse(RELEASE).jar("react-rcp-1.4.0.");
 
         assertEquals(Map.entry("react-rcp-1.4.0.jar", JAR_HASH), jar);
         assertNull(Checksums.parse(RELEASE).jar("other-"));
+
     }
 
     @Test
     void fallsBackToTheOnlyJar() {
+
         final Checksums checksums = Checksums.parse(JAR_HASH + "  hologram-addon-1.0.jar\n");
 
         assertEquals(Map.entry("hologram-addon-1.0.jar", JAR_HASH), checksums.jar("hologram"));
         assertEquals(Map.entry("hologram-addon-1.0.jar", JAR_HASH), checksums.jar("other"));
+
     }
 
     @Test
     void missingOrBrokenApiVersionIsZero() {
+
         assertEquals(0, Checksums.parse("# version: 1\n").apiVersion());
         assertEquals(0, Checksums.parse("# api-version: one\n").apiVersion());
         assertNull(Checksums.parse("").version());
+
     }
 
 }

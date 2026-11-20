@@ -38,6 +38,7 @@ public final class DatabaseSettingsFactory {
             final @NotNull ConfigurationNode typeRoot,
             final @NotNull File pluginDirectory
     ) {
+
         final DatabaseType type = DatabaseType.parse(root.node("type").getString("sqlite"));
         final ConfigurationNode async = root.node("async");
         final ConfigurationNode history = root.node("history");
@@ -71,6 +72,7 @@ public final class DatabaseSettingsFactory {
                 jdbcSettings,
                 mongoSettings
         );
+
     }
 
     private @NotNull JdbcSettings jdbc(
@@ -78,6 +80,7 @@ public final class DatabaseSettingsFactory {
             final @NotNull ConfigurationNode root,
             final @NotNull File pluginDirectory
     ) {
+
         final ConfigurationNode poolNode = root.node("pool");
         final PoolSettings pool = new PoolSettings(
                 Math.max(1, poolNode.node("maximum-pool-size").getInt(type == DatabaseType.SQLITE ? 1 : 10)),
@@ -94,6 +97,7 @@ public final class DatabaseSettingsFactory {
             case MYSQL -> mysql(root, pool);
             case MONGODB -> throw new IllegalArgumentException("MongoDB is not a JDBC database");
         };
+
     }
 
     private @NotNull JdbcSettings sqlite(
@@ -101,6 +105,7 @@ public final class DatabaseSettingsFactory {
             final @NotNull File pluginDirectory,
             final @NotNull PoolSettings pool
     ) {
+
         final Path file = localDatabaseFile(pluginDirectory, DatabaseType.SQLITE, root.node("file").getString("react.db"), ".db");
         final ConfigurationNode pragmas = root.node("pragmas");
         final Map<String, String> properties = new LinkedHashMap<>();
@@ -111,6 +116,7 @@ public final class DatabaseSettingsFactory {
         properties.put("cache_size", String.valueOf(pragmas.node("cache-size").getInt(-20000)));
 
         return new JdbcSettings("jdbc:sqlite:" + normalize(file), SQLITE_DRIVER, "", "", pool, properties);
+
     }
 
     private @NotNull JdbcSettings h2(
@@ -118,6 +124,7 @@ public final class DatabaseSettingsFactory {
             final @NotNull File pluginDirectory,
             final @NotNull PoolSettings pool
     ) {
+
         final Path file = localDatabaseFile(pluginDirectory, DatabaseType.H2, root.node("file").getString("react.db"), ".db");
         final String url = "jdbc:h2:file:" + normalize(file)
                 + ";MODE=" + root.node("compatibility-mode").getString("REGULAR")
@@ -133,12 +140,14 @@ public final class DatabaseSettingsFactory {
                 pool,
                 Map.of()
         );
+
     }
 
     private @NotNull JdbcSettings mysql(
             final @NotNull ConfigurationNode root,
             final @NotNull PoolSettings pool
     ) {
+
         final String host = root.node("host").getString("127.0.0.1");
         final int port = Math.max(1, root.node("port").getInt(3306));
         final String database = root.node("database").getString("react");
@@ -164,9 +173,11 @@ public final class DatabaseSettingsFactory {
                 pool,
                 properties
         );
+
     }
 
     private @NotNull MongoSettings mongo(final @NotNull ConfigurationNode root) {
+
         final ConfigurationNode pool = root.node("pool");
         final ConfigurationNode timeouts = root.node("timeouts");
         return new MongoSettings(
@@ -188,6 +199,7 @@ public final class DatabaseSettingsFactory {
                 positiveDuration(pool.node("max-life-time").getString("30m"), Duration.ofMinutes(30)),
                 root.node("application-name").getString("React")
         );
+
     }
 
     private @NotNull Path localDatabaseFile(
@@ -196,6 +208,7 @@ public final class DatabaseSettingsFactory {
             final String configuredName,
             final @NotNull String extension
     ) {
+
         String fileName = configuredName == null || configuredName.isBlank() ? "react" + extension : configuredName.trim();
         if (!Path.of(fileName).getFileName().toString().equals(fileName)) {
             throw new IllegalArgumentException("Database file must be a file name, not a path: " + fileName);
@@ -210,9 +223,11 @@ public final class DatabaseSettingsFactory {
             throw new IllegalStateException("Could not create the local database directory", ex);
         }
         return result;
+
     }
 
     private @NotNull Duration positiveDuration(final String input, final @NotNull Duration fallback) {
+
         if (input == null || input.isBlank()) {
             return fallback;
         }
@@ -222,9 +237,12 @@ public final class DatabaseSettingsFactory {
         } catch (final IllegalArgumentException ex) {
             return fallback;
         }
+
     }
 
     private @NotNull String normalize(final @NotNull Path path) {
+
         return path.toString().replace('\\', '/');
+
     }
 }

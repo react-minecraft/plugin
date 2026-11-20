@@ -27,9 +27,11 @@ public final class InferenceResultEvent extends Event {
             final double probability,
             final long timestamp
     ) {
+
         this.check = check;
         this.probability = probability;
         this.timestamp = timestamp;
+
     }
 
     /**
@@ -38,7 +40,9 @@ public final class InferenceResultEvent extends Event {
      * @return the check
      */
     public @NotNull Check check() {
+
         return check;
+
     }
 
     /**
@@ -47,7 +51,9 @@ public final class InferenceResultEvent extends Event {
      * @return the probability
      */
     public double probability() {
+
         return probability;
+
     }
 
     /**
@@ -56,7 +62,9 @@ public final class InferenceResultEvent extends Event {
      * @return the epoch milliseconds
      */
     public long timestamp() {
+
         return timestamp;
+
     }
 
 }

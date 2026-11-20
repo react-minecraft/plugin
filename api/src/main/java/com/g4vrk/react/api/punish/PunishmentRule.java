@@ -24,7 +24,9 @@ public record PunishmentRule(int start, int period, @NotNull List<String> lines)
      * @return {@code true} for a rule from {@code every}
      */
     public boolean repeating() {
+
         return period > 0;
+
     }
 
 }

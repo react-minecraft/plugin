@@ -16,6 +16,7 @@ class ExtensionManagerShutdownTest {
 
     @Test
     void shutdownDuringUpdateCheckSkipsExtensionLoading(@TempDir final Path directory) throws Exception {
+
         final ExtensionContext context = new ExtensionContext(null, directory, LoggerFactory.getLogger(getClass()),
                 null, null, null, null, null, null, null, null, null, null);
         final ExtensionManager manager = new ExtensionManager(context, StagedUpdates.NONE);
@@ -40,6 +41,7 @@ class ExtensionManagerShutdownTest {
             release.countDown();
             manager.close();
         }
+
     }
 
 }

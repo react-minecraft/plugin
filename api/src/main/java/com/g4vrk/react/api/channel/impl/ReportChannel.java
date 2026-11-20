@@ -31,7 +31,9 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
     };
 
     public void delivery(final @NotNull Delivery delivery) {
+
         this.delivery = delivery;
+
     }
 
     /**
@@ -39,7 +41,9 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
      */
     @Override
     public boolean subscribe(final @NotNull Audience recipient) {
+
         return this.subscribe(recipient, null, null);
+
     }
 
     /**
@@ -47,7 +51,9 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
      * selection.
      */
     public boolean subscribe(final @NotNull Audience recipient, final @NotNull Collection<UUID> players) {
+
         return this.subscribe(recipient, players, null);
+
     }
 
     /**
@@ -145,6 +151,7 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
 
     @Override
     public void publish(final @NotNull CheckReport report) {
+
         final Delivery delivery = this.delivery;
 
         for (final Map.Entry<Audience, Subscription> entry : subscriptions.entrySet()) {
@@ -156,6 +163,7 @@ public final class ReportChannel extends AudienceChannel<CheckReport> {
                 delivery.deliver(entry.getKey(), report);
             }
         }
+
     }
 
     /**

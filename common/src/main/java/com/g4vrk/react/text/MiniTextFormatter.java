@@ -41,22 +41,29 @@ public final class MiniTextFormatter implements TextFormatter {
     private final PlaceholderRegistry placeholders;
 
     public MiniTextFormatter(final @NotNull SerializerRegistry serializers, final @NotNull PlaceholderRegistry placeholders) {
+
         this.serializers = serializers;
         this.placeholders = placeholders;
+
     }
 
     @Override
     public @NotNull Component format(final @NotNull String text) {
+
         return this.serializers.universalSerializer().serialize(text);
+
     }
 
     @Override
     public @NotNull Component format(final @NotNull String text, final @NotNull TrackedPlayer player) {
+
         return this.serializers.universalSerializer().serialize(text, mapper(this.placeholders, player));
+
     }
 
     @Override
     public @NotNull Component format(final @NotNull String text, final @NotNull TagResolver @NotNull ... resolvers) {
+
         if (resolvers.length == 0) {
             return this.serializers.universalSerializer().serialize(text);
         }
@@ -67,6 +74,7 @@ public final class MiniTextFormatter implements TextFormatter {
         }
 
         return ServerTags.deserialize(text, resolvers);
+
     }
 
     @Override
@@ -75,6 +83,7 @@ public final class MiniTextFormatter implements TextFormatter {
             final @NotNull TrackedPlayer player,
             final @NotNull TagResolver @NotNull ... resolvers
     ) {
+
         if (resolvers.length == 0) {
             return this.serializers.universalSerializer().serialize(text, mapper(this.placeholders, player));
         }
@@ -88,6 +97,7 @@ public final class MiniTextFormatter implements TextFormatter {
                 text,
                 TagResolver.resolver(this.placeholders.tags(player), TagResolver.resolver(resolvers))
         );
+
     }
 
     /**
@@ -98,7 +108,9 @@ public final class MiniTextFormatter implements TextFormatter {
      * @return the component
      */
     public @NotNull Component formatWithPlaceholders(final @NotNull String text, final @NotNull TrackedPlayer player) {
+
         return this.serializers.universalSerializer().serialize(text, mapper(this.placeholders, player));
+
     }
 
     @Override
@@ -106,33 +118,44 @@ public final class MiniTextFormatter implements TextFormatter {
             final @NotNull String text,
             final @NotNull TagMapper source
     ) {
+
         return this.serializers.universalSerializer().serialize(text, mapper(source));
+
     }
 
     private static com.g4vrk.text.TagMapper mapper(
             final @NotNull PlaceholderRegistry registry,
             final @NotNull TrackedPlayer player
     ) {
+
         return mapper(registry.mapper(player));
+
     }
 
     private static com.g4vrk.text.TagMapper mapper(final @NotNull TagMapper source) {
+
         return new com.g4vrk.text.TagMapper() {
 
             @Override
             public String map(final @NotNull String name, final @NotNull String args) {
+
                 return source.map(name, args);
+
             }
 
             @Override
             public boolean has(final @NotNull String name) {
+
                 return source.has(name);
+
             }
 
         };
+
     }
 
     private static boolean present() {
+
         try {
             Component.class.getMethod("compact");
             Class.forName(MINI_MESSAGE_CLASS, false, MiniTextFormatter.class.getClassLoader());
@@ -141,9 +164,11 @@ public final class MiniTextFormatter implements TextFormatter {
         } catch (final ReflectiveOperationException ignored) {
             return false;
         }
+
     }
 
     private static void warnOnce() {
+
         if (WARNED.compareAndSet(false, true)) {
             LOGGER.log(
                     Level.WARNING,
@@ -151,6 +176,7 @@ public final class MiniTextFormatter implements TextFormatter {
                             + "of their callers. Install Paper 1.18.2 or newer to get them back."
             );
         }
+
     }
 
     /**
@@ -164,7 +190,9 @@ public final class MiniTextFormatter implements TextFormatter {
                 final @NotNull String text,
                 final @NotNull TagResolver @NotNull ... resolvers
         ) {
+
             return MINI_MESSAGE.deserialize(Legacy2MiniMessage.toMarkup(text), resolvers);
+
         }
 
     }

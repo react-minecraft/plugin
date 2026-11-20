@@ -7,6 +7,7 @@ public enum Language {
     RU;
 
     public static @NotNull Language resolve() {
+
         try {
             final String languageStr = System.getProperty("user.language").toUpperCase();
 
@@ -14,5 +15,6 @@ public enum Language {
         } catch (final Throwable ignored) {
             return RU;
         }
+
     }
 }

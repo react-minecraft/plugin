@@ -20,7 +20,9 @@ final class Placeholders {
      * @return {@code true} when the text holds {@code %} or {@code {}
      */
     static boolean mentions(final @NotNull String text) {
+
         return text.indexOf('%') != -1 || text.indexOf('{') != -1;
+
     }
 
     /**
@@ -30,6 +32,7 @@ final class Placeholders {
      * @return the query, empty when the tag has no arguments
      */
     static @NotNull String join(final @NotNull ArgumentQueue arguments) {
+
         if (!arguments.hasNext()) {
             return "";
         }
@@ -47,6 +50,7 @@ final class Placeholders {
         } while (arguments.hasNext());
 
         return builder.toString();
+
     }
 
 }

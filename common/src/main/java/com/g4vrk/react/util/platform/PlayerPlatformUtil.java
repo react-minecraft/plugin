@@ -16,6 +16,7 @@ public final class PlayerPlatformUtil {
     }
 
     public static boolean bedrockPlayer(final @NotNull UUID uuid) {
+
         final PlayerDetector floodgate = floodgateDetector();
         if (floodgate != null && floodgate.isBedrockPlayer(uuid)) {
             return true;
@@ -23,9 +24,11 @@ public final class PlayerPlatformUtil {
 
         final PlayerDetector geyser = geyserDetector();
         return geyser != null && geyser.isBedrockPlayer(uuid);
+
     }
 
     private static PlayerDetector floodgateDetector() {
+
         PlayerDetector detector = floodgateDetector;
 
         if (detector == null) {
@@ -47,9 +50,11 @@ public final class PlayerPlatformUtil {
         }
 
         return detector;
+
     }
 
     private static PlayerDetector geyserDetector() {
+
         PlayerDetector detector = geyserDetector;
 
         if (detector == null) {
@@ -71,6 +76,7 @@ public final class PlayerPlatformUtil {
         }
 
         return detector;
+
     }
 
     private static PlayerDetector findDetector(
@@ -78,6 +84,7 @@ public final class PlayerPlatformUtil {
             final @NotNull String factoryMethodName,
             final @NotNull String detectorMethodName
     ) {
+
         final Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
 
         for (final Plugin plugin : plugins) {
@@ -99,6 +106,7 @@ public final class PlayerPlatformUtil {
                 factoryMethodName,
                 detectorMethodName
         );
+
     }
 
     private static PlayerDetector findDetector(
@@ -107,6 +115,7 @@ public final class PlayerPlatformUtil {
             final @NotNull String factoryMethodName,
             final @NotNull String detectorMethodName
     ) {
+
         try {
             final Class<?> apiClass = Class.forName(apiClassName, false, classLoader);
             final Method factory = apiClass.getMethod(factoryMethodName);
@@ -121,6 +130,7 @@ public final class PlayerPlatformUtil {
         } catch (final ReflectiveOperationException | LinkageError | RuntimeException ignored) {
             return null;
         }
+
     }
 
     private record PlayerDetector(
@@ -129,11 +139,14 @@ public final class PlayerPlatformUtil {
     ) {
 
         private boolean isBedrockPlayer(final @NotNull UUID uuid) {
+
             try {
                 return Boolean.TRUE.equals(method.invoke(instance, uuid));
             } catch (final ReflectiveOperationException | RuntimeException ignored) {
                 return false;
             }
+
         }
+
     }
 }

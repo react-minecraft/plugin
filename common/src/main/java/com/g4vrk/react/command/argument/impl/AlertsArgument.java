@@ -14,7 +14,9 @@ public final class AlertsArgument extends ReportToggleArgument {
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull ActionParser<Audience> actionParser
     ) {
+
         super(builderFactory, actionParser, BuiltinChannels.ALERTS, Permissions.ALERTS, ActionsConfig::alerts, false, "alerts");
+
     }
 
 }

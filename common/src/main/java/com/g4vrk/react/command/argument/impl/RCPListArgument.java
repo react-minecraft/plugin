@@ -46,25 +46,30 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
             final @NotNull RCPHost host,
             final @NotNull UpdateService updates
     ) {
+
         this.builderFactory = builderFactory;
         this.actionParser = actionParser;
         this.host = host;
         this.updates = updates;
         this.onReload(config);
+
     }
 
     @Override
     public void onReload(final @NotNull ActionsConfig config) {
+
         final ActionsConfig.Rcps rcps = config.rcps();
         this.header = actionParser.parseAll(rcps.header());
         this.entry = actionParser.parseAll(rcps.entry());
         this.entryWithStatus = actionParser.parseAll(rcps.entryWithStatus());
         this.react = actionParser.parseAll(rcps.react());
         this.texts = config.texts();
+
     }
 
     @Override
     public @NotNull Command.Builder<CommandSender> build() {
+
         return builderFactory.create()
                 .literal("rcps")
                 .permission("react.command.rcps")
@@ -113,6 +118,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                             )
                     );
                 });
+
     }
 
     private @NotNull String updateLabel(final @NotNull String key) {
@@ -126,11 +132,13 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
     }
 
     private @NotNull String checked(final @Nullable Instant instant) {
+
         if (instant == null) {
             return texts.notChecked();
         }
         final long minutes = Duration.between(instant, Instant.now()).toMinutes();
         return minutes < 1 ? texts.checkedNow() : texts.checkedAgo().replace("<minutes>", Long.toString(minutes));
+
     }
 
     private static void run(
@@ -138,6 +146,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
             final CommandSender sender,
             final Map<String, String> placeholders
     ) {
+
         actions.run(sender, text -> {
             String replaced = text;
             for (final Map.Entry<String, String> placeholder : placeholders.entrySet()) {
@@ -145,6 +154,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
             }
             return replaced;
         });
+
     }
 
 }

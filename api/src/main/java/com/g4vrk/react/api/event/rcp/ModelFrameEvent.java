@@ -43,6 +43,7 @@ public final class ModelFrameEvent extends Event {
             final float @NotNull [] features,
             final boolean inCombat
     ) {
+
         this.model = Objects.requireNonNull(model, "model");
         this.playerId = Objects.requireNonNull(playerId, "playerId");
         this.columns = List.copyOf(columns);
@@ -51,6 +52,7 @@ public final class ModelFrameEvent extends Event {
         }
         this.features = features;
         this.inCombat = inCombat;
+
     }
 
     /**
@@ -59,7 +61,9 @@ public final class ModelFrameEvent extends Event {
      * @return the model id, for example {@code vector}
      */
     public @NotNull String model() {
+
         return this.model;
+
     }
 
     /**
@@ -68,7 +72,9 @@ public final class ModelFrameEvent extends Event {
      * @return the player UUID
      */
     public @NotNull UUID playerId() {
+
         return this.playerId;
+
     }
 
     /**
@@ -77,7 +83,9 @@ public final class ModelFrameEvent extends Event {
      * @return the immutable column names
      */
     public @NotNull List<String> columns() {
+
         return this.columns;
+
     }
 
     /**
@@ -86,7 +94,9 @@ public final class ModelFrameEvent extends Event {
      * @return the value count
      */
     public int size() {
+
         return this.features.length;
+
     }
 
     /**
@@ -96,7 +106,9 @@ public final class ModelFrameEvent extends Event {
      * @return the value
      */
     public float feature(final int index) {
+
         return this.features[index];
+
     }
 
     /**
@@ -105,7 +117,9 @@ public final class ModelFrameEvent extends Event {
      * @return an independent copy
      */
     public float @NotNull [] features() {
+
         return this.features.clone();
+
     }
 
     /**
@@ -114,7 +128,9 @@ public final class ModelFrameEvent extends Event {
      * @return {@code true} in combat
      */
     public boolean inCombat() {
+
         return this.inCombat;
+
     }
 
 }

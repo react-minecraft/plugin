@@ -62,6 +62,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
             final @NotNull String literal,
             final @NotNull String... aliases
     ) {
+
         this.builderFactory = builderFactory;
         this.actionParser = actionParser;
         this.channel = channel;
@@ -72,10 +73,12 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         this.byCheck = byCheck;
 
         this.onReload(React.INSTANCE.configs().actions());
+
     }
 
     @Override
     public final @NotNull Command.Builder<CommandSender> build() {
+
         Command.Builder<CommandSender> builder = builderFactory.create()
                 .literal(literal, aliases)
                 .permission(permission)
@@ -105,6 +108,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
                         this.disabledActions.run(sender);
                     }
                 });
+
     }
 
     private void follow(
@@ -132,11 +136,13 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
 
     @Override
     public final void onReload(final @NotNull ActionsConfig config) {
+
         final ActionsConfig.ReportToggle toggle = this.section.apply(config);
 
         this.enabledActions = this.actionParser.parseAll(toggle.onEnable());
         this.enabledPlayersActions = this.actionParser.parseAll(toggle.onEnablePlayers());
         this.disabledActions = this.actionParser.parseAll(toggle.onDisable());
+
     }
 
 }

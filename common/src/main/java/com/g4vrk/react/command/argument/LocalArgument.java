@@ -18,7 +18,9 @@ public abstract class LocalArgument {
      * @return the builders
      */
     public @NotNull List<Command.Builder<CommandSender>> builds() {
+
         return List.of(build());
+
     }
 
 }

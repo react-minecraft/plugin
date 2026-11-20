@@ -56,6 +56,7 @@ final class PlaceholderScannerTest {
 
         final String input = "{".repeat(20_000);
         assertEquals(input, PlaceholderScanner.apply(input, (key, query, bracket) -> null));
+
     }
 
 }

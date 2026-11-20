@@ -19,6 +19,7 @@ public final class DebugArgument extends ReportToggleArgument {
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull ActionParser<Audience> actionParser
     ) {
+
         super(
                 builderFactory,
                 actionParser,
@@ -28,6 +29,7 @@ public final class DebugArgument extends ReportToggleArgument {
                 true,
                 "debug"
         );
+
     }
 
 }

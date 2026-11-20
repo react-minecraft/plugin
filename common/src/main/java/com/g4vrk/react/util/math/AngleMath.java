@@ -11,19 +11,24 @@ public class AngleMath {
             final float currentDelta,
             final float previousDelta
     ) {
+
         return currentDelta - previousDelta;
+
     }
 
     public static float calculateJerk(
             final float currentAccel,
             final float previousAccel
     ) {
+
         return currentAccel - previousAccel;
+
     }
 
     public static float calculateGCDError(
             final float delta
     ) {
+
         if (Math.abs(delta) < GCD_EPSILON) {
             return 0.0f;
         }
@@ -32,11 +37,13 @@ public class AngleMath {
         float remainder = Math.abs(delta) % gcd;
 
         return remainder / gcd;
+
     }
 
     private static float calculateGCD(
             final float a
     ) {
+
         float x = Math.abs(a);
         float b = 0.1f;
 
@@ -47,11 +54,13 @@ public class AngleMath {
         }
 
         return x;
+
     }
 
     public static float normalizeAngle(
             final float angle
     ) {
+
         float normalized = angle % 360.0f;
         if (normalized > 180.0f) {
             normalized -= 360.0f;
@@ -59,11 +68,13 @@ public class AngleMath {
             normalized += 360.0f;
         }
         return normalized;
+
     }
 
     public static float normalizeDelta(
             final float delta
     ) {
+
         float normalized = delta % 360.0f;
 
         if (normalized > 180.0f) {
@@ -73,5 +84,6 @@ public class AngleMath {
         }
 
         return normalized;
+
     }
 }

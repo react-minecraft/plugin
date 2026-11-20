@@ -19,6 +19,7 @@ class ExtensionClassLoaderTest {
 
     @Test
     void ownResourceWinsOverThePlugins(@TempDir final Path directory) throws Exception {
+
         final Path parentJar = jar(directory.resolve("plugin.jar"), "en/actions.yml", "plugin");
         final Path extensionJar = jar(directory.resolve("addon.jar"), "en/actions.yml", "addon");
 
@@ -26,10 +27,12 @@ class ExtensionClassLoaderTest {
              ExtensionClassLoader loader = new ExtensionClassLoader("test", extensionJar.toUri().toURL(), parent)) {
             assertEquals("addon", read(loader, "en/actions.yml"));
         }
+
     }
 
     @Test
     void missingResourceFallsBackToThePlugin(@TempDir final Path directory) throws Exception {
+
         final Path parentJar = jar(directory.resolve("plugin.jar"), "shared.yml", "plugin");
         final Path extensionJar = jar(directory.resolve("addon.jar"), "own.yml", "addon");
 
@@ -37,16 +40,19 @@ class ExtensionClassLoaderTest {
              ExtensionClassLoader loader = new ExtensionClassLoader("test", extensionJar.toUri().toURL(), parent)) {
             assertEquals("plugin", read(loader, "shared.yml"));
         }
+
     }
 
     private static String read(
             final ClassLoader loader,
             final String name
     ) throws Exception {
+
         try (InputStream in = loader.getResourceAsStream(name)) {
             assertNotNull(in);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
+
     }
 
     private static Path jar(
@@ -54,12 +60,14 @@ class ExtensionClassLoaderTest {
             final String entry,
             final String content
     ) throws Exception {
+
         try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(path))) {
             out.putNextEntry(new JarEntry(entry));
             out.write(content.getBytes(StandardCharsets.UTF_8));
             out.closeEntry();
         }
         return path;
+
     }
 
 }

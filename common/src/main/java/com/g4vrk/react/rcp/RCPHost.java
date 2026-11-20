@@ -28,28 +28,37 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
     private volatile List<HostedRCPEnvironment> environments = List.of();
 
     public RCPHost(final @NotNull PlayerRegistry playerRegistry) {
+
         super(playerRegistry);
         this.players = playerRegistry;
+
     }
 
     public synchronized void attach(final @NotNull HostedRCPEnvironment environment) {
+
         final List<HostedRCPEnvironment> updated = new ArrayList<>(environments);
         updated.add(environment);
         this.environments = List.copyOf(updated);
+
     }
 
     public synchronized void detach(final @NotNull HostedRCPEnvironment environment) {
+
         final List<HostedRCPEnvironment> updated = new ArrayList<>(environments);
         updated.remove(environment);
         this.environments = List.copyOf(updated);
+
     }
 
     @Override
     public @Nullable RCPPlayer byEntityId(final int entityId) {
+
         return this.players.byEntityId(entityId);
+
     }
 
     public void rotation(final @NotNull TrackedPlayerImpl player, final float @NotNull [] sample) {
+
         final List<HostedRCPEnvironment> attached = this.environments;
 
         for (int i = 0, environmentCount = attached.size(); i < environmentCount; i++) {
@@ -65,21 +74,29 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
                 }
             }
         }
+
     }
 
     public void reload(final @NotNull TrackedPlayerImpl player) {
+
         dispatch(listener -> listener.onReload(player));
+
     }
 
     public void reset(final @NotNull UUID player) {
+
         dispatch(listener -> listener.onReset(player));
+
     }
 
     public void quit(final @NotNull UUID player) {
+
         dispatch(listener -> listener.onQuit(player));
+
     }
 
     private void dispatch(final @NotNull Consumer<RCPPlayerListener> event) {
+
         for (final HostedRCPEnvironment environment : this.environments) {
             for (final RCPPlayerListener listener : environment.playerListeners()) {
                 try {
@@ -89,13 +106,17 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
                 }
             }
         }
+
     }
 
     public @NotNull List<HostedRCPEnvironment> environments() {
+
         return this.environments;
+
     }
 
     public @Nullable String status() {
+
         for (final HostedRCPEnvironment environment : this.environments) {
             final String status = environment.currentStatus();
             if (status != null) {
@@ -103,6 +124,7 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
             }
         }
         return null;
+
     }
 
 }

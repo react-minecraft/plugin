@@ -63,20 +63,24 @@ public final class MongoStorageBackend implements StorageBackend {
     private final MongoCollection<Document> bypasses;
 
     public MongoStorageBackend(final @NotNull MongoSettings settings) {
+
         this.client = MongoClients.create(clientSettings(settings));
         this.database = client.getDatabase(settings.database());
         this.violations = database.getCollection(MONGO_VIOLATIONS_COLLECTION);
         this.inference = database.getCollection(MONGO_INFERENCE_COLLECTION);
         this.bypasses = database.getCollection(MONGO_BYPASS_COLLECTION);
+
     }
 
     @Override
     public void initialize() {
+
         database.runCommand(new Document("ping", 1));
         violations.createIndex(Indexes.ascending(FIELD_PLAYER_UUID));
         inference.createIndex(Indexes.compoundIndex(Indexes.ascending(FIELD_PLAYER_UUID), Indexes.ascending(FIELD_TIMESTAMP)));
         inference.createIndex(Indexes.ascending(FIELD_TIMESTAMP));
         bypasses.createIndex(Indexes.ascending(FIELD_PLAYER_UUID));
+
     }
 
     @Override
@@ -84,6 +88,7 @@ public final class MongoStorageBackend implements StorageBackend {
             final @NotNull UUID playerUuid,
             final long historyCutoff
     ) {
+
         final String uuid = playerUuid.toString();
         final Map<String, StoredViolation> loadedViolations = new LinkedHashMap<>();
         for (final Document document : violations.find(eq(FIELD_PLAYER_UUID, uuid))) {
@@ -109,10 +114,12 @@ public final class MongoStorageBackend implements StorageBackend {
             loadedBypasses.put(document.getString(FIELD_CHECK), longNumber(document, FIELD_EXPIRES_AT));
         }
         return new PlayerStorageData(loadedViolations, history, loadedBypasses);
+
     }
 
     @Override
     public void writeBatch(final @NotNull List<StorageMutation> mutations) {
+
         if (mutations.isEmpty()) {
             return;
         }
@@ -177,30 +184,40 @@ public final class MongoStorageBackend implements StorageBackend {
         if (!bypassWrites.isEmpty()) {
             bypasses.bulkWrite(bypassWrites);
         }
+
     }
 
     @Override
     public long deleteHistoryBefore(final long cutoff) {
+
         bypasses.deleteMany(lte(FIELD_EXPIRES_AT, System.currentTimeMillis()));
         return inference.deleteMany(lt(FIELD_TIMESTAMP, cutoff)).getDeletedCount();
+
     }
 
     @Override
     public void close() {
+
         client.close();
+
     }
 
     private static double number(final @NotNull Document document, final @NotNull String field) {
+
         final Number value = document.get(field, Number.class);
         return value == null ? 0.0D : value.doubleValue();
+
     }
 
     private static long longNumber(final @NotNull Document document, final @NotNull String field) {
+
         final Number value = document.get(field, Number.class);
         return value == null ? 0L : value.longValue();
+
     }
 
     private static @NotNull MongoClientSettings clientSettings(final @NotNull MongoSettings settings) {
+
         final MongoClientSettings.Builder builder = MongoClientSettings.builder();
 
         if (!settings.uri().isBlank()) {
@@ -231,5 +248,6 @@ public final class MongoStorageBackend implements StorageBackend {
                         .serverSelectionTimeout(settings.serverSelectionTimeout().toMillis(), TimeUnit.MILLISECONDS));
 
         return builder.build();
+
     }
 }

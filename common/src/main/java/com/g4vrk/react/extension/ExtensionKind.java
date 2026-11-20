@@ -23,10 +23,12 @@ public enum ExtensionKind {
             final @NotNull String data,
             final @NotNull String metadataFile
     ) {
+
         this.displayName = displayName;
         this.jars = jars;
         this.data = data;
         this.metadataFile = metadataFile;
+
     }
 
     /**
@@ -35,7 +37,9 @@ public enum ExtensionKind {
      * @return {@code RCP} or {@code addon}
      */
     public @NotNull String displayName() {
+
         return displayName;
+
     }
 
     /**
@@ -45,7 +49,9 @@ public enum ExtensionKind {
      * @return the jar folder
      */
     public @NotNull Path jars(final @NotNull Path dataFolder) {
+
         return dataFolder.resolve(jars);
+
     }
 
     /**
@@ -55,7 +61,9 @@ public enum ExtensionKind {
      * @return the data root
      */
     public @NotNull Path data(final @NotNull Path dataFolder) {
+
         return dataFolder.resolve(data);
+
     }
 
     /**
@@ -64,7 +72,9 @@ public enum ExtensionKind {
      * @return the file name
      */
     public @NotNull String metadataFile() {
+
         return metadataFile;
+
     }
 
 }

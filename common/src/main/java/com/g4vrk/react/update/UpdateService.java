@@ -24,11 +24,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -55,7 +58,6 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     private final Plugin plugin;
     private final Supplier<MainConfig> main;
     private final Consumer<UpdateDownloadedEvent> notifier;
-
 
     private final Map<String, Status> statuses = new ConcurrentHashMap<>();
     private final Map<String, UpdateDownloadedEvent> downloaded = new ConcurrentHashMap<>();
@@ -156,9 +158,6 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         if (closed || timer != null) {
             return;
         }
-        final Duration interval = settings.interval() == null || settings.interval().compareTo(MIN_INTERVAL) < 0
-                ? MIN_INTERVAL
-                : settings.interval();
         final ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor(runnable -> {
             final Thread thread = new Thread(runnable, "React-Updates");
             thread.setDaemon(true);
@@ -169,25 +168,42 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             timer.shutdownNow();
             return;
         }
-        timer.scheduleWithFixedDelay(() -> tick(manager), 30L, interval.toSeconds(), TimeUnit.SECONDS);
+        timer.schedule(() -> tick(manager, timer), 30L, TimeUnit.SECONDS);
 
     }
 
-    private void tick(final @NotNull ExtensionManager manager) {
+    /**
+     * Checks everything, reboots what was downloaded and plans the next check with the interval
+     * read just now, so a changed {@code interval} works without a restart.
+     */
+    private void tick(
+            final @NotNull ExtensionManager manager,
+            final @NotNull ScheduledExecutorService timer
+    ) {
 
         try {
             settings = configuration.reload(settings);
-            final List<Component> staged = checkAll();
-            if (!settings.autoReboot()) {
-                return;
-            }
-            for (final Component component : staged) {
-                if (component.extension() != null) {
-                    manager.reboot(component.name());
+            checkAll();
+            if (settings.autoReboot()) {
+                for (final UpdateDownloadedEvent event : pending()) {
+                    if (event.kind() != UpdateDownloadedEvent.Kind.PLUGIN) {
+                        manager.reboot(event.name());
+                    }
                 }
             }
         } catch (final RuntimeException failure) {
             logger.error("Could not check for updates", failure);
+        }
+        if (closed) {
+            return;
+        }
+        final Duration interval = settings.interval() == null || settings.interval().compareTo(MIN_INTERVAL) < 0
+                ? MIN_INTERVAL
+                : settings.interval();
+        try {
+            timer.schedule(() -> tick(manager, timer), interval.toSeconds(), TimeUnit.SECONDS);
+        } catch (final RejectedExecutionException ignored) {
+            // closed while checking
         }
 
     }
@@ -421,17 +437,22 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
 
     }
 
-    private @NotNull List<Component> checkAll() {
+    private void checkAll() {
 
-        final List<Component> staged = new ArrayList<>();
         synchronized (checks) {
-            for (final Component component : components()) {
-                if (check(component)) {
-                    staged.add(component);
+            final List<Component> components = components();
+            final Set<String> present = new HashSet<>();
+            present.add("plugin");
+            for (final Component component : components) {
+                if (component.extension() != null) {
+                    present.add(key(component.extension(), component.name()));
                 }
             }
+            downloaded.keySet().retainAll(present);
+            for (final Component component : components) {
+                check(component);
+            }
         }
-        return staged;
 
     }
 
@@ -545,10 +566,10 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                 announce(component, release.version(), true);
                 return false;
             }
-            if (component.extension() != null) {
-                clear(component.target());
-            }
             client.download(release, jar, target);
+            if (component.extension() != null) {
+                clearExcept(component.target(), target);
+            }
             statuses.put(key(component.repository()), new Status(release.version(), channel, now, "staged"));
             announce(component, release.version(), false);
 
@@ -675,6 +696,19 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
              */
         }
         return jars;
+
+    }
+
+    private static void clearExcept(
+            final @NotNull Path directory,
+            final @NotNull Path keep
+    ) throws IOException {
+
+        for (final Path jar : jars(directory)) {
+            if (!jar.equals(keep)) {
+                Files.deleteIfExists(jar);
+            }
+        }
 
     }
 

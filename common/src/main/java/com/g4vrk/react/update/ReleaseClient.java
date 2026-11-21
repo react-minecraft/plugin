@@ -64,6 +64,8 @@ public final class ReleaseClient {
     private static final Duration DOWNLOAD_TIMEOUT = Duration.ofMinutes(2);
     private static final long MAX_METADATA_BYTES = 1024 * 1024;
     private static final long MAX_JAR_BYTES = 128L * 1024 * 1024;
+    private static final String CHANNEL_RELEASE = "release";
+    private static final String CHANNEL_NIGHTLY = "nightly";
 
     private final Logger logger;
     private final HttpClient http = HttpClient.newBuilder()
@@ -126,10 +128,15 @@ public final class ReleaseClient {
 
         final String releases = "https://github.com/" + repository + "/releases/";
         if (pinned != null) {
-            return signed(releases + "download/v" + pinned + "/");
+            return bound(signed(releases + "download/v" + pinned + "/"), CHANNEL_RELEASE, pinned);
         }
 
-        final Release release = signed(releases + (channel == UpdateChannel.PRERELEASE ? "download/nightly/" : "latest/download/"));
+        final boolean nightly = channel == UpdateChannel.PRERELEASE;
+        final Release release = bound(
+                signed(releases + (nightly ? "download/nightly/" : "latest/download/")),
+                nightly ? CHANNEL_NIGHTLY : CHANNEL_RELEASE,
+                null
+        );
         if (!REACT_RCP.equalsIgnoreCase(repository)) {
             return release;
         }
@@ -138,7 +145,30 @@ public final class ReleaseClient {
             return release;
         }
         logger.warn("React RCP {} was revoked, using {} instead", release.version(), fallback);
-        return signed(releases + "download/v" + fallback + "/");
+        return bound(signed(releases + "download/v" + fallback + "/"), CHANNEL_RELEASE, fallback);
+
+    }
+
+    /**
+     * Checks that a signed file belongs to the place it was fetched from, so a signed file of
+     * another release cannot be replayed there: a nightly as the latest release, or an older
+     * release under a pinned tag. Files without the header line are accepted.
+     */
+    private static @NotNull Release bound(
+            final @NotNull Release release,
+            final @NotNull String channel,
+            final @Nullable String version
+    ) throws VerificationException {
+
+        final String signedChannel = release.checksums().header().get("channel");
+        if (signedChannel != null && !signedChannel.equalsIgnoreCase(channel)) {
+            throw new VerificationException("signed channel " + signedChannel + " is not " + channel);
+        }
+        final String signedVersion = release.checksums().version();
+        if (version != null && signedVersion != null && !signedVersion.equals(version)) {
+            throw new VerificationException("signed version " + signedVersion + " is not " + version);
+        }
+        return release;
 
     }
 
@@ -200,11 +230,14 @@ public final class ReleaseClient {
 
     }
 
-    private @NotNull Release signed(final @NotNull String base)
-            throws IOException, InterruptedException, VerificationException {
+    private @NotNull Release signed(
+            final @NotNull String base
+    ) throws IOException, InterruptedException, VerificationException {
+
         final byte[] bytes = get(base + CHECKSUMS);
         verifySignature(bytes, get(base + SIGNATURE));
         return new Release(base, Checksums.parse(new String(bytes, StandardCharsets.UTF_8)));
+
     }
 
     private @NotNull Map<String, String> revokedVersions() {
@@ -288,6 +321,7 @@ public final class ReleaseClient {
         private final HttpResponse.BodySubscriber<T> delegate;
         private final long limit;
         private long received;
+        private boolean done;
         private Flow.Subscription subscription;
 
         private LimitedBodySubscriber(final HttpResponse.@NotNull BodySubscriber<T> delegate, final long limit) {
@@ -315,9 +349,13 @@ public final class ReleaseClient {
         @Override
         public void onNext(final @NotNull List<ByteBuffer> buffers) {
 
+            if (done) {
+                return;
+            }
             for (final ByteBuffer buffer : buffers) {
                 received += buffer.remaining();
                 if (received > limit) {
+                    done = true;
                     subscription.cancel();
                     delegate.onError(new IOException("HTTP response exceeds size limit"));
                     return;
@@ -330,6 +368,10 @@ public final class ReleaseClient {
         @Override
         public void onError(final @NotNull Throwable failure) {
 
+            if (done) {
+                return;
+            }
+            done = true;
             delegate.onError(failure);
 
         }
@@ -337,6 +379,10 @@ public final class ReleaseClient {
         @Override
         public void onComplete() {
 
+            if (done) {
+                return;
+            }
+            done = true;
             delegate.onComplete();
 
         }

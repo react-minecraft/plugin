@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -177,7 +178,17 @@ public final class ConfigFile<T> {
             final String body = text.isEmpty() || text.endsWith("\n") ? text : text + separator;
             updated = body + separator + line + separator;
         }
-        Files.writeString(path, updated, StandardCharsets.UTF_8);
+        final Path temporary = Files.createTempFile(path.toAbsolutePath().getParent(), path.getFileName() + ".", ".tmp");
+        try {
+            Files.writeString(temporary, updated, StandardCharsets.UTF_8);
+            try {
+                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (final AtomicMoveNotSupportedException unsupported) {
+                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
 
     }
 

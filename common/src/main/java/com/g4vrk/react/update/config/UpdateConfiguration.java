@@ -31,6 +31,14 @@ public final class UpdateConfiguration {
     private final Logger logger;
     private final ConfigFile<UpdateSettings> settingsFile;
 
+    /**
+     * Creates a loader for the updater's YAML files.
+     *
+     * @param dataFolder the plugin data directory
+     * @param folder     the {@code update} directory inside {@code dataFolder}
+     * @param language   the bundled default language ({@code en} or {@code ru})
+     * @param logger     the logger for config and migration messages
+     */
     public UpdateConfiguration(
             final @NotNull Path dataFolder,
             final @NotNull Path folder,
@@ -42,10 +50,21 @@ public final class UpdateConfiguration {
         this.folder = folder;
         this.language = language;
         this.logger = logger;
-        this.settingsFile = ConfigFile.builder(UpdateSettings.class).path(folder.resolve("settings.yml")).defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/settings.yml").migrations(settingsMigrations()).logger(logger).build();
+        this.settingsFile = ConfigFile.builder(UpdateSettings.class)
+                .path(folder.resolve("settings.yml"))
+                .defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/settings.yml")
+                .migrations(settingsMigrations())
+                .logger(logger)
+                .build();
 
     }
 
+    /**
+     * Reloads {@code update/settings.yml}, returning {@code previous} when the file cannot be read.
+     *
+     * @param previous the settings to keep on failure
+     * @return the loaded settings, or {@code previous}
+     */
     public @NotNull UpdateSettings reload(final @NotNull UpdateSettings previous) {
 
         try {
@@ -57,14 +76,32 @@ public final class UpdateConfiguration {
 
     }
 
+    /**
+     * Reads whether the bundled React RCP is enabled in {@code .rcp/react-rcp.yml}.
+     *
+     * @return {@code true} when the bundled React RCP is enabled
+     * @throws ConfigurateException when {@code react-rcp.yml} cannot be read or migrated
+     */
     public boolean reactRcpEnabled() throws ConfigurateException {
 
         final Path path = ExtensionKind.RCP.data(dataFolder).resolve("react-rcp.yml");
-        final ConfigFile<ReactRCPSettings> config = ConfigFile.builder(ReactRCPSettings.class).path(path).defaults(UpdateConfiguration.class.getClassLoader(), language + "/react-rcp.yml").migrations(rcpMigrations()).logger(logger).build();
+        final ConfigFile<ReactRCPSettings> config = ConfigFile.builder(ReactRCPSettings.class)
+                .path(path)
+                .defaults(UpdateConfiguration.class.getClassLoader(), language + "/react-rcp.yml")
+                .migrations(rcpMigrations())
+                .logger(logger)
+                .build();
         return config.load().settings().enabled();
 
     }
 
+    /**
+     * Loads the update settings for the plugin or one extension component.
+     *
+     * @param kind the extension kind, or {@code null} for the plugin itself
+     * @param name the component name
+     * @return the component settings, or disabled defaults when the file cannot be read
+     */
     public @NotNull ComponentSettings component(
             final @Nullable ExtensionKind kind,
             final @NotNull String name

@@ -12,7 +12,11 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
  * @param pinnedVersion a release to stay on, empty to follow the channel
  */
 @ConfigSerializable
-public record ComponentSettings(boolean enabled, UpdateChannel channel, String pinnedVersion) {
+public record ComponentSettings(
+        boolean enabled,
+        @Nullable UpdateChannel channel,
+        @Nullable String pinnedVersion
+) {
 
     /**
      * The channel, {@link UpdateChannel#RELEASE} when the file has none.

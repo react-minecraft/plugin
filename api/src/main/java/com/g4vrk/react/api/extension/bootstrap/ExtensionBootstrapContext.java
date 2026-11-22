@@ -12,19 +12,29 @@ import java.net.URI;
 @ApiStatus.NonExtendable
 public interface ExtensionBootstrapContext {
 
-    /** Declares a stable ID and a positive version of the extension's exported API. */
+    /**
+     * Declares a stable ID and a positive version of the extension's exported API.
+     */
     void identify(final @NotNull ExtensionId id, final int apiVersion);
 
-    /** Exports exactly this package to direct dependents. */
+    /**
+     * Exports exactly this package to direct dependents.
+     */
     void exportPackage(final @NotNull String packageName);
 
-    /** Requires an installed, enabled extension with the specified API version. */
+    /**
+     * Requires an installed, enabled extension with the specified API version.
+     */
     void require(final @NotNull ExtensionId id, final int apiVersion);
 
-    /** Links a compatible extension when it is available. */
+    /**
+     * Links a compatible extension when it is available.
+     */
     void optional(final @NotNull ExtensionId id, final int apiVersion);
 
-    /** Adds a pinned HTTPS JAR to this extension's private classpath. */
+    /**
+     * Adds a pinned HTTPS JAR to this extension's private classpath.
+     */
     void library(final @NotNull URI source, final @NotNull String sha256);
 
 }

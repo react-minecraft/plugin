@@ -1,7 +1,6 @@
 package com.g4vrk.react.bukkit;
 
 import com.cryptomorin.xseries.XSound;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
 import org.bukkit.entity.Entity;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.platform.sender.PlatformSender;
@@ -43,7 +42,7 @@ import java.util.function.Supplier;
 public final class BukkitPlatform implements ReactPlatform {
 
     private final Plugin plugin;
-    private final Scheduler scheduler;
+    private final TaskScheduler<Entity> scheduler;
     private final String platformName;
     private final String artifactPrefix;
 
@@ -51,7 +50,7 @@ public final class BukkitPlatform implements ReactPlatform {
 
     public BukkitPlatform(
             final @NotNull Plugin plugin,
-            final @NotNull Scheduler scheduler,
+            final @NotNull TaskScheduler<Entity> scheduler,
             final @NotNull String platformName,
             final @NotNull String artifactPrefix
     ) {

@@ -3,6 +3,7 @@ package com.g4vrk.react.paper;
 import com.g4vrk.react.bukkit.BukkitRuntime;
 import com.g4vrk.schedula.api.SchedulaAPI;
 import com.g4vrk.schedula.bukkit.impl.task.runner.factory.PaperSchedulerFactory;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ public final class PaperRuntime {
 
         return BukkitRuntime.initialize(
                 plugin,
-                SchedulaAPI.builder().factory(new PaperSchedulerFactory(plugin)).build().createScheduler(),
+                SchedulaAPI.<Entity>builder().factory(new PaperSchedulerFactory(plugin)).build().createScheduler(),
                 "paper"
         );
 

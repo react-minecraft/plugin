@@ -3,6 +3,7 @@ package com.g4vrk.react.folia;
 import com.g4vrk.react.bukkit.BukkitRuntime;
 import com.g4vrk.schedula.api.SchedulaAPI;
 import com.g4vrk.schedula.folia.impl.task.runner.factory.FoliaSchedulerFactory;
+import org.bukkit.entity.Entity;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ public final class FoliaRuntime {
 
         return BukkitRuntime.initialize(
                 plugin,
-                SchedulaAPI.builder().factory(new FoliaSchedulerFactory(plugin)).build().createScheduler(),
+                SchedulaAPI.<Entity>builder().factory(new FoliaSchedulerFactory(plugin)).build().createScheduler(),
                 "folia"
         );
 

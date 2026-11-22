@@ -12,13 +12,19 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.NonExtendable
 public interface ExtensionService {
 
-    /** Publishes one implementation per exported interface during enable. */
+    /**
+     * Publishes one implementation per exported interface during enable.
+     */
     <T> void register(final @NotNull Class<T> type, final @NotNull T service);
 
-    /** Finds a service supplied by a directly linked dependency, if available. */
+    /**
+     * Finds a service supplied by a directly linked dependency, if available.
+     */
     <T> @Nullable T find(final @NotNull ExtensionId provider, final @NotNull Class<T> type);
 
-    /** Finds a service or throws if the provider did not publish it. */
+    /**
+     * Finds a service or throws if the provider did not publish it.
+     */
     default <T> @NotNull T require(final @NotNull ExtensionId provider, final @NotNull Class<T> type) {
 
         final T service = find(provider, type);

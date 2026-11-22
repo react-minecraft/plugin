@@ -69,7 +69,7 @@ public final class ConfigMigrationChain {
      *
      * @return the version the file had before, or {@code -1} if it was already current
      */
-    int apply(final @NotNull ConfigurationNode root) throws SerializationException {
+    public int apply(final @NotNull ConfigurationNode root) throws SerializationException {
 
         final ConfigurationNode versionNode = root.node(VERSION_KEY);
         if (!versionNode.virtual()) {

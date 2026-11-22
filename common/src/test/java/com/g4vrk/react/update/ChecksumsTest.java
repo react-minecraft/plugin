@@ -84,4 +84,18 @@ class ChecksumsTest {
 
     }
 
+    @Test
+    void skipsDotfilesAndParentTraversalNames() {
+
+        final Checksums checksums = Checksums.parse("""
+                %s  .hidden.jar
+                %s  ..
+                %s  ../escape.jar
+                %s  valid-1.0.0.jar
+                """.formatted(JAR_HASH, JAR_HASH, JAR_HASH, JAR_HASH));
+
+        assertEquals(Map.of("valid-1.0.0.jar", JAR_HASH), checksums.files());
+
+    }
+
 }

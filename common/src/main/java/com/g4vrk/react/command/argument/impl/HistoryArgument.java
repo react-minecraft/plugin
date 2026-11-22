@@ -14,6 +14,8 @@ import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.IntegerParser;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
+
 /**
  * Shows a page of the selected player's analysis history.
  */
@@ -26,16 +28,19 @@ public final class HistoryArgument extends LocalArgument {
 
     private final InferenceHistoryPrinter printer;
     private final PlayerRegistry playerRegistry;
+    private final Consumer<CommandSender> playerOnly;
 
     public HistoryArgument(
             final @NotNull CommandBuilderFactory builderFactory,
             final @NotNull InferenceHistoryPrinter printer,
-            final @NotNull PlayerRegistry playerRegistry
+            final @NotNull PlayerRegistry playerRegistry,
+            final @NotNull Consumer<CommandSender> playerOnly
     ) {
 
         this.builderFactory = builderFactory;
         this.printer = printer;
         this.playerRegistry = playerRegistry;
+        this.playerOnly = playerOnly;
 
     }
 
@@ -58,6 +63,7 @@ public final class HistoryArgument extends LocalArgument {
                     if (selector == null) {
 
                         if (!(sender instanceof Player player)) {
+                            this.playerOnly.accept(sender);
                             return;
                         }
 

@@ -3,6 +3,7 @@ package com.g4vrk.react.action;
 import com.cryptomorin.xseries.XSound;
 import com.g4vrk.functionalActions.Action;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.key.InvalidKeyException;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import org.bukkit.Keyed;
@@ -33,7 +34,7 @@ public final class PlaySoundAction implements Action<Audience> {
         final String[] parts = arguments.split(";", 3);
         try {
             audience.playSound(Sound.sound(key(parts[0].trim()), Sound.Source.MASTER, number(parts, 1), number(parts, 2)));
-        } catch (final IllegalArgumentException failure) {
+        } catch (final IllegalArgumentException | InvalidKeyException failure) {
             logger.warn("Invalid sound action: {}", arguments, failure);
         }
 

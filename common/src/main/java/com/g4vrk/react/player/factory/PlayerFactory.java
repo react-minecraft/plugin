@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public final class PlayerFactory implements ReloadObserver<MainConfig> {
 
-    private boolean checkBedrockPlayers;
+    private volatile boolean checkBedrockPlayers;
 
     public PlayerFactory() {
 

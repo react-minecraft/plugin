@@ -33,11 +33,11 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
     private final RCPHost host;
     private final UpdateService updates;
 
-    private ExecutableActionList<? super Audience> header;
-    private ExecutableActionList<? super Audience> entry;
-    private ExecutableActionList<? super Audience> entryWithStatus;
-    private ExecutableActionList<? super Audience> react;
-    private ActionsConfig.Texts texts;
+    private volatile ExecutableActionList<? super Audience> header;
+    private volatile ExecutableActionList<? super Audience> entry;
+    private volatile ExecutableActionList<? super Audience> entryWithStatus;
+    private volatile ExecutableActionList<? super Audience> react;
+    private volatile ActionsConfig.Texts texts;
 
     public RCPListArgument(
             final @NotNull CommandBuilderFactory builderFactory,

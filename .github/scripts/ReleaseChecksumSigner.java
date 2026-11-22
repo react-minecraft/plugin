@@ -32,11 +32,15 @@ public final class ReleaseChecksumSigner {
             throw new IllegalStateException("SIGNING_KEY is not set");
         }
 
+        final String repository = System.getenv("GITHUB_REPOSITORY");
         final StringBuilder text = new StringBuilder()
                 .append("# ").append(args[0]).append(" checksums\n")
                 .append("#\n")
-                .append("# version: ").append(args[1]).append('\n')
-                .append("# channel: ").append(args[2]).append('\n')
+                .append("# version: ").append(args[1]).append('\n');
+        if (repository != null && !repository.isBlank()) {
+            text.append("# repository: ").append(repository.strip()).append('\n');
+        }
+        text.append("# channel: ").append(args[2]).append('\n')
                 .append("# commit: ").append(args[3]).append('\n')
                 .append("# date: ").append(Instant.now().truncatedTo(ChronoUnit.SECONDS)).append('\n')
                 .append("# api-version: ").append(args[4]).append('\n')

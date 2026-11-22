@@ -58,16 +58,16 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     private final ActionParser<Audience> actionParser;
     private final PlayerRegistry playerRegistry;
 
-    private ExecutableActionList<? super Audience> granted;
-    private ExecutableActionList<? super Audience> removed;
-    private ExecutableActionList<? super Audience> cancelled;
-    private ExecutableActionList<? super Audience> invalidCheck;
-    private ExecutableActionList<? super Audience> invalidDuration;
-    private ExecutableActionList<? super Audience> listHeader;
-    private ExecutableActionList<? super Audience> listEntry;
-    private ExecutableActionList<? super Audience> listEmpty;
-    private String allChecks;
-    private String forever;
+    private volatile ExecutableActionList<? super Audience> granted;
+    private volatile ExecutableActionList<? super Audience> removed;
+    private volatile ExecutableActionList<? super Audience> cancelled;
+    private volatile ExecutableActionList<? super Audience> invalidCheck;
+    private volatile ExecutableActionList<? super Audience> invalidDuration;
+    private volatile ExecutableActionList<? super Audience> listHeader;
+    private volatile ExecutableActionList<? super Audience> listEntry;
+    private volatile ExecutableActionList<? super Audience> listEmpty;
+    private volatile String allChecks;
+    private volatile String forever;
 
     public BypassArgument(
             final @NotNull CommandBuilderFactory builderFactory,

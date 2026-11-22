@@ -18,7 +18,7 @@ public class CombatListener implements Listener, ReloadObserver<MainConfig> {
 
     private final PlayerRegistry playerRegistry;
 
-    private long combatTicks;
+    private volatile long combatTicks;
 
     public CombatListener(
             final @NotNull PlayerRegistry playerRegistry

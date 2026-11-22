@@ -20,7 +20,7 @@ public record Checksums(@NotNull Map<String, String> header, @NotNull Map<String
     /**
      * Plain file names only: no paths, so a release cannot point a download outside its folder.
      */
-    private static final Pattern SAFE_NAME = Pattern.compile("[A-Za-z0-9._+-]+");
+    private static final Pattern SAFE_NAME = Pattern.compile("[A-Za-z0-9][A-Za-z0-9._+-]*");
 
     /**
      * Reads the file.

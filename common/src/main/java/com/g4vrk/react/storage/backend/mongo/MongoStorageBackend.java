@@ -234,9 +234,11 @@ public final class MongoStorageBackend implements StorageBackend {
         }
 
         builder.applicationName(settings.applicationName())
-                .retryWrites(settings.retryWrites())
-                .applyToSslSettings(ssl -> ssl.enabled(settings.tls()))
-                .applyToConnectionPoolSettings(pool -> pool
+                .retryWrites(settings.retryWrites());
+        if (settings.uri().isBlank() || settings.tls()) {
+            builder.applyToSslSettings(ssl -> ssl.enabled(settings.tls()));
+        }
+        builder.applyToConnectionPoolSettings(pool -> pool
                         .minSize(Math.min(settings.minimumPoolSize(), settings.maximumPoolSize()))
                         .maxSize(settings.maximumPoolSize())
                         .maxConnectionIdleTime(settings.maxConnectionIdleTime().toMillis(), TimeUnit.MILLISECONDS)

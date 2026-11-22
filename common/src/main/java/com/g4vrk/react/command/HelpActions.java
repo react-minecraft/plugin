@@ -15,10 +15,7 @@ public final class HelpActions implements ReloadObserver<ActionsConfig> {
 
     private final ActionParser<Audience> actionParser;
 
-    private ExecutableActionList<? super Audience> root;
-    private ExecutableActionList<? super Audience> noPermission;
-    private ExecutableActionList<? super Audience> unknownCommand;
-    private ExecutableActionList<? super Audience> playerOnly;
+    private volatile Actions actions;
 
     public HelpActions(final @NotNull ActionParser<Audience> actionParser, final @NotNull ActionsConfig config) {
 
@@ -31,34 +28,45 @@ public final class HelpActions implements ReloadObserver<ActionsConfig> {
     public void onReload(final @NotNull ActionsConfig config) {
 
         final ActionsConfig.Help help = config.help();
-        this.root = actionParser.parseAll(help.root());
-        this.noPermission = actionParser.parseAll(help.noPermission());
-        this.unknownCommand = actionParser.parseAll(help.unknownCommand());
-        this.playerOnly = actionParser.parseAll(help.playerOnly());
+        this.actions = new Actions(
+                actionParser.parseAll(help.root()),
+                actionParser.parseAll(help.noPermission()),
+                actionParser.parseAll(help.unknownCommand()),
+                actionParser.parseAll(help.playerOnly())
+        );
 
     }
 
     public void root(final @NotNull Audience audience) {
 
-        root.run(audience);
+        actions.root().run(audience);
 
     }
 
     public void noPermission(final @NotNull Audience audience) {
 
-        noPermission.run(audience);
+        actions.noPermission().run(audience);
 
     }
 
     public void unknownCommand(final @NotNull Audience audience) {
 
-        unknownCommand.run(audience);
+        actions.unknownCommand().run(audience);
 
     }
 
     public void playerOnly(final @NotNull Audience audience) {
 
-        playerOnly.run(audience);
+        actions.playerOnly().run(audience);
+
+    }
+
+    private record Actions(
+            @NotNull ExecutableActionList<? super Audience> root,
+            @NotNull ExecutableActionList<? super Audience> noPermission,
+            @NotNull ExecutableActionList<? super Audience> unknownCommand,
+            @NotNull ExecutableActionList<? super Audience> playerOnly
+    ) {
 
     }
 

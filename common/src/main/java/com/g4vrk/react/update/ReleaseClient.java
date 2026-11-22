@@ -59,6 +59,7 @@ public final class ReleaseClient {
     private static final String REVOKED_URL = RCPAPI.API_URL + "/api/v1/rcp/revoked";
     private static final String PUBLIC_KEY = "MCowBQYDK2VwAyEAjBPvgQr/pgYBmpHeXr0t+G402p1vHKGx3MbANe+FntI=";
     private static final Pattern VERSION = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.+-]{0,39}");
+    private static final Pattern RELEASE_VERSION = Pattern.compile("\\d+(?:\\.\\d+)*");
     private static final Pattern REPOSITORY = Pattern.compile("[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}");
     private static final Duration TIMEOUT = Duration.ofSeconds(15);
     private static final Duration DOWNLOAD_TIMEOUT = Duration.ofMinutes(2);
@@ -82,10 +83,24 @@ public final class ReleaseClient {
     /**
      * A release whose {@code checksums.txt} passed the signature check.
      *
-     * @param base      the download folder of the release, ending with {@code /}
-     * @param checksums the parsed file
+     * @param base            the download folder of the release, ending with {@code /}
+     * @param checksums       the parsed file
+     * @param revokedFallback {@code true} when this release was chosen as a revoked-version fallback
      */
-    public record Release(@NotNull String base, @NotNull Checksums checksums) {
+    public record Release(
+            @NotNull String base,
+            @NotNull Checksums checksums,
+            boolean revokedFallback
+    ) {
+
+        public Release(
+                final @NotNull String base,
+                final @NotNull Checksums checksums
+        ) {
+
+            this(base, checksums, false);
+
+        }
 
         /**
          * The version of the release.
@@ -146,7 +161,54 @@ public final class ReleaseClient {
             return release;
         }
         logger.warn("React RCP {} was revoked, using {} instead", release.version(), fallback);
-        return bound(signed(releases + "download/v" + fallback + "/"), repository, CHANNEL_RELEASE, fallback);
+        final Release fallbackRelease = bound(
+                signed(releases + "download/v" + fallback + "/"),
+                repository,
+                CHANNEL_RELEASE,
+                fallback
+        );
+        return new Release(fallbackRelease.base(), fallbackRelease.checksums(), true);
+
+    }
+
+    /**
+     * Returns {@code true} only when both {@code running} and {@code candidate} are plain numeric
+     * release versions ({@code x.y.z}) and {@code candidate} is strictly lower than {@code running}.
+     * Dev or commit-suffixed versions are ignored.
+     */
+    static boolean isReleaseDowngrade(
+            final @NotNull String running,
+            final @NotNull String candidate
+    ) {
+
+        if (!RELEASE_VERSION.matcher(running).matches() || !RELEASE_VERSION.matcher(candidate).matches()) {
+            return false;
+        }
+        final String[] currentParts = running.split("\\.");
+        final String[] nextParts = candidate.split("\\.");
+        final int length = Math.max(currentParts.length, nextParts.length);
+        for (int index = 0; index < length; index++) {
+            final String current = index < currentParts.length ? stripLeadingZeros(currentParts[index]) : "";
+            final String next = index < nextParts.length ? stripLeadingZeros(nextParts[index]) : "";
+            if (current.length() != next.length()) {
+                return next.length() < current.length();
+            }
+            final int compare = next.compareTo(current);
+            if (compare != 0) {
+                return compare < 0;
+            }
+        }
+        return false;
+
+    }
+
+    private static @NotNull String stripLeadingZeros(final @NotNull String digits) {
+
+        int index = 0;
+        while (index < digits.length() && digits.charAt(index) == '0') {
+            index++;
+        }
+        return digits.substring(index);
 
     }
 

@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
 )
 public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
-    private double alertThreshold;
+    private volatile double alertThreshold;
 
-    private DecayStrategy decayStrategy;
+    private volatile DecayStrategy decayStrategy;
 
     public AimAI(final @NotNull TrackedPlayerImpl player) {
 

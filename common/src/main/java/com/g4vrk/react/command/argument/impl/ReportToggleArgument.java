@@ -48,9 +48,9 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
     private final boolean byCheck;
     private final Function<ActionsConfig, ActionsConfig.ReportToggle> section;
 
-    private ExecutableActionList<? super Audience> enabledActions;
-    private ExecutableActionList<? super Audience> enabledPlayersActions;
-    private ExecutableActionList<? super Audience> disabledActions;
+    private volatile ExecutableActionList<? super Audience> enabledActions;
+    private volatile ExecutableActionList<? super Audience> enabledPlayersActions;
+    private volatile ExecutableActionList<? super Audience> disabledActions;
 
     protected ReportToggleArgument(
             final @NotNull CommandBuilderFactory builderFactory,

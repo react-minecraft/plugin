@@ -131,7 +131,7 @@ public class ConnectionListener implements Listener {
                 }
                 entity.refreshRotationPermission();
                 hydration.retryIfAvailable();
-            }, TickSchedule.repeating(1, 1));
+            }, TickSchedule.repeating(1, 20));
 
             onJoin.accept(bukkitPlayer);
         }

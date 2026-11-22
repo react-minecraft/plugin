@@ -15,6 +15,7 @@ import com.g4vrk.react.action.PlaySoundAction;
 import com.g4vrk.react.command.CommandTreeRefresh;
 import com.g4vrk.react.api.ReactAPI;
 import com.g4vrk.react.api.channel.BuiltinChannels;
+import com.g4vrk.react.api.channel.impl.ReportChannel;
 import com.g4vrk.react.channel.DebugActions;
 import com.g4vrk.react.channel.ReportActions;
 import com.g4vrk.react.config.ReactConfigs;
@@ -97,6 +98,7 @@ public class React {
 
     private CommandService commands;
     private ListenerService listeners;
+    private volatile boolean terminated;
 
     public void initialize(final @NotNull Plugin plugin, final @NotNull ReactAPI api) {
         if (placeholders.keySet().isEmpty()) {
@@ -108,9 +110,11 @@ public class React {
     }
 
     public void preLoad() {
+
     }
 
     public void load() {
+        this.terminated = false;
         logger.info("Checking for 'PacketEvents' plugin...");
         if (!PluginUtil.containsPlugin("packetevents")) {
             logger.error("Plugin 'packetevents' cannot be found on this server!");
@@ -228,6 +232,9 @@ public class React {
     }
 
     public synchronized void reload() {
+        if (terminated || configs == null) {
+            return;
+        }
         this.loadConfigs();
 
         commands.reload(configs.actions());
@@ -248,7 +255,8 @@ public class React {
         events.post(new ReloadEvent());
     }
 
-    public void terminate() {
+    public synchronized void terminate() {
+        this.terminated = true;
         logger.info("Terminating the plugin...");
 
         if (extensions != null) {
@@ -262,6 +270,13 @@ public class React {
         }
         if (listeners != null) {
             listeners.close();
+        }
+
+        for (final ReportChannel channel : List.of(BuiltinChannels.ALERTS, BuiltinChannels.MONITOR, BuiltinChannels.DEBUG)) {
+            channel.clear();
+            channel.delivery((recipient, report) -> {
+
+            });
         }
 
         try {

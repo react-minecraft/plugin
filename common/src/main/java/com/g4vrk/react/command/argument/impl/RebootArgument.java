@@ -42,12 +42,12 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
     private final ExtensionManager extensions;
     private final Scheduler scheduler;
 
-    private ExecutableActionList<? super Audience> starting;
-    private ExecutableActionList<? super Audience> cancelled;
-    private ExecutableActionList<? super Audience> extensionsStarting;
-    private ExecutableActionList<? super Audience> extensionsDone;
-    private ExecutableActionList<? super Audience> extensionsUnknown;
-    private PluginReboot.Messages messages;
+    private volatile ExecutableActionList<? super Audience> starting;
+    private volatile ExecutableActionList<? super Audience> cancelled;
+    private volatile ExecutableActionList<? super Audience> extensionsStarting;
+    private volatile ExecutableActionList<? super Audience> extensionsDone;
+    private volatile ExecutableActionList<? super Audience> extensionsUnknown;
+    private volatile PluginReboot.Messages messages;
 
     public RebootArgument(
             final @NotNull CommandBuilderFactory builderFactory,

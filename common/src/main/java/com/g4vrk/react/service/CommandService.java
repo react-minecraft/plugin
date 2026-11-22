@@ -118,7 +118,7 @@ public final class CommandService {
                 bypass,
                 reload,
                 reboot,
-                new HistoryArgument(builderFactory, historyPrinter, playerRegistry),
+                new HistoryArgument(builderFactory, historyPrinter, playerRegistry, help::playerOnly),
                 rcps
         )) {
             argument.builds().forEach(manager::command);

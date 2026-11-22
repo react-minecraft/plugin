@@ -136,15 +136,15 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     }
 
     /**
-     * Runs on the extension thread before any jar is loaded: installs or removes the React RCP,
-     * downloads the official addons that are missing and stages every update.
+     * Runs on the extension thread before any jar is loaded: installs or removes the React RCP
+     * and downloads the official addons that are missing. Update checks run asynchronously via
+     * {@link #start(ExtensionManager)} so network issues do not delay server startup.
      */
     public synchronized void onStart() {
 
         settings = configuration.reload(settings);
         reactRCP();
         externalAddons();
-        checkAll();
 
     }
 
@@ -568,6 +568,22 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
         try {
             final ReleaseClient.Release release = client.release(component.repository(), channel, componentSettings.pinned());
             final Instant now = Instant.now();
+            final String candidateVersion = release.checksums().version();
+            if (componentSettings.pinned() == null
+                    && channel == UpdateChannel.RELEASE
+                    && !release.revokedFallback()
+                    && candidateVersion != null
+                    && ReleaseClient.isReleaseDowngrade(component.version(), candidateVersion)) {
+                statuses.put(key(component.repository()), new Status(release.version(), channel, now, "rejected"));
+                logger.error(
+                        "Rejected downgrade of {} from {} to {}",
+                        component.name(),
+                        component.version(),
+                        candidateVersion
+                );
+                discard(component);
+                return false;
+            }
             if (component.extension() != null && release.checksums().apiVersion() != RCPAPI.VERSION) {
                 statuses.put(
                         key(component.repository()),

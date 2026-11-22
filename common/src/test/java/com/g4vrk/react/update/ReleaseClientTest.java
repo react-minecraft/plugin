@@ -2,8 +2,10 @@ package com.g4vrk.react.update;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReleaseClientTest {
 
@@ -61,6 +63,22 @@ class ReleaseClientTest {
         final ReleaseClient.Release release = new ReleaseClient.Release("https://example.invalid/", checksums);
 
         assertSame(release, ReleaseClient.bound(release, "react-minecraft/plugin", "release", "2.0.0"));
+
+    }
+
+    @Test
+    void releaseDowngradeRejectsStrictlyLowerNumericReleasesOnly() {
+
+        assertTrue(ReleaseClient.isReleaseDowngrade("2.1.0", "2.0.0"));
+        assertTrue(ReleaseClient.isReleaseDowngrade("2.10.0", "2.2.0"));
+        assertTrue(ReleaseClient.isReleaseDowngrade("2.0.1", "2.0"));
+
+        assertFalse(ReleaseClient.isReleaseDowngrade("2.0.0", "2.0.0"));
+        assertFalse(ReleaseClient.isReleaseDowngrade("2.0", "2.0.0"));
+        assertFalse(ReleaseClient.isReleaseDowngrade("2.2.0", "2.10.0"));
+        assertFalse(ReleaseClient.isReleaseDowngrade("2.0.0-6d81e55", "1.9.0"));
+        assertFalse(ReleaseClient.isReleaseDowngrade("9.9.9-local", "1.0.0"));
+        assertFalse(ReleaseClient.isReleaseDowngrade("2.0.0", "2.0.0-abc1234"));
 
     }
 

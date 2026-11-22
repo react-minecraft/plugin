@@ -8,7 +8,7 @@ import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
-import com.g4vrk.react.extension.HostedRCPEnvironment;
+import com.g4vrk.react.extension.environment.HostedRCPEnvironment;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.update.UpdateChannel;
 import com.g4vrk.react.update.UpdateService;

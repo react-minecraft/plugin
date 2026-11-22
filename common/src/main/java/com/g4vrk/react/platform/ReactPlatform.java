@@ -9,7 +9,7 @@ import com.g4vrk.react.platform.reboot.PreparedPluginReboot;
 import com.g4vrk.react.api.platform.PlatformServer;
 import com.g4vrk.schedula.task.scheduler.TaskScheduler;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
-import com.g4vrk.react.placeholder.SimplePlaceholderRegistry;
+import com.g4vrk.react.placeholder.registry.SimplePlaceholderRegistry;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import net.kyori.adventure.key.Key;
 import org.jetbrains.annotations.NotNull;

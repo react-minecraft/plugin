@@ -1,6 +1,6 @@
 package com.g4vrk.react.text;
 
-import com.g4vrk.react.placeholder.SimplePlaceholderRegistry;
+import com.g4vrk.react.placeholder.registry.SimplePlaceholderRegistry;
 import com.g4vrk.text.LegacySerializerRegistry;
 import org.slf4j.helpers.NOPLogger;
 import net.kyori.adventure.text.Component;

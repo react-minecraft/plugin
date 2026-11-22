@@ -1,0 +1,35 @@
+
+#
+# React - АнтиЧит основанный на Проверках от Нейросети
+#
+# Исходный код плагина: https://github.com/react-minecraft/plugin
+# (ИИ модель не входит в проект)
+#
+
+# Настройки игроков
+player:
+
+  # Проверять ли бедрок игроков?
+  check-bedrock-players: false
+
+  # Настройки PvP - Активности
+  combat:
+    # Сколько секунд после удара, идет анализ поворотов?
+    time: 2s
+
+# Внешние аддоны. Аддон скачивается из GitHub релизов при старте, если
+# download-next-start: true и его jar ещё нет в addons/.
+# Обновления установленных аддонов настраиваются в update/addons/<имя>.yml
+external-addons:
+  hologram:
+    repository: react-minecraft/hologram-addon
+    download-next-start: true
+  menu:
+    repository: react-minecraft/menu-addon
+    download-next-start: true
+  punish:
+    repository: react-minecraft/punish-addon
+    download-next-start: true
+
+# Не меняйте / Do not change
+config-version: 5

@@ -1,5 +1,13 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.react.extension.descriptor.ExtensionDescriptor;
+import com.g4vrk.react.extension.descriptor.ExtensionKind;
+import com.g4vrk.react.extension.descriptor.ExtensionPlan;
+import com.g4vrk.react.extension.descriptor.InvalidExtensionException;
+import com.g4vrk.react.extension.environment.ExtensionContext;
+import com.g4vrk.react.extension.loader.LoadedExtension;
+import com.g4vrk.react.extension.update.StagedUpdateRegistry;
+
 import com.g4vrk.react.api.extension.ExtensionId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

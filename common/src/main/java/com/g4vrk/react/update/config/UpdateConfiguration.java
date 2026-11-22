@@ -2,10 +2,8 @@ package com.g4vrk.react.update.config;
 
 import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.config.ConfigMigrationChain;
-import com.g4vrk.react.extension.ExtensionKind;
-import com.g4vrk.react.update.ComponentUpdateConfig;
+import com.g4vrk.react.extension.descriptor.ExtensionKind;
 import com.g4vrk.react.update.UpdateChannel;
-import com.g4vrk.react.update.UpdateConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;

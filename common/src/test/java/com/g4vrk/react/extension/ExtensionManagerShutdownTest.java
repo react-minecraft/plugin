@@ -1,5 +1,9 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.react.extension.descriptor.ExtensionKind;
+import com.g4vrk.react.extension.environment.ExtensionContext;
+import com.g4vrk.react.extension.update.StagedUpdateRegistry;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;

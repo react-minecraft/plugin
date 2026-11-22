@@ -1,0 +1,31 @@
+#
+# React - АнтиЧит основанный на Проверках от Нейросети
+#
+# Исходный код плагина: https://github.com/react-minecraft/plugin
+# (ИИ модель не входит в проект)
+#
+
+# Lines: [console], [alert], [log], [reset-vl] and every action of actions.yml.
+# PlaceholderResolver: <player>, <check>, <vl>
+punishments:
+  aim:
+
+    # Проверки, к которым применяется наказание
+    checks:
+      - "aim-ai"
+
+    # Один раз, когда VL дойдёт до N
+    at: {}
+
+    # На N VL, затем каждые M VL ("M" без N: каждые M VL)
+    every:
+      "10;8":
+
+        # Выполнить команду от имени консоли
+        - "[console] kick <player> [React] Heuristic violations (Aim-AI)"
+
+        # Сбросить VL игрока
+        #- "[reset-vl]"
+
+# Не меняйте / Do not change
+config-version: 3

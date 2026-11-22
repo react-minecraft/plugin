@@ -12,7 +12,7 @@ import com.g4vrk.react.bukkit.placeholder.ReactPlaceholderExpansion;
 import com.g4vrk.react.bukkit.reboot.PluginReboot;
 import com.g4vrk.react.bukkit.sender.BukkitPlatformPlayer;
 import com.g4vrk.react.bukkit.util.BukkitBedrockDetector;
-import com.g4vrk.react.placeholder.SimplePlaceholderRegistry;
+import com.g4vrk.react.placeholder.registry.SimplePlaceholderRegistry;
 import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import com.g4vrk.react.platform.listener.PlatformListenerBridge;
 import com.g4vrk.react.platform.update.PlatformUpdateSource;

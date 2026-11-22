@@ -3,7 +3,7 @@ package com.g4vrk.react.rcp;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.registry.RCPPlayerRegistry;
-import com.g4vrk.react.extension.HostedRCPEnvironment;
+import com.g4vrk.react.extension.environment.HostedRCPEnvironment;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.registry.view.RegistryView;

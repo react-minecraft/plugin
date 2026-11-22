@@ -1,14 +1,18 @@
 package com.g4vrk.react.update;
 
+import com.g4vrk.react.update.client.ReleaseClient;
+import com.g4vrk.react.update.config.ComponentUpdateConfig;
+import com.g4vrk.react.update.config.UpdateConfig;
+
 import com.g4vrk.react.api.event.plugin.UpdateDownloadedEvent;
 import com.g4vrk.react.api.extension.GitHubSource;
 import com.g4vrk.react.api.rcp.RCPAPI;
 import com.g4vrk.react.config.model.MainConfig;
-import com.g4vrk.react.extension.ExtensionDescriptor;
-import com.g4vrk.react.extension.ExtensionKind;
+import com.g4vrk.react.extension.descriptor.ExtensionDescriptor;
+import com.g4vrk.react.extension.descriptor.ExtensionKind;
 import com.g4vrk.react.extension.ExtensionManager;
-import com.g4vrk.react.extension.InvalidExtensionException;
-import com.g4vrk.react.extension.StagedUpdateRegistry;
+import com.g4vrk.react.extension.descriptor.InvalidExtensionException;
+import com.g4vrk.react.extension.update.StagedUpdateRegistry;
 import com.g4vrk.react.update.config.UpdateConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

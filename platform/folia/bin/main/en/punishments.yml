@@ -1,0 +1,31 @@
+#
+# React - AI-Powered Anti-Cheat
+#
+# Plugin source code: https://github.com/react-minecraft/plugin
+# (The AI model is not included in this project)
+#
+
+# Lines: [console], [alert], [log], [reset-vl] and every action of actions.yml.
+# PlaceholderResolver: <player>, <check>, <vl>
+punishments:
+  aim:
+
+    # Checks to which this punishment applies
+    checks:
+      - "aim-ai"
+
+    # Run once when VL reaches N
+    at: {}
+
+    # Run at N VL, then every M VL ("M" alone: every M VL)
+    every:
+      "10;8":
+
+        # Execute a command as the console
+        - "[console] kick <player> [React] Heuristic violations (Aim-AI)"
+
+        # Reset the player's VL
+        #- "[reset-vl]"
+
+# Не меняйте / Do not change
+config-version: 3

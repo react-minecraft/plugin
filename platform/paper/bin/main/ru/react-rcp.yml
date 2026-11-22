@@ -1,0 +1,17 @@
+#
+# React RCP - модели и подключение к React
+#
+# RCP скачивается с GitHub: https://github.com/react-minecraft/rcp
+# Каждая сборка проверяется по SHA-256 и подписи ed25519.
+# Его обновления настраиваются в update/rcp/React.yml
+#
+# Купить доступ к нашей модели -> https://www.react-ac.space/
+#
+
+settings:
+
+  # Загружать ли React RCP
+  enabled: true
+
+# Не меняйте / Do not change
+config-version: 2

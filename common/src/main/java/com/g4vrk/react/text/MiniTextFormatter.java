@@ -73,7 +73,7 @@ public final class MiniTextFormatter implements TextFormatter {
             return this.serializers.universalSerializer().serialize(text);
         }
 
-        return ServerTags.deserialize(text, resolvers);
+        return ServerTagResolver.deserialize(text, resolvers);
 
     }
 
@@ -93,7 +93,7 @@ public final class MiniTextFormatter implements TextFormatter {
             return this.serializers.universalSerializer().serialize(text, mapper(this.placeholders, player));
         }
 
-        return ServerTags.deserialize(
+        return ServerTagResolver.deserialize(
                 text,
                 TagResolver.resolver(this.placeholders.tags(player), TagResolver.resolver(resolvers))
         );
@@ -182,7 +182,7 @@ public final class MiniTextFormatter implements TextFormatter {
     /**
      * The styling path, kept in its own class so a server without MiniMessage never loads it.
      */
-    private static final class ServerTags {
+    private static final class ServerTagResolver {
 
         private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 

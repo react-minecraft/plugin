@@ -59,7 +59,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
     private final Supplier<MainConfig> main;
     private final Consumer<UpdateDownloadedEvent> notifier;
 
-    private final Map<String, Status> statuses = new ConcurrentHashMap<>();
+    private final Map<String, UpdateState> statuses = new ConcurrentHashMap<>();
     private final Map<String, UpdateDownloadedEvent> downloaded = new ConcurrentHashMap<>();
     private final Map<String, String> warned = new ConcurrentHashMap<>();
     private final Object checks = new Object();
@@ -93,7 +93,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
      * @param lastCheck when GitHub last answered, or {@code null}
      * @param state     a short word on the outcome
      */
-    public record Status(
+    public record UpdateState(
             @Nullable String version,
             @NotNull UpdateChannel channel,
             @Nullable Instant lastCheck,
@@ -217,7 +217,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
      * @param repository the repository, {@code owner/name}
      * @return the status, or {@code null} when it was never checked
      */
-    public @Nullable Status status(final @NotNull String repository) {
+    public @Nullable UpdateState status(final @NotNull String repository) {
 
         return statuses.get(repository.toLowerCase(Locale.ROOT));
 
@@ -228,7 +228,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
      *
      * @return the status, or {@code null} when it was never checked
      */
-    public @Nullable Status reactRCPStatus() {
+    public @Nullable UpdateState reactRCPStatus() {
 
         return status(ReleaseClient.REACT_RCP);
 
@@ -312,7 +312,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
 
         if (!enabled) {
             removeReactRCP();
-            statuses.put(ReleaseClient.REACT_RCP, new Status(null, UpdateChannel.RELEASE, null, "disabled"));
+            statuses.put(ReleaseClient.REACT_RCP, new UpdateState(null, UpdateChannel.RELEASE, null, "disabled"));
             return;
         }
         for (final ExtensionDescriptor descriptor : scan(ExtensionKind.RCP)) {
@@ -410,7 +410,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
         try {
             final ReleaseClient.Release release = client.release(repository, channel, pinned);
             if (release.checksums().apiVersion() != RCPAPI.VERSION) {
-                statuses.put(key(repository), new Status(release.version(), channel, Instant.now(), "api-version " + release.checksums().apiVersion()));
+                statuses.put(key(repository), new UpdateState(release.version(), channel, Instant.now(), "api-version " + release.checksums().apiVersion()));
                 logger.warn(
                         "Not installing {} {}: it needs api-version {}, this plugin provides {}",
                         display,
@@ -422,17 +422,17 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             }
             final Map.Entry<String, String> jar = release.checksums().jar(prefix);
             if (jar == null) {
-                statuses.put(key(repository), new Status(release.version(), channel, Instant.now(), "no jar"));
+                statuses.put(key(repository), new UpdateState(release.version(), channel, Instant.now(), "no jar"));
                 return;
             }
             client.download(release, jar, into.resolve(jar.getKey()));
-            statuses.put(key(repository), new Status(release.version(), channel, Instant.now(), "installed"));
+            statuses.put(key(repository), new UpdateState(release.version(), channel, Instant.now(), "installed"));
             logger.info("Installed {} {}", display, release.version());
         } catch (final IOException failure) {
-            statuses.put(key(repository), new Status(null, channel, null, "offline"));
+            statuses.put(key(repository), new UpdateState(null, channel, null, "offline"));
             logger.warn("Could not download {}: {}", display, failure.getMessage());
         } catch (final ReleaseClient.VerificationException failure) {
-            statuses.put(key(repository), new Status(null, channel, null, "rejected"));
+            statuses.put(key(repository), new UpdateState(null, channel, null, "rejected"));
             logger.error("Rejected {}: {}", display, failure.getMessage());
         } catch (final InterruptedException failure) {
             Thread.currentThread().interrupt();
@@ -560,7 +560,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
                 : configuration.component(component.extension(), component.name());
         final UpdateChannel channel = componentSettings.effectiveChannel();
         if (!componentSettings.enabled()) {
-            statuses.put(key(component.repository()), new Status(null, channel, null, "disabled"));
+            statuses.put(key(component.repository()), new UpdateState(null, channel, null, "disabled"));
             discard(component);
             return false;
         }
@@ -574,7 +574,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
                     && !release.revokedFallback()
                     && candidateVersion != null
                     && ReleaseClient.isReleaseDowngrade(component.version(), candidateVersion)) {
-                statuses.put(key(component.repository()), new Status(release.version(), channel, now, "rejected"));
+                statuses.put(key(component.repository()), new UpdateState(release.version(), channel, now, "rejected"));
                 logger.error(
                         "Rejected downgrade of {} from {} to {}",
                         component.name(),
@@ -587,7 +587,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             if (component.extension() != null && release.checksums().apiVersion() != RCPAPI.VERSION) {
                 statuses.put(
                         key(component.repository()),
-                        new Status(
+                        new UpdateState(
                                 release.version(),
                                 channel,
                                 now,
@@ -599,11 +599,11 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             }
             final Map.Entry<String, String> jar = release.checksums().jar(component.prefix());
             if (jar == null) {
-                statuses.put(key(component.repository()), new Status(release.version(), channel, now, "no jar"));
+                statuses.put(key(component.repository()), new UpdateState(release.version(), channel, now, "no jar"));
                 return false;
             }
             if (ReleaseClient.matches(component.current(), jar.getValue())) {
-                statuses.put(key(component.repository()), new Status(release.version(), channel, now, "up to date"));
+                statuses.put(key(component.repository()), new UpdateState(release.version(), channel, now, "up to date"));
                 discard(component);
                 return false;
             }
@@ -612,7 +612,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
                     ? component.target()
                     : component.target().resolve(jar.getKey());
             if (ReleaseClient.matches(target, jar.getValue())) {
-                statuses.put(key(component.repository()), new Status(release.version(), channel, now, "staged"));
+                statuses.put(key(component.repository()), new UpdateState(release.version(), channel, now, "staged"));
                 announce(component, release.version(), true);
                 return false;
             }
@@ -620,7 +620,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             if (component.extension() != null) {
                 clearExcept(component.target(), target);
             }
-            statuses.put(key(component.repository()), new Status(release.version(), channel, now, "staged"));
+            statuses.put(key(component.repository()), new UpdateState(release.version(), channel, now, "staged"));
             announce(component, release.version(), false);
 
             final UpdateDownloadedEvent event = new UpdateDownloadedEvent(component.kind(), component.name(), release.version());
@@ -628,15 +628,15 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             notifier.accept(event);
             return true;
         } catch (final IOException failure) {
-            statuses.put(key(component.repository()), new Status(null, channel, null, "offline"));
+            statuses.put(key(component.repository()), new UpdateState(null, channel, null, "offline"));
             logger.debug("Could not check {} for updates", component.repository(), failure);
         } catch (final ReleaseClient.VerificationException failure) {
-            statuses.put(key(component.repository()), new Status(null, channel, null, "rejected"));
+            statuses.put(key(component.repository()), new UpdateState(null, channel, null, "rejected"));
             logger.error("Rejected the update of {}: {}", component.name(), failure.getMessage());
         } catch (final InterruptedException failure) {
             Thread.currentThread().interrupt();
         } catch (final RuntimeException failure) {
-            statuses.put(key(component.repository()), new Status(null, channel, null, "failed"));
+            statuses.put(key(component.repository()), new UpdateState(null, channel, null, "failed"));
             logger.error("Could not update {}", component.name(), failure);
         }
         return false;

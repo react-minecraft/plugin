@@ -26,7 +26,7 @@ public final class PluginReboot implements Runnable {
     private final CommandSender sender;
     private final File jar;
     private final String newVersion;
-    private final Messages messages;
+    private final MessageSet messages;
     private final Logger logger;
     private final PluginReloadBridge access;
 
@@ -35,7 +35,7 @@ public final class PluginReboot implements Runnable {
             final @NotNull CommandSender sender,
             final @NotNull File jar,
             final @NotNull String newVersion,
-            final @NotNull Messages messages
+            final @NotNull MessageSet messages
     ) throws ReflectiveOperationException {
 
         this.plugin = plugin;
@@ -60,7 +60,7 @@ public final class PluginReboot implements Runnable {
     public static @NotNull PluginReboot prepare(
             final @NotNull Plugin plugin,
             final @NotNull CommandSender sender,
-            final @NotNull Messages messages
+            final @NotNull MessageSet messages
     ) {
 
         if (isFolia()) {
@@ -175,7 +175,7 @@ public final class PluginReboot implements Runnable {
      * Holds legacy strings that can be sent after the plugin has been unloaded.
      */
     @ApiStatus.Internal
-    public record Messages(
+    public record MessageSet(
             @NotNull String unloaded,
             @NotNull String loaded,
             @NotNull String failed

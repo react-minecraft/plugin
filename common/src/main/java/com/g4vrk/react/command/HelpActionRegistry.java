@@ -15,7 +15,7 @@ public final class HelpActionRegistry implements ReloadObserver<ActionsConfig> {
 
     private final ActionParser<Audience> actionParser;
 
-    private volatile Actions actions;
+    private volatile ActionGroup actions;
 
     public HelpActionRegistry(final @NotNull ActionParser<Audience> actionParser, final @NotNull ActionsConfig config) {
 
@@ -28,7 +28,7 @@ public final class HelpActionRegistry implements ReloadObserver<ActionsConfig> {
     public void onReload(final @NotNull ActionsConfig config) {
 
         final ActionsConfig.Help help = config.help();
-        this.actions = new Actions(
+        this.actions = new ActionGroup(
                 actionParser.parseAll(help.root()),
                 actionParser.parseAll(help.noPermission()),
                 actionParser.parseAll(help.unknownCommand()),
@@ -61,7 +61,7 @@ public final class HelpActionRegistry implements ReloadObserver<ActionsConfig> {
 
     }
 
-    private record Actions(
+    private record ActionGroup(
             @NotNull ExecutableActionList<? super Audience> root,
             @NotNull ExecutableActionList<? super Audience> noPermission,
             @NotNull ExecutableActionList<? super Audience> unknownCommand,

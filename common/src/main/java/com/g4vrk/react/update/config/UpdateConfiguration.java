@@ -85,7 +85,7 @@ public final class UpdateConfiguration {
     public boolean reactRcpEnabled() throws ConfigurateException {
 
         final Path path = ExtensionKind.RCP.data(dataFolder).resolve("react-rcp.yml");
-        final ConfigFile<ReactRCPSettings> config = ConfigFile.builder(ReactRCPSettings.class)
+        final ConfigFile<ReactRcpConfig> config = ConfigFile.builder(ReactRcpConfig.class)
                 .path(path)
                 .defaults(UpdateConfiguration.class.getClassLoader(), language + "/react-rcp.yml")
                 .migrations(rcpMigrations())
@@ -198,13 +198,13 @@ public final class UpdateConfiguration {
      * The installation switch in {@code .rcp/react-rcp.yml}.
      */
     @ConfigSerializable
-    private record ReactRCPSettings(Settings settings) {
+    private record ReactRcpConfig(Config settings) {
 
         /**
          * Whether the bundled provider is enabled.
          */
         @ConfigSerializable
-        record Settings(boolean enabled) {
+        record Config(boolean enabled) {
 
         }
 

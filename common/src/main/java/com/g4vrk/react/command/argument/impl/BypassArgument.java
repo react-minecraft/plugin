@@ -85,7 +85,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             final @NotNull ActionsConfig config
     ) {
 
-        final ActionsConfig.Bypass bypass = config.bypass();
+        final ActionsConfig.BypassAction bypass = config.bypass();
         this.granted = actionParser.parseAll(bypass.granted());
         this.removed = actionParser.parseAll(bypass.removed());
         this.cancelled = actionParser.parseAll(bypass.cancelled());

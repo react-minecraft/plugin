@@ -7,16 +7,16 @@ import java.util.Map;
 
 @ConfigSerializable
 public record ActionsConfig(
-        Alerts alerts,
+        AlertAction alerts,
         Monitor monitor,
         Debug debug,
-        Bypass bypass,
+        BypassAction bypass,
         Reload reload,
         Reboot reboot,
-        Rcps rcps,
-        Updates updates,
+        RcpAction rcps,
+        UpdateAction updates,
         Help help,
-        Texts texts
+        TextAction texts
 ) {
 
     /**
@@ -34,7 +34,7 @@ public record ActionsConfig(
     }
 
     @ConfigSerializable
-    public record Alerts(
+    public record AlertAction(
             List<String> alert,
             List<String> onEnable,
             List<String> onEnablePlayers,
@@ -64,7 +64,7 @@ public record ActionsConfig(
      * {@code <check>} and {@code <duration>} when there is no check or end.
      */
     @ConfigSerializable
-    public record Bypass(
+    public record BypassAction(
             List<String> granted,
             List<String> removed,
             List<String> cancelled,
@@ -100,7 +100,7 @@ public record ActionsConfig(
     }
 
     @ConfigSerializable
-    public record Rcps(
+    public record RcpAction(
             List<String> header,
             List<String> entry,
             List<String> entryWithStatus,
@@ -112,11 +112,11 @@ public record ActionsConfig(
      * Update notifications: a downloaded plugin jar, and a staged addon or RCP jar.
      */
     @ConfigSerializable
-    public record Updates(List<String> plugin, List<String> extension) {
+    public record UpdateAction(List<String> plugin, List<String> extension) {
     }
 
     @ConfigSerializable
-    public record Texts(
+    public record TextAction(
             String unavailable,
             String noVersion,
             String version,

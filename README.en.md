@@ -53,6 +53,8 @@
 1. Download `react-paper-*.jar` or `react-folia-*.jar` for your server.
 2. Move it to the `plugins/` folder.
 3. Start the server. React downloads its RCP into `plugins/React/.rcp/providers/` when a signed stable build for API 2 is available. To try a prerelease, [install the nightly RCP manually](https://github.com/react-minecraft/rcp#что-это).
+
+For React 2.0.0 nightly, use RCP and addon builds compiled against the new platform API. Replace earlier releases of hologram 1.2.0, menu 1.1.0, and punish 1.0.2 with compatible builds.
 4. Link the server at https://www.react-ac.space/ with `/react link` or `/react link <code>`.
 
 > [!IMPORTANT]
@@ -119,8 +121,9 @@ Use JDK 21.
 
 | Module   | Description                                   |
 |----------|-----------------------------------------------|
-| `api`    | Stable API for RCPs and addons, RCP and addon loaders |
-| `common` | Core anti-cheat logic, data, checks, and more |
+| `api`    | RCP and addon API, including server platform contracts |
+| `common` | Checks, data, and extension loading |
+| `bukkit` | Shared Bukkit and PacketEvents integration for Paper and Folia |
 | `paper`  | Implementation for Paper servers              |
 | `folia`  | Implementation for Folia servers              |
 

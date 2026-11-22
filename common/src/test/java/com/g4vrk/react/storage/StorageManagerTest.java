@@ -57,8 +57,8 @@ final class StorageManagerTest {
 
             assertEquals(
                     List.of(
-                            new StorageMutation.Bypass(player, "aim", -1L),
-                            new StorageMutation.Bypass(player, "other", Long.MAX_VALUE)
+                            new StorageMutation.BypassMutation(player, "aim", -1L),
+                            new StorageMutation.BypassMutation(player, "other", Long.MAX_VALUE)
                     ),
                     written.poll(5, TimeUnit.SECONDS)
             );

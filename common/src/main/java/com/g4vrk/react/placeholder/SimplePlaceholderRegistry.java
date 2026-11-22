@@ -141,7 +141,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
     @Override
     public @NotNull TagResolver tags(final @NotNull TrackedPlayer player) {
 
-        return new Tags(player);
+        return new TagResolverView(player);
 
     }
 
@@ -227,11 +227,11 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
     /**
      * The MiniMessage resolver of one player.
      */
-    private final class Tags implements TagResolver {
+    private final class TagResolverView implements TagResolver {
 
         private final TrackedPlayer player;
 
-        private Tags(final @NotNull TrackedPlayer player) {
+        private TagResolverView(final @NotNull TrackedPlayer player) {
 
             this.player = player;
 

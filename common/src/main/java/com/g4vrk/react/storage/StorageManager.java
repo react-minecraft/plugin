@@ -206,7 +206,7 @@ public final class StorageManager {
                 }
                 final StorageMutation.Violation violation = pending.materialize(violations.get(pending.check()));
                 putViolation(violations, violation);
-            } else if (mutation instanceof final StorageMutation.Bypass bypass) {
+            } else if (mutation instanceof final StorageMutation.BypassMutation bypass) {
                 if (bypasses == null) {
                     bypasses = new HashMap<>(stored.bypasses());
                 }
@@ -259,7 +259,7 @@ public final class StorageManager {
             final long until
     ) {
 
-        enqueue(new StorageMutation.Bypass(playerUuid, check, until), false);
+        enqueue(new StorageMutation.BypassMutation(playerUuid, check, until), false);
 
     }
 

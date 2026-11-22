@@ -161,7 +161,7 @@ public final class MongoStorageBackend implements StorageBackend {
                         .append(FIELD_TIMESTAMP, value.timestamp())
                         .append(FIELD_PROBABILITY, value.probability());
                 inferenceWrites.add(new ReplaceOneModel<>(eq(FIELD_ID, stored.id().toString()), document, upsert));
-            } else if (mutation instanceof final StorageMutation.Bypass bypass) {
+            } else if (mutation instanceof final StorageMutation.BypassMutation bypass) {
                 final String id = bypass.playerUuid() + ":" + bypass.check();
                 if (bypass.lifted()) {
                     bypassWrites.add(new DeleteOneModel<>(eq(FIELD_ID, id)));

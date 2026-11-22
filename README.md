@@ -47,11 +47,13 @@
 
 - Ядро сервера: `Paper / Folia`. Paper поддерживается с `1.16.5`.
 - Java: от 17 для JAR Paper и от 21 для JAR Folia. Само ядро может требовать более новую версию.
-- React включает [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0); совместимый установленный плагин используется вместо встроенной копии. PlaceholderAPI нужен только для его плейсхолдеров.
+- React включает [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0). Если на сервере уже установлен совместимый PacketEvents, React использует его. PlaceholderAPI нужен только для его плейсхолдеров.
 
 1. Скачайте `react-paper-*.jar` или `react-folia-*.jar` под своё ядро
 2. Переместите его в папку `plugins/`
 3. Запустите сервер. Плагин сам скачает React RCP в `plugins/React/.rcp/providers/`, когда есть подписанный стабильный релиз под API 2. Для проверки nightly [поставьте RCP вручную](https://github.com/react-minecraft/rcp#что-это).
+
+Для nightly React 2.0.0 используйте RCP и аддоны, собранные под новый API платформы. Выпущенные ранее hologram 1.2.0, menu 1.1.0 и punish 1.0.2 нужно заменить совместимыми сборками.
 4. Привяжите сервер к аккаунту на https://www.react-ac.space/: `/react link` или `/react link <код>`
 
 > [!IMPORTANT]
@@ -120,8 +122,9 @@
 
 | Модуль   | Описание                                           |
 |----------|----------------------------------------------------|
-| `api`    | Стабильный API для RCP и аддонов, загрузчики RCP и аддонов |
-| `common` | Главная работа античита, данные, проверки и прочее |
+| `api`    | API для RCP и аддонов, контракты серверной платформы |
+| `common` | Проверки, данные и загрузка расширений |
+| `bukkit` | Общая интеграция Paper и Folia с Bukkit и PacketEvents |
 | `paper`  | Реализация для Paper серверов                      |
 | `folia`  | Реализация для Folia серверов                      |
 

@@ -13,7 +13,7 @@ public sealed interface StorageMutation permits
         StorageMutation.Violation,
         StorageMutation.PendingViolation,
         StorageMutation.Inference,
-        StorageMutation.Bypass {
+        StorageMutation.BypassMutation {
 
     @NotNull UUID playerUuid();
 
@@ -67,7 +67,7 @@ public sealed interface StorageMutation permits
      * @param until      when the bypass ends in epoch millis, {@link Long#MAX_VALUE} for never,
      *                   a negative value to lift it
      */
-    record Bypass(
+    record BypassMutation(
             @NotNull UUID playerUuid,
             @NotNull String check,
             long until

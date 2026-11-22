@@ -126,7 +126,7 @@ public final class JdbcStorageBackend implements StorageBackend {
                 boolean hasInference = false;
                 boolean hasBypasses = false;
                 boolean hasLifts = false;
-                final Map<UUID, Map<String, StorageMutation.Bypass>> bypasses = new HashMap<>();
+                final Map<UUID, Map<String, StorageMutation.BypassMutation>> bypasses = new HashMap<>();
 
                 for (final StorageMutation mutation : mutations) {
                     if (mutation instanceof final StorageMutation.Violation violation) {
@@ -137,14 +137,14 @@ public final class JdbcStorageBackend implements StorageBackend {
                         bindInference(inferenceStatement, inference);
                         inferenceStatement.addBatch();
                         hasInference = true;
-                    } else if (mutation instanceof final StorageMutation.Bypass bypass) {
+                    } else if (mutation instanceof final StorageMutation.BypassMutation bypass) {
                         bypasses.computeIfAbsent(bypass.playerUuid(), key -> new HashMap<>())
                                 .put(bypass.check(), bypass);
                     }
                 }
 
-                for (final Map<String, StorageMutation.Bypass> playerBypasses : bypasses.values()) {
-                    for (final StorageMutation.Bypass bypass : playerBypasses.values()) {
+                for (final Map<String, StorageMutation.BypassMutation> playerBypasses : bypasses.values()) {
+                    for (final StorageMutation.BypassMutation bypass : playerBypasses.values()) {
                         final PreparedStatement statement = bypass.lifted() ? liftStatement : bypassStatement;
                         statement.setString(1, bypass.playerUuid().toString());
                         statement.setString(2, bypass.check());

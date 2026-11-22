@@ -37,7 +37,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
     private volatile ExecutableActionList<? super Audience> entry;
     private volatile ExecutableActionList<? super Audience> entryWithStatus;
     private volatile ExecutableActionList<? super Audience> react;
-    private volatile ActionsConfig.Texts texts;
+    private volatile ActionsConfig.TextAction texts;
 
     public RCPListArgument(
             final @NotNull CommandBuilderFactory builderFactory,
@@ -58,7 +58,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
     @Override
     public void onReload(final @NotNull ActionsConfig config) {
 
-        final ActionsConfig.Rcps rcps = config.rcps();
+        final ActionsConfig.RcpAction rcps = config.rcps();
         this.header = actionParser.parseAll(rcps.header());
         this.entry = actionParser.parseAll(rcps.entry());
         this.entryWithStatus = actionParser.parseAll(rcps.entryWithStatus());
@@ -97,9 +97,9 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
                         );
                     }
 
-                    final UpdateService.Status reported = updates.reactRCPStatus();
-                    final UpdateService.Status status = reported == null
-                            ? new UpdateService.Status(null, UpdateChannel.RELEASE, null, "not checked")
+                    final UpdateService.UpdateState reported = updates.reactRCPStatus();
+                    final UpdateService.UpdateState status = reported == null
+                            ? new UpdateService.UpdateState(null, UpdateChannel.RELEASE, null, "not checked")
                             : reported;
                     run(
                             react,

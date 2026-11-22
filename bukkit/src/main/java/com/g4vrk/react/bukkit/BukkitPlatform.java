@@ -284,7 +284,7 @@ public final class BukkitPlatform implements ReactPlatform {
         if (bukkitSender == null) {
             throw new IllegalStateException("Unsupported command sender type");
         }
-        final PluginReboot reboot = PluginReboot.prepare(plugin, bukkitSender, new PluginReboot.Messages(messages.unloaded(), messages.loaded(), messages.failed()));
+        final PluginReboot reboot = PluginReboot.prepare(plugin, bukkitSender, new PluginReboot.MessageSet(messages.unloaded(), messages.loaded(), messages.failed()));
         return new PreparedPluginReboot() {
 
             @Override

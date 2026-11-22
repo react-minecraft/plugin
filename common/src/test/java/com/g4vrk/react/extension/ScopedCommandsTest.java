@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScopedCommandsTest {
 
     private final TestManager manager = new TestManager();
-    private final PlatformCommandBridge platformCommands = new TestPlatformCommands(manager);
+    private final PlatformCommandBridge platformCommands = new TestPlatformCommandBridge(manager);
 
     @Test
     void removesOnlyOwnSubcommandsUnderSharedRoot() {
@@ -80,11 +80,11 @@ class ScopedCommandsTest {
 
     }
 
-    private static final class TestPlatformCommands implements PlatformCommandBridge {
+    private static final class TestPlatformCommandBridge implements PlatformCommandBridge {
 
         private final CommandManager<PlatformSender> manager;
 
-        private TestPlatformCommands(
+        private TestPlatformCommandBridge(
                 final @NotNull CommandManager<PlatformSender> manager
         ) {
 

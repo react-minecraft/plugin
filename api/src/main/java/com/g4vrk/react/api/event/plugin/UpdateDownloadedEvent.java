@@ -6,6 +6,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Posted after an update was downloaded and its signature checked.
+ *
+ * <p>This event is posted asynchronously from the update or extension thread. Listeners must not
+ * call Bukkit or Folia region-bound APIs directly without scheduling onto the appropriate thread.</p>
  */
 @ApiStatus.AvailableSince("2.0")
 public final class UpdateDownloadedEvent extends Event {

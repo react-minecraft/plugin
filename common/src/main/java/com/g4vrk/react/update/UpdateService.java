@@ -187,7 +187,10 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             if (settings.autoReboot()) {
                 for (final UpdateDownloadedEvent event : pending()) {
                     if (event.kind() != UpdateDownloadedEvent.Kind.PLUGIN) {
-                        manager.reboot(event.name());
+                        final ExtensionKind kind = event.kind() == UpdateDownloadedEvent.Kind.RCP
+                                ? ExtensionKind.RCP
+                                : ExtensionKind.ADDON;
+                        manager.reboot(kind, event.name());
                     }
                 }
             }
@@ -449,8 +452,39 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
                 }
             }
             downloaded.keySet().retainAll(present);
+            pruneStaged(present);
             for (final Component component : components) {
                 check(component);
+            }
+        }
+
+    }
+
+    /**
+     * Deletes staged folders belonging to extensions that are no longer installed, so reinstalling
+     * one later does not apply a stale jar on top of it.
+     */
+    private void pruneStaged(final @NotNull Set<String> present) {
+
+        final Path stagedRoot = folder.resolve("staged");
+        for (final ExtensionKind kind : ExtensionKind.values()) {
+            final Path kindDir = stagedRoot.resolve(kind.name().toLowerCase(Locale.ROOT));
+            if (!Files.isDirectory(kindDir)) {
+                continue;
+            }
+            try (DirectoryStream<Path> entries = Files.newDirectoryStream(kindDir)) {
+                for (final Path entry : entries) {
+                    if (!Files.isDirectory(entry)) {
+                        continue;
+                    }
+                    final String componentKey = key(kind, entry.getFileName().toString());
+                    if (!present.contains(componentKey)) {
+                        clear(entry);
+                        Files.deleteIfExists(entry);
+                    }
+                }
+            } catch (final IOException failure) {
+                logger.warn("Could not clean up stale staged updates in {}", kindDir, failure);
             }
         }
 
@@ -521,18 +555,18 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      */
     private boolean check(final @NotNull Component component) {
 
-        final ComponentSettings settings = component.extension() == null
+        final ComponentSettings componentSettings = component.extension() == null
                 ? configuration.component(null, component.name())
                 : configuration.component(component.extension(), component.name());
-        final UpdateChannel channel = settings.effectiveChannel();
-        if (!settings.enabled()) {
+        final UpdateChannel channel = componentSettings.effectiveChannel();
+        if (!componentSettings.enabled()) {
             statuses.put(key(component.repository()), new Status(null, channel, null, "disabled"));
             discard(component);
             return false;
         }
 
         try {
-            final ReleaseClient.Release release = client.release(component.repository(), channel, settings.pinned());
+            final ReleaseClient.Release release = client.release(component.repository(), channel, componentSettings.pinned());
             final Instant now = Instant.now();
             if (component.extension() != null && release.checksums().apiVersion() != RCPAPI.VERSION) {
                 statuses.put(

@@ -128,12 +128,13 @@ public final class ReleaseClient {
 
         final String releases = "https://github.com/" + repository + "/releases/";
         if (pinned != null) {
-            return bound(signed(releases + "download/v" + pinned + "/"), CHANNEL_RELEASE, pinned);
+            return bound(signed(releases + "download/v" + pinned + "/"), repository, CHANNEL_RELEASE, pinned);
         }
 
         final boolean nightly = channel == UpdateChannel.PRERELEASE;
         final Release release = bound(
                 signed(releases + (nightly ? "download/nightly/" : "latest/download/")),
+                repository,
                 nightly ? CHANNEL_NIGHTLY : CHANNEL_RELEASE,
                 null
         );
@@ -145,21 +146,27 @@ public final class ReleaseClient {
             return release;
         }
         logger.warn("React RCP {} was revoked, using {} instead", release.version(), fallback);
-        return bound(signed(releases + "download/v" + fallback + "/"), CHANNEL_RELEASE, fallback);
+        return bound(signed(releases + "download/v" + fallback + "/"), repository, CHANNEL_RELEASE, fallback);
 
     }
 
     /**
      * Checks that a signed file belongs to the place it was fetched from, so a signed file of
-     * another release cannot be replayed there: a nightly as the latest release, or an older
-     * release under a pinned tag. Files without the header line are accepted.
+     * another repository or release cannot be replayed there: another repo's file, a nightly as
+     * the latest release, or an older release under a pinned tag. Files without a header line are
+     * accepted.
      */
-    private static @NotNull Release bound(
+    static @NotNull Release bound(
             final @NotNull Release release,
+            final @NotNull String repository,
             final @NotNull String channel,
             final @Nullable String version
     ) throws VerificationException {
 
+        final String signedRepository = release.checksums().header().get("repository");
+        if (signedRepository != null && !signedRepository.equalsIgnoreCase(repository)) {
+            throw new VerificationException("signed repository " + signedRepository + " is not " + repository);
+        }
         final String signedChannel = release.checksums().header().get("channel");
         if (signedChannel != null && !signedChannel.equalsIgnoreCase(channel)) {
             throw new VerificationException("signed channel " + signedChannel + " is not " + channel);

@@ -101,24 +101,55 @@ public final class ExtensionManager implements AutoCloseable {
      */
     public @NotNull CompletableFuture<RebootResult> reboot(final @NotNull String target) {
 
+        final String key = target.toLowerCase(Locale.ROOT);
+        final Set<ExtensionKind> kinds = switch (key) {
+            case ALL -> Set.of(ExtensionKind.values());
+            case RCP -> Set.of(ExtensionKind.RCP);
+            case ADDONS -> Set.of(ExtensionKind.ADDON);
+            default -> null;
+        };
+        return reboot(
+                extension -> kinds == null
+                        ? extension.descriptor().name().equalsIgnoreCase(key) || extension.plan().id().toString().equals(key)
+                        : kinds.contains(extension.descriptor().kind()),
+                descriptor -> kinds == null
+                        ? descriptor.name().equalsIgnoreCase(key)
+                        : kinds.contains(descriptor.kind())
+        );
+
+    }
+
+    /**
+     * Reboots one extension identified by its kind and name, without matching group keywords
+     * ({@link #ALL}, {@link #RCP}, {@link #ADDONS}) or colliding across kinds.
+     *
+     * @param kind the extension kind
+     * @param name the extension name, any case
+     * @return what was unloaded, loaded and what failed
+     */
+    public @NotNull CompletableFuture<RebootResult> reboot(
+            final @NotNull ExtensionKind kind,
+            final @NotNull String name
+    ) {
+
+        return reboot(
+                extension -> extension.descriptor().kind() == kind && extension.descriptor().name().equalsIgnoreCase(name),
+                descriptor -> descriptor.kind() == kind && descriptor.name().equalsIgnoreCase(name)
+        );
+
+    }
+
+    private @NotNull CompletableFuture<RebootResult> reboot(
+            final @NotNull ExtensionSelector selector,
+            final @NotNull DescriptorFilter reloadFilter
+    ) {
+
         return CompletableFuture.supplyAsync(() -> {
             final RebootResult result = new RebootResult();
-            final String key = target.toLowerCase(Locale.ROOT);
-
-            final Set<ExtensionKind> kinds = switch (key) {
-                case ALL -> Set.of(ExtensionKind.values());
-                case RCP -> Set.of(ExtensionKind.RCP);
-                case ADDONS -> Set.of(ExtensionKind.ADDON);
-                default -> null;
-            };
             final List<LoadedExtension> targets = new ArrayList<>();
             final Set<ExtensionId> affected = new HashSet<>();
             for (final LoadedExtension extension : loaded) {
-                final ExtensionDescriptor descriptor = extension.descriptor();
-                final boolean selected = kinds == null
-                        ? descriptor.name().equalsIgnoreCase(key) || extension.plan().id().toString().equals(key)
-                        : kinds.contains(descriptor.kind());
-                if (selected || extension.services().dependencyIds().stream().anyMatch(affected::contains)) {
+                if (selector.matches(extension) || extension.services().dependencyIds().stream().anyMatch(affected::contains)) {
                     targets.add(extension);
                     affected.add(extension.plan().id());
                 }
@@ -161,7 +192,7 @@ public final class ExtensionManager implements AutoCloseable {
 
             final Set<ExtensionDescriptor> stopped = new HashSet<>();
             targets.forEach(extension -> stopped.add(extension.descriptor()));
-            loadAll(descriptor -> (kinds == null ? descriptor.name().equalsIgnoreCase(key) : kinds.contains(descriptor.kind()))
+            loadAll(descriptor -> reloadFilter.accepts(descriptor)
                     || stopped.stream().anyMatch(old -> old.kind() == descriptor.kind() && old.name().equalsIgnoreCase(descriptor.name())), result);
 
             for (final LoadedExtension extension : targets) {
@@ -452,6 +483,13 @@ public final class ExtensionManager implements AutoCloseable {
     private interface DescriptorFilter {
 
         boolean accepts(final @NotNull ExtensionDescriptor descriptor);
+
+    }
+
+    @FunctionalInterface
+    private interface ExtensionSelector {
+
+        boolean matches(final @NotNull LoadedExtension extension);
 
     }
 

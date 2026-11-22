@@ -110,11 +110,15 @@ public final class ConfigMigrationChain {
 
     }
 
+    /**
+     * Builds a {@link ConfigMigrationChain} by appending ordered migration steps.
+     */
     public static final class Builder {
 
         private final List<ConfigMigration> steps = new ArrayList<>();
 
         private Builder() {
+
         }
 
         /**

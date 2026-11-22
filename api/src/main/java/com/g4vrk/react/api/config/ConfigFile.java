@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -112,10 +114,7 @@ public final class ConfigFile<T> {
 
         try {
             if (Files.notExists(path)) {
-                Files.createDirectories(path.toAbsolutePath().getParent());
-                try (InputStream in = openDefaults()) {
-                    Files.copy(in, path);
-                }
+                copyDefaultsAtomically();
             }
 
             final CommentedConfigurationNode root = loader(path).load();
@@ -153,7 +152,7 @@ public final class ConfigFile<T> {
 
         final Path backup = path.resolveSibling(path.getFileName() + ".v" + previous + ".bak");
         Files.copy(path, backup, StandardCopyOption.REPLACE_EXISTING);
-        loader(path).save(migrated);
+        saveAtomically(migrated);
         logger.warn(
                 "Migrated {} from version {} to {}. The old file is kept as {}",
                 path.getFileName(),
@@ -161,6 +160,45 @@ public final class ConfigFile<T> {
                 migrations.latest(),
                 backup.getFileName()
         );
+
+    }
+
+    private void copyDefaultsAtomically() throws IOException {
+
+        final Path parent = path.toAbsolutePath().getParent();
+        Files.createDirectories(parent);
+        final Path temporary = Files.createTempFile(parent, path.getFileName() + ".", ".tmp");
+        try {
+            try (InputStream in = openDefaults()) {
+                Files.copy(in, temporary, StandardCopyOption.REPLACE_EXISTING);
+            }
+            try {
+                Files.move(temporary, path, StandardCopyOption.ATOMIC_MOVE);
+            } catch (final AtomicMoveNotSupportedException unsupported) {
+                Files.move(temporary, path);
+            }
+        } catch (final FileAlreadyExistsException ignored) {
+            // Created concurrently by another thread.
+        } catch (final AccessDeniedException failure) {
+            if (Files.notExists(path)) {
+                throw failure;
+            }
+            // Created concurrently by another thread on Windows.
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+
+    }
+
+    private void saveAtomically(final @NotNull CommentedConfigurationNode node) throws IOException {
+
+        final Path temporary = Files.createTempFile(path.toAbsolutePath().getParent(), path.getFileName() + ".", ".tmp");
+        try {
+            loader(temporary).save(node);
+            moveAtomically(temporary, path);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
 
     }
 
@@ -181,13 +219,22 @@ public final class ConfigFile<T> {
         final Path temporary = Files.createTempFile(path.toAbsolutePath().getParent(), path.getFileName() + ".", ".tmp");
         try {
             Files.writeString(temporary, updated, StandardCharsets.UTF_8);
-            try {
-                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            } catch (final AtomicMoveNotSupportedException unsupported) {
-                Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING);
-            }
+            moveAtomically(temporary, path);
         } finally {
             Files.deleteIfExists(temporary);
+        }
+
+    }
+
+    private static void moveAtomically(
+            final @NotNull Path source,
+            final @NotNull Path target
+    ) throws IOException {
+
+        try {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (final AtomicMoveNotSupportedException unsupported) {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
         }
 
     }
@@ -225,6 +272,11 @@ public final class ConfigFile<T> {
 
     }
 
+    /**
+     * Builds a {@link ConfigFile} instance.
+     *
+     * @param <T> the mapped type
+     */
     public static final class Builder<T> {
 
         private final Class<T> type;

@@ -133,4 +133,33 @@ class ConfigFileTest {
 
     }
 
+    @Test
+    void concurrentFirstLoadsSucceedWithoutTemporaryFilesLeftBehind() throws Exception {
+
+        final Path path = directory.resolve("concurrent.yml");
+        final ConfigFile<Object> config = file(path, RENAME);
+        final java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+        final java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(4);
+        try {
+            final java.util.List<java.util.concurrent.Future<CommentedConfigurationNode>> futures = new java.util.ArrayList<>();
+            for (int index = 0; index < 4; index++) {
+                futures.add(pool.submit(() -> {
+                    start.await();
+                    return config.loadNode();
+                }));
+            }
+            start.countDown();
+            for (final java.util.concurrent.Future<CommentedConfigurationNode> future : futures) {
+                assertEquals(5, future.get().node("limit").getInt());
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+        assertEquals(DEFAULTS, Files.readString(path));
+        try (var entries = Files.list(directory)) {
+            assertEquals(1L, entries.count());
+        }
+
+    }
+
 }

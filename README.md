@@ -124,9 +124,9 @@
 |----------|----------------------------------------------------|
 | `api`    | API для RCP и аддонов, контракты серверной платформы |
 | `common` | Проверки, данные и загрузка расширений |
-| `bukkit` | Общая интеграция Paper и Folia с Bukkit и PacketEvents |
-| `paper`  | Реализация для Paper серверов                      |
-| `folia`  | Реализация для Folia серверов                      |
+| `platform/bukkit` | Общая интеграция Paper и Folia с Bukkit и PacketEvents |
+| `platform/paper`  | Реализация для Paper серверов                          |
+| `platform/folia`  | Реализация для Folia серверов                          |
 
 ---
 

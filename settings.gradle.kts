@@ -3,9 +3,9 @@ rootProject.name = "react"
 include(
     "api",
     "common",
-    "bukkit",
-    "paper",
-    "folia"
+    "platform:bukkit",
+    "platform:paper",
+    "platform:folia"
 )
 
 dependencyResolutionManagement {

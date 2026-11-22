@@ -46,6 +46,10 @@ allprojects {
 
 subprojects {
 
+    if (childProjects.isNotEmpty()) {
+        return@subprojects
+    }
+
     apply(plugin = "java-library")
     apply(plugin = "maven-publish")
     apply(plugin = "com.gradleup.shadow")
@@ -153,13 +157,13 @@ tasks {
 
     clean {
 
-        dependsOn(subprojects.map { "${it.path}:clean" })
+        dependsOn(subprojects.filter { it.childProjects.isEmpty() }.map { "${it.path}:clean" })
 
     }
 
     build {
 
-        dependsOn(subprojects.map { "${it.path}:build" })
+        dependsOn(subprojects.filter { it.childProjects.isEmpty() }.map { "${it.path}:build" })
 
     }
 

@@ -1,103 +1,98 @@
 package com.g4vrk.react.service;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import com.g4vrk.functionalActions.parser.ActionParser;
-import com.g4vrk.react.Permissions;
+import com.g4vrk.react.PermissionKey;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.command.HelpActions;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.react.command.HelpActionRegistry;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
 import com.g4vrk.react.command.argument.impl.BypassArgument;
 import com.g4vrk.react.command.argument.impl.DebugArgument;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
+import com.g4vrk.react.command.argument.impl.MonitorArgument;
 import com.g4vrk.react.command.argument.impl.RCPListArgument;
 import com.g4vrk.react.command.argument.impl.RebootArgument;
 import com.g4vrk.react.command.argument.impl.ReloadArgument;
-import com.g4vrk.react.command.argument.impl.MonitorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
-import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
-import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.extension.ExtensionManager;
+import com.g4vrk.react.history.printer.InferenceHistoryPrinter;
+import com.g4vrk.react.platform.command.PlatformCommandBridge;
+import com.g4vrk.react.platform.ReactPlatform;
+import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.update.UpdateService;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
-import io.leangen.geantyref.TypeToken;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
-import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
-import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
+import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.exception.ArgumentParseException;
 import org.incendo.cloud.exception.InvalidCommandSenderException;
 import org.incendo.cloud.exception.InvalidSyntaxException;
 import org.incendo.cloud.exception.NoPermissionException;
 import org.incendo.cloud.exception.NoSuchCommandException;
-import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.key.CloudKey;
-import org.incendo.cloud.paper.LegacyPaperCommandManager;
 import org.incendo.cloud.parser.standard.StringParser;
-import org.incendo.cloud.setting.ManagerSetting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
- * The {@code /react} command: its manager, every argument, the help replies and the error handlers.
+ * The {@code /react} command: its platform-agnostic Cloud manager, every argument,
+ * the help replies, and the error handlers.
  */
 @Accessors(fluent = true)
 public final class CommandService {
 
     private static final CloudKey<String> UNKNOWN = CloudKey.of("unknown", String.class);
 
+    private final PlatformCommandBridge platformCommands;
     @Getter
-    private final LegacyPaperCommandManager<CommandSender> manager;
+    private final CommandManager<PlatformSender> manager;
     @Getter
     private final CommandBuilderFactory builderFactory;
 
     private List<ReloadObserver<ActionsConfig>> observers = List.of();
 
-    public CommandService(final @NotNull Plugin plugin) {
-        this.manager = LegacyPaperCommandManager.createNative(
-                plugin,
-                ExecutionCoordinator.<CommandSender>builder()
-                        .parsingExecutor(this::withCommandLock)
-                        .suggestionsExecutor(this::withCommandLock)
-                        .build()
-        );
-        /*
-         * Addons and RCPs register and delete their commands after the server has started.
-         */
-        this.manager.settings().set(ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);
+    public CommandService(
+            final @NotNull PlatformCommandBridge platformCommands
+    ) {
+
+        this.platformCommands = platformCommands;
+        this.manager = platformCommands.manager();
         this.builderFactory = new CommandBuilderFactory(
                 manager,
                 "react",
-                Permissions.COMMAND_USAGE,
+                PermissionKey.COMMAND_USAGE,
                 "React anticheat main command",
                 new String[]{"reactac", "reactai", "ac"}
         );
-        this.registerCompletions();
+
     }
 
     public void register(
+            final @NotNull ReactPlatform platform,
             final @NotNull ActionParser<Audience> parser,
             final @NotNull ActionsConfig actions,
-            final @NotNull Scheduler scheduler,
+            final @NotNull TaskScheduler<PlatformPlayer> scheduler,
             final @NotNull InferenceHistoryPrinter historyPrinter,
             final @NotNull PlayerRegistry playerRegistry,
             final @NotNull RCPHost host,
             final @NotNull ExtensionManager extensions,
             final @NotNull UpdateService updates
     ) {
-        final HelpActions help = new HelpActions(parser, actions);
-        final AlertsArgument alerts = new AlertsArgument(builderFactory, parser);
-        final MonitorArgument monitor = new MonitorArgument(builderFactory, parser);
+
+        final HelpActionRegistry help = new HelpActionRegistry(parser, actions);
+        final AlertsArgument alerts = new AlertsArgument(builderFactory, platformCommands, parser);
+        final MonitorArgument monitor = new MonitorArgument(builderFactory, platformCommands, parser);
         final ReloadArgument reload = new ReloadArgument(builderFactory, scheduler, parser);
-        final RebootArgument reboot = new RebootArgument(builderFactory, parser, actions, extensions, scheduler);
+        final RebootArgument reboot = new RebootArgument(builderFactory, platform, parser, actions, extensions, scheduler);
         final RCPListArgument rcps = new RCPListArgument(builderFactory, parser, actions, host, updates);
-        final DebugArgument debug = new DebugArgument(builderFactory, parser);
-        final BypassArgument bypass = new BypassArgument(builderFactory, parser, actions, playerRegistry);
+        final DebugArgument debug = new DebugArgument(builderFactory, platformCommands, parser);
+        final BypassArgument bypass = new BypassArgument(builderFactory, platformCommands, parser, actions, playerRegistry);
         this.observers = List.of(help, alerts, monitor, debug, bypass, reload, reboot, rcps);
 
         manager.command(builderFactory.create().handler(context -> help.root(context.sender())));
@@ -118,36 +113,20 @@ public final class CommandService {
                 bypass,
                 reload,
                 reboot,
-                new HistoryArgument(builderFactory, historyPrinter, playerRegistry, help::playerOnly),
+                new HistoryArgument(builderFactory, platformCommands, historyPrinter, playerRegistry, help::playerOnly),
                 rcps
         )) {
             argument.builds().forEach(manager::command);
         }
+
     }
 
-    public void reload(final @NotNull ActionsConfig actions) {
+    public void reload(
+            final @NotNull ActionsConfig actions
+    ) {
+
         for (final ReloadObserver<ActionsConfig> observer : observers) {
             observer.onReload(actions);
-        }
-    }
-
-    private void withCommandLock(final @NotNull Runnable task) {
-        synchronized (this.manager) {
-            task.run();
-        }
-    }
-
-    private void registerCompletions() {
-
-        if (manager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
-            manager.registerBrigadier();
-            /*
-             * Vanilla suggestions list entity-only selectors for players-only arguments.
-             * Keep the native argument type and use the component's filtered suggestions.
-             */
-            manager.brigadierManager().setNativeSuggestions(new TypeToken<MultiplePlayerSelectorParser<CommandSender>>() {}, false);
-        } else if (manager.hasCapability(CloudBukkitCapabilities.ASYNCHRONOUS_COMPLETION)) {
-            manager.registerAsynchronousCompletions();
         }
 
     }

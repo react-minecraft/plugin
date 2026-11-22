@@ -89,13 +89,13 @@ public final class ReleaseClient {
      */
     public record Release(
             @NotNull String base,
-            @NotNull Checksums checksums,
+            @NotNull ChecksumManifest checksums,
             boolean revokedFallback
     ) {
 
         public Release(
                 final @NotNull String base,
-                final @NotNull Checksums checksums
+                final @NotNull ChecksumManifest checksums
         ) {
 
             this(base, checksums, false);
@@ -246,7 +246,7 @@ public final class ReleaseClient {
      * complete and checked.
      *
      * @param release the release
-     * @param jar     the jar name with its SHA-256, from {@link Checksums#jar(String)}
+     * @param jar     the jar name with its SHA-256, from {@link ChecksumManifest#jar(String)}
      * @param target  where the jar goes
      * @throws IOException           when the download fails
      * @throws InterruptedException  when the thread is interrupted
@@ -305,7 +305,7 @@ public final class ReleaseClient {
 
         final byte[] bytes = get(base + CHECKSUMS);
         verifySignature(bytes, get(base + SIGNATURE));
-        return new Release(base, Checksums.parse(new String(bytes, StandardCharsets.UTF_8)));
+        return new Release(base, ChecksumManifest.parse(new String(bytes, StandardCharsets.UTF_8)));
 
     }
 

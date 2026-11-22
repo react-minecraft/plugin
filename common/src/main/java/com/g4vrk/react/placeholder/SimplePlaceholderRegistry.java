@@ -155,7 +155,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
     @Override
     public @NotNull String apply(final @NotNull String text, final @NotNull TrackedPlayer player) {
 
-        if (!Placeholders.mentions(text)) {
+        if (!PlaceholderTextHelper.mentions(text)) {
             return text;
         }
 
@@ -251,7 +251,7 @@ public final class SimplePlaceholderRegistry implements PlaceholderRegistry {
             final String value = SimplePlaceholderRegistry.this.resolve(
                     this.player,
                     name.substring(PREFIX.length()),
-                    Placeholders.join(arguments)
+                    PlaceholderTextHelper.join(arguments)
             );
 
             return value == null ? null : Tag.inserting(context.deserialize(value));

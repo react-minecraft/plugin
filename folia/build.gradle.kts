@@ -7,9 +7,15 @@ plugins {
     id("react.runtime-libraries")
 }
 
+val packetEventsBundle by configurations.creating {
+    isTransitive = true
+}
+
 dependencies {
 
-    implementation(project(":common"))
+    implementation(project(":bukkit"))
+    compileOnly(libs.packetevents)
+    add("packetEventsBundle", libs.packetevents)
 
     compileOnly(libs.folia.api)
 
@@ -36,7 +42,7 @@ tasks {
 
     named<ProcessResources>("processResources") {
 
-        expandPluginDescriptor(rootProject.version.toString(), "com.g4vrk.react.folia.FoliaReactPlugin")
+        expandPluginDescriptor(rootProject.version.toString(), "com.g4vrk.react.folia.FoliaPlugin")
     }
 
     named<Jar>("jar") {

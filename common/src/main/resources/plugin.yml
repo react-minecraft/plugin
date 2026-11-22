@@ -24,6 +24,12 @@ folia-supported: true
 softdepend:
   - packetevents
   - PlaceholderAPI
+  - ProtocolLib
+  - ProtocolSupport
+  - ViaVersion
+  - ViaBackwards
+  - ViaRewind
+  - Geyser-Spigot
 
 authors:
   - g4vrk

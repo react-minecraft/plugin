@@ -1,41 +1,35 @@
 package com.g4vrk.react.api.rcp.player;
 
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Player-shaped combat targets, without linking newer Bukkit entity classes.
+ * Platform-independent combat target type identifiers.
  */
 @ApiStatus.AvailableSince("2.0")
 public final class CombatTarget {
+
+    /**
+     * Resource key of the vanilla training mannequin entity type.
+     */
+    public static final @NotNull String MANNEQUIN_TYPE_ID = "minecraft:mannequin";
 
     private CombatTarget() {
 
     }
 
     /**
-     * Checks whether the entity is a supported combat target.
+     * Checks whether the given namespaced entity type key identifies a training mannequin.
      *
-     * @param entity the entity, or {@code null}
-     * @return whether the entity is a player or mannequin
+     * @param entityTypeId the namespaced entity type key (for example {@code minecraft:mannequin}), or {@code null}
+     * @return {@code true} when it matches {@link #MANNEQUIN_TYPE_ID}
      */
-    public static boolean isSupported(final @Nullable Entity entity) {
+    public static boolean isMannequinType(
+            final @Nullable String entityTypeId
+    ) {
 
-        return entity instanceof Player || isMannequin(entity);
-
-    }
-
-    /**
-     * Checks for a mannequin without linking to newer Bukkit entity classes.
-     *
-     * @param entity the entity, or {@code null}
-     * @return whether the entity is a mannequin
-     */
-    public static boolean isMannequin(final @Nullable Entity entity) {
-
-        return entity != null && "minecraft:mannequin".equals(entity.getType().getKey().toString());
+        return MANNEQUIN_TYPE_ID.equals(entityTypeId);
 
     }
 

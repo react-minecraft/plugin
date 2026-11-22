@@ -53,7 +53,7 @@ public final class ExtensionManager implements AutoCloseable {
     private static final long CLOSE_TIMEOUT_SECONDS = 15;
 
     private final ExtensionContext context;
-    private final StagedUpdates updates;
+    private final StagedUpdateRegistry updates;
     private final Logger logger;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> {
         final Thread thread = new Thread(runnable, "React-Extensions");
@@ -64,7 +64,7 @@ public final class ExtensionManager implements AutoCloseable {
     private final List<LoadedExtension> loaded = new CopyOnWriteArrayList<>();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    public ExtensionManager(final @NotNull ExtensionContext context, final @NotNull StagedUpdates updates) {
+    public ExtensionManager(final @NotNull ExtensionContext context, final @NotNull StagedUpdateRegistry updates) {
 
         this.context = context;
         this.updates = updates;
@@ -365,7 +365,7 @@ public final class ExtensionManager implements AutoCloseable {
         LoadedExtension extension = null;
         try {
             extension = LoadedExtension.load(context, candidate.descriptor(), candidate.plan(), dependencies);
-            if (stopping.get() || !context.plugin().isEnabled()) {
+            if (stopping.get() || !context.platform().enabled()) {
                 extension.close();
                 return;
             }

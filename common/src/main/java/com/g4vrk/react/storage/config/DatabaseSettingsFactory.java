@@ -13,27 +13,27 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.DATA_DIRECTORY;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_BATCH_SIZE;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_CLEANUP_INTERVAL;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_EXECUTOR_QUEUE_CAPACITY;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_EXECUTOR_THREADS;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_FLUSH_INTERVAL;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_PENDING_WRITE_CAPACITY;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_RETENTION;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_RETRY_INITIAL_DELAY;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_RETRY_MAXIMUM_DELAY;
-import static com.g4vrk.react.storage.constant.StorageConstants.DEFAULT_SHUTDOWN_TIMEOUT;
-import static com.g4vrk.react.storage.constant.StorageConstants.H2_DRIVER;
-import static com.g4vrk.react.storage.constant.StorageConstants.MYSQL_DRIVER;
-import static com.g4vrk.react.storage.constant.StorageConstants.SQLITE_DRIVER;
+import static com.g4vrk.react.storage.constant.StorageConstant.DATA_DIRECTORY;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_BATCH_SIZE;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_CLEANUP_INTERVAL;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_EXECUTOR_QUEUE_CAPACITY;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_EXECUTOR_THREADS;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_FLUSH_INTERVAL;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_PENDING_WRITE_CAPACITY;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_RETENTION;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_RETRY_INITIAL_DELAY;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_RETRY_MAXIMUM_DELAY;
+import static com.g4vrk.react.storage.constant.StorageConstant.DEFAULT_SHUTDOWN_TIMEOUT;
+import static com.g4vrk.react.storage.constant.StorageConstant.H2_DRIVER;
+import static com.g4vrk.react.storage.constant.StorageConstant.MYSQL_DRIVER;
+import static com.g4vrk.react.storage.constant.StorageConstant.SQLITE_DRIVER;
 
 /**
  * Builds validated database settings from the configuration tree.
  */
 public final class DatabaseSettingsFactory {
 
-    public @NotNull DatabaseSettings create(
+    public @NotNull DatabaseConfig create(
             final @NotNull ConfigurationNode root,
             final @NotNull ConfigurationNode typeRoot,
             final @NotNull File pluginDirectory
@@ -44,8 +44,8 @@ public final class DatabaseSettingsFactory {
         final ConfigurationNode history = root.node("history");
         final ConfigurationNode retry = async.node("retry");
 
-        final JdbcSettings jdbcSettings;
-        final MongoSettings mongoSettings;
+        final JdbcConfig jdbcSettings;
+        final MongoConfig mongoSettings;
 
         if (type == DatabaseType.MONGODB) {
             jdbcSettings = null;
@@ -55,7 +55,7 @@ public final class DatabaseSettingsFactory {
             mongoSettings = null;
         }
 
-        return new DatabaseSettings(
+        return new DatabaseConfig(
                 root.node("enabled").getBoolean(true),
                 type,
                 positiveDuration(history.node("retention").getString(DEFAULT_RETENTION), Duration.ofDays(30)),
@@ -75,14 +75,14 @@ public final class DatabaseSettingsFactory {
 
     }
 
-    private @NotNull JdbcSettings jdbc(
+    private @NotNull JdbcConfig jdbc(
             final @NotNull DatabaseType type,
             final @NotNull ConfigurationNode root,
             final @NotNull File pluginDirectory
     ) {
 
         final ConfigurationNode poolNode = root.node("pool");
-        final PoolSettings pool = new PoolSettings(
+        final PoolConfig pool = new PoolConfig(
                 Math.max(1, poolNode.node("maximum-pool-size").getInt(type == DatabaseType.SQLITE ? 1 : 10)),
                 Math.max(0, poolNode.node("minimum-idle").getInt(type == DatabaseType.SQLITE ? 1 : 2)),
                 positiveDuration(poolNode.node("connection-timeout").getString("10s"), Duration.ofSeconds(10)),
@@ -100,10 +100,10 @@ public final class DatabaseSettingsFactory {
 
     }
 
-    private @NotNull JdbcSettings sqlite(
+    private @NotNull JdbcConfig sqlite(
             final @NotNull ConfigurationNode root,
             final @NotNull File pluginDirectory,
-            final @NotNull PoolSettings pool
+            final @NotNull PoolConfig pool
     ) {
 
         final Path file = localDatabaseFile(pluginDirectory, DatabaseType.SQLITE, root.node("file").getString("react.db"), ".db");
@@ -115,14 +115,14 @@ public final class DatabaseSettingsFactory {
         properties.put("foreign_keys", String.valueOf(pragmas.node("foreign-keys").getBoolean(true)));
         properties.put("cache_size", String.valueOf(pragmas.node("cache-size").getInt(-20000)));
 
-        return new JdbcSettings("jdbc:sqlite:" + normalize(file), SQLITE_DRIVER, "", "", pool, properties);
+        return new JdbcConfig("jdbc:sqlite:" + normalize(file), SQLITE_DRIVER, "", "", pool, properties);
 
     }
 
-    private @NotNull JdbcSettings h2(
+    private @NotNull JdbcConfig h2(
             final @NotNull ConfigurationNode root,
             final @NotNull File pluginDirectory,
-            final @NotNull PoolSettings pool
+            final @NotNull PoolConfig pool
     ) {
 
         final Path file = localDatabaseFile(pluginDirectory, DatabaseType.H2, root.node("file").getString("react.db"), ".db");
@@ -132,7 +132,7 @@ public final class DatabaseSettingsFactory {
                 + ";DB_CLOSE_ON_EXIT=FALSE"
                 + ";DATABASE_TO_UPPER=FALSE";
 
-        return new JdbcSettings(
+        return new JdbcConfig(
                 url,
                 H2_DRIVER,
                 root.node("username").getString("sa"),
@@ -143,9 +143,9 @@ public final class DatabaseSettingsFactory {
 
     }
 
-    private @NotNull JdbcSettings mysql(
+    private @NotNull JdbcConfig mysql(
             final @NotNull ConfigurationNode root,
-            final @NotNull PoolSettings pool
+            final @NotNull PoolConfig pool
     ) {
 
         final String host = root.node("host").getString("127.0.0.1");
@@ -165,7 +165,7 @@ public final class DatabaseSettingsFactory {
         properties.put("rewriteBatchedStatements", String.valueOf(propertiesNode.node("rewrite-batched-statements").getBoolean(true)));
         properties.put("tcpKeepAlive", String.valueOf(propertiesNode.node("tcp-keep-alive").getBoolean(true)));
 
-        return new JdbcSettings(
+        return new JdbcConfig(
                 "jdbc:mysql://" + host + ':' + port + '/' + database,
                 MYSQL_DRIVER,
                 root.node("username").getString("react"),
@@ -176,11 +176,11 @@ public final class DatabaseSettingsFactory {
 
     }
 
-    private @NotNull MongoSettings mongo(final @NotNull ConfigurationNode root) {
+    private @NotNull MongoConfig mongo(final @NotNull ConfigurationNode root) {
 
         final ConfigurationNode pool = root.node("pool");
         final ConfigurationNode timeouts = root.node("timeouts");
-        return new MongoSettings(
+        return new MongoConfig(
                 root.node("uri").getString(""),
                 root.node("host").getString("127.0.0.1"),
                 Math.max(1, root.node("port").getInt(27017)),

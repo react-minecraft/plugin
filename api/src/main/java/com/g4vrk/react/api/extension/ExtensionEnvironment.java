@@ -3,10 +3,11 @@ package com.g4vrk.react.api.extension;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.extension.command.CommandRegistrar;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
+import com.g4vrk.react.api.platform.PlatformServer;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.text.TextFormatter;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ import java.nio.file.Path;
 public interface ExtensionEnvironment {
 
     /** Returns the services published and consumed by this extension. */
-    @NotNull ExtensionServices services();
+    @NotNull ExtensionService services();
 
     /** Checks an optional dependency before loading code that imports its types. */
     boolean dependencyAvailable(final @NotNull ExtensionId id);
@@ -53,18 +54,22 @@ public interface ExtensionEnvironment {
     @NotNull Logger logger();
 
     /**
-     * The React plugin, for Bukkit calls that need a plugin instance.
+     * The active server platform facade (Paper, Folia, Fabric, Minestom, etc.).
      *
-     * @return the plugin
+     * <p>Platform-specific extensions may unwrap the native container via
+     * {@link PlatformServer#unwrapPlugin(Class)}.</p>
+     *
+     * @return the platform server facade
      */
-    @NotNull Plugin plugin();
+    @NotNull PlatformServer platform();
 
     /**
-     * The plugin's scheduler, which works the same on Paper and Folia.
+     * The plugin's platform-independent scheduler, working across Paper, Folia, Fabric, Minestom,
+     * and other supported platforms.
      *
      * @return the scheduler
      */
-    @NotNull Scheduler scheduler();
+    @NotNull TaskScheduler<PlatformPlayer> scheduler();
 
     /**
      * The Cloud command tree, where the extension registers its commands.
@@ -81,7 +86,7 @@ public interface ExtensionEnvironment {
     @NotNull ListenerRegistry listeners();
 
     /**
-     * Placeholders that this extension adds to {@code %react_<key>%} and to MiniMessage texts.
+     * PlaceholderResolver that this extension adds to {@code %react_<key>%} and to MiniMessage texts.
      *
      * @return the placeholder registry
      */

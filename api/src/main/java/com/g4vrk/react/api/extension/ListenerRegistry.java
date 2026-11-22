@@ -1,6 +1,6 @@
 package com.g4vrk.react.api.extension;
 
-import com.g4vrk.react.api.event.EventBus;
+import com.g4vrk.react.api.event.EventDispatcher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @ApiStatus.NonExtendable
 @ApiStatus.AvailableSince("2.0")
-public interface ListenerRegistry extends EventBus {
+public interface ListenerRegistry extends EventDispatcher {
 
     /**
      * Registers a listener everywhere it fits.

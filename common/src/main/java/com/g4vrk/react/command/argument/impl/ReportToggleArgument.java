@@ -5,15 +5,15 @@ import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.impl.ReportChannel;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
 import com.g4vrk.react.command.argument.LocalArgument;
-import com.g4vrk.react.command.argument.PlayerSelectorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
+import com.g4vrk.react.platform.command.PlatformCommandBridge;
+import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
-import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
 import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
 import org.incendo.cloud.suggestion.Suggestion;
@@ -29,16 +29,14 @@ import java.util.stream.Collectors;
 
 /**
  * {@code /react <literal> [players]} for a {@link ReportChannel}.
- *
- * <p>Without players it toggles reports of everyone. With players, e.g. {@code Steve,Alex}
- * or {@code @a}, the sender toggles that selection. When the
- * channel filters by check, a check id after the players narrows it to that check.</p>
  */
 public abstract class ReportToggleArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
+    private static final CloudKey<Collection<PlatformPlayer>> PLAYERS = CloudKey.of("players", new TypeToken<Collection<PlatformPlayer>>() {});
     private static final CloudKey<String> CHECK = CloudKey.of("check", String.class);
 
     private final CommandBuilderFactory builderFactory;
+    private final PlatformCommandBridge platformCommands;
     private final ActionParser<Audience> actionParser;
 
     private final ReportChannel channel;
@@ -54,6 +52,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
 
     protected ReportToggleArgument(
             final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull PlatformCommandBridge platformCommands,
             final @NotNull ActionParser<Audience> actionParser,
             final @NotNull ReportChannel channel,
             final @NotNull String permission,
@@ -64,6 +63,7 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
     ) {
 
         this.builderFactory = builderFactory;
+        this.platformCommands = platformCommands;
         this.actionParser = actionParser;
         this.channel = channel;
         this.permission = permission;
@@ -77,12 +77,12 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
     }
 
     @Override
-    public final @NotNull Command.Builder<CommandSender> build() {
+    public final @NotNull Command.Builder<PlatformSender> build() {
 
-        Command.Builder<CommandSender> builder = builderFactory.create()
+        Command.Builder<PlatformSender> builder = builderFactory.create()
                 .literal(literal, aliases)
                 .permission(permission)
-                .argument(PlayerSelectorArgument.players(false));
+                .argument(platformCommands.multiplePlayersArgument(PLAYERS, false));
         if (byCheck) {
             builder = builder.optional(
                     CHECK,
@@ -93,37 +93,37 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
         }
         return builder.handler(context -> {
 
-                    final CommandSender sender = context.sender();
-                    final MultiplePlayerSelector selector = context.getOrDefault(PlayerSelectorArgument.PLAYERS, null);
-                    final String check = context.getOrDefault(CHECK, null);
+            final PlatformSender sender = context.sender();
+            final Collection<PlatformPlayer> players = context.getOrDefault(PLAYERS, null);
+            final String check = context.getOrDefault(CHECK, null);
 
-                    if (selector != null || check != null) {
-                        this.follow(sender, selector == null ? null : selector.values(), check);
-                        return;
-                    }
+            if (players != null || check != null) {
+                this.follow(sender, players, check);
+                return;
+            }
 
-                    if (this.channel.toggle(sender)) {
-                        this.enabledActions.run(sender);
-                    } else {
-                        this.disabledActions.run(sender);
-                    }
-                });
+            if (this.channel.toggle(sender)) {
+                this.enabledActions.run(sender);
+            } else {
+                this.disabledActions.run(sender);
+            }
+        });
 
     }
 
     private void follow(
-            final @NotNull CommandSender sender,
-            final @Nullable Collection<Player> players,
+            final @NotNull PlatformSender sender,
+            final @Nullable Collection<PlatformPlayer> players,
             final @Nullable String check
     ) {
 
-        final Set<UUID> uuids = players == null ? null : players.stream().map(Player::getUniqueId).collect(Collectors.toSet());
+        final Set<UUID> uuids = players == null ? null : players.stream().map(PlatformPlayer::uniqueId).collect(Collectors.toSet());
         if (!this.channel.toggle(sender, uuids, check)) {
             this.disabledActions.run(sender);
             return;
         }
 
-        final String names = players == null ? "*" : players.stream().map(Player::getName).collect(Collectors.joining(", "));
+        final String names = players == null ? "*" : players.stream().map(PlatformPlayer::name).collect(Collectors.joining(", "));
         final String checkName = check == null ? "*" : check;
         this.enabledPlayersActions.run(
                 sender,
@@ -135,7 +135,9 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
     }
 
     @Override
-    public final void onReload(final @NotNull ActionsConfig config) {
+    public final void onReload(
+            final @NotNull ActionsConfig config
+    ) {
 
         final ActionsConfig.ReportToggle toggle = this.section.apply(config);
 

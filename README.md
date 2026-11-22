@@ -47,7 +47,7 @@
 
 - Ядро сервера: `Paper / Folia`. Paper поддерживается с `1.16.5`.
 - Java: от 17 для JAR Paper и от 21 для JAR Folia. Само ядро может требовать более новую версию.
-- Обязательно поставьте [PacketEvents для Bukkit](https://github.com/retrooper/packetevents/releases). PlaceholderAPI нужен только для его плейсхолдеров.
+- React включает [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0); совместимый установленный плагин используется вместо встроенной копии. PlaceholderAPI нужен только для его плейсхолдеров.
 
 1. Скачайте `react-paper-*.jar` или `react-folia-*.jar` под своё ядро
 2. Переместите его в папку `plugins/`

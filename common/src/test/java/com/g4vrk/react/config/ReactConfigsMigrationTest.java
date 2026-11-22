@@ -28,7 +28,7 @@ class ReactConfigsMigrationTest {
                         .replace("<white>провалил", "<white>custom")
         );
 
-        final ReactConfigs configs = new ReactConfigs(directory, "ru", NOPLogger.NOP_LOGGER);
+        final ConfigManager configs = new ConfigManager(directory, "ru", NOPLogger.NOP_LOGGER);
         configs.load();
 
         final ActionsConfig actions = configs.actions();
@@ -55,7 +55,7 @@ class ReactConfigsMigrationTest {
 
         copy("legacy/history.yml", directory.resolve("history.yml"));
 
-        final ReactConfigs configs = new ReactConfigs(directory, "ru", NOPLogger.NOP_LOGGER);
+        final ConfigManager configs = new ConfigManager(directory, "ru", NOPLogger.NOP_LOGGER);
         configs.load();
 
         final HistoryConfig.Format format = configs.history().format();

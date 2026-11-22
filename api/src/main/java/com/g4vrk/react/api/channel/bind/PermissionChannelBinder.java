@@ -1,8 +1,8 @@
 package com.g4vrk.react.api.channel.bind;
 
 import com.g4vrk.react.api.channel.impl.AudienceChannel;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.permissions.Permissible;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public class PermissionChannelBinder implements Consumer<Audience> {
             final @NotNull Audience audience
     ) {
 
-        if (audience instanceof final Permissible permissible && permissible.hasPermission(this.permission)) {
+        if (audience instanceof final PlatformSender sender && sender.hasPermission(this.permission)) {
             this.channel.subscribe(audience);
         } else if (this.removeWithoutPermission) {
             this.channel.remove(audience);

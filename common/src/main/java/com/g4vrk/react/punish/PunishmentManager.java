@@ -4,18 +4,19 @@ import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.channel.BuiltinChannels;
-import com.g4vrk.react.api.event.EventBus;
+import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
+import com.g4vrk.react.api.event.EventDispatcher;
 import com.g4vrk.react.api.event.check.CheckPunishEvent;
+import com.g4vrk.react.api.platform.PlatformServer;
 import com.g4vrk.react.api.punish.PunishmentRule;
 import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
-import com.g4vrk.react.check.Check;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.schedula.task.TickSchedule;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
+import com.g4vrk.react.check.Check;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -47,20 +48,20 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
     private static final char PERIOD_SEPARATOR = ';';
 
     private final Logger logger;
-    private final Server server;
-    private final Scheduler scheduler;
+    private final PlatformServer server;
+    private final TaskScheduler<PlatformPlayer> scheduler;
     private final ActionParser<Audience> parser;
-    private final EventBus events;
+    private final EventDispatcher events;
 
     private volatile Map<String, RuleSet> rules = Map.of();
     private volatile Map<String, List<PunishmentRule>> view = Map.of();
 
     public PunishmentManager(
             final @NotNull Logger logger,
-            final @NotNull Server server,
-            final @NotNull Scheduler scheduler,
+            final @NotNull PlatformServer server,
+            final @NotNull TaskScheduler<PlatformPlayer> scheduler,
             final @NotNull ActionParser<Audience> parser,
-            final @NotNull EventBus events
+            final @NotNull EventDispatcher events
     ) {
         this.events = events;
         this.logger = logger;
@@ -263,7 +264,7 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
                 .replace("<check>", check.name())
                 .replace("<vl>", level);
         try {
-            final Audience audience = check.player().bukkitPlayer;
+            final Audience audience = check.player().platformPlayer;
             runActions(rule.actions(), audience, placeholders, line ->
                     runSpecial(check, line, placeholders.apply(line.substring(line.indexOf(']') + 1).trim()), level));
         } catch (final Throwable th) {
@@ -278,12 +279,12 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             final @NotNull String level
     ) {
         switch (tag(line)) {
-            case "alert" -> BuiltinChannels.ALERTS.publish(check.report(args.isEmpty() ? "VL " + level : args));
+            case "alert" -> BuiltinChannelRegistry.ALERTS.publish(check.report(args.isEmpty() ? "VL " + level : args));
             case "log" -> logger.info("[Punishment] {} reached VL {} on {}", check.player().name(), level, check.name());
             case "reset-vl", "reset" -> check.resetViolations();
             default -> {
                 if (!args.isEmpty()) {
-                    scheduler.schedule(() -> server.dispatchCommand(server.getConsoleSender(), args), TickSchedule.instant());
+                    scheduler.schedule(() -> server.dispatchConsoleCommand(args), TickSchedule.instant());
                 }
             }
         }

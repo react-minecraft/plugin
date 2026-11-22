@@ -63,7 +63,7 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
     public @Nullable TrackedPlayerImpl byEntityId(final int entityId) {
 
         for (final TrackedPlayerImpl player : this.entries.values()) {
-            if (player.bukkitPlayer.getEntityId() == entityId) {
+            if (player.platformPlayer.entityId() == entityId) {
                 return player;
             }
         }

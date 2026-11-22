@@ -1,8 +1,9 @@
 package com.g4vrk.react.player;
 
-import com.g4vrk.react.Permissions;
+import com.g4vrk.react.PermissionKey;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.event.player.PlayerBypassEvent;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.player.HistoryEntry;
 import com.g4vrk.react.api.player.TrackedPlayer;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
@@ -13,11 +14,10 @@ import com.g4vrk.react.history.InferenceHistory;
 import com.g4vrk.react.history.entry.InferenceHistoryEntry;
 import com.g4vrk.react.player.rotation.RotationData;
 import com.g4vrk.react.statistic.InferenceStatistic;
-import com.g4vrk.react.storage.constant.StorageConstants;
+import com.g4vrk.react.storage.constant.StorageConstant;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StoredInference;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     private final UUID uniqueId;
     private final String name;
 
-    public final Player bukkitPlayer;
+    public final PlatformPlayer platformPlayer;
 
     public final CombatActivity combatActivity;
     public final RotationData rotationData = new RotationData(MAX_ROTATION_WINDOW);
@@ -64,12 +64,12 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     public TrackedPlayerImpl(
             final @NotNull UUID uniqueId,
             final @NotNull String name,
-            final @NotNull Player bukkitPlayer
+            final @NotNull PlatformPlayer platformPlayer
     ) {
 
         this.uniqueId = uniqueId;
         this.name = name;
-        this.bukkitPlayer = bukkitPlayer;
+        this.platformPlayer = platformPlayer;
         this.checkManager = new CheckManager(this);
         this.inferenceHistory = new InferenceHistory(
                 React.INSTANCE.storageManager().historyRetention(),
@@ -103,9 +103,9 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     }
 
     @Override
-    public @NotNull Player bukkit() {
+    public @NotNull PlatformPlayer platform() {
 
-        return bukkitPlayer;
+        return platformPlayer;
 
     }
 
@@ -119,7 +119,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     @Override
     public void enterCombat() {
 
-        React.INSTANCE.listeners().combat().activate(this);
+        React.INSTANCE.listeners().activateCombat(this);
 
     }
 
@@ -214,9 +214,9 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     public boolean bypassed(final @NotNull String check) {
 
         final String id = check.toLowerCase(Locale.ROOT);
-        return bypassActive(StorageConstants.ALL_CHECKS)
+        return bypassActive(StorageConstant.ALL_CHECKS)
                 || bypassActive(id)
-                || Permissions.hasBypassForCheck(bukkitPlayer, id);
+                || PermissionKey.hasBypassForCheck(platformPlayer, id);
 
     }
 
@@ -225,7 +225,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
      */
     public void refreshRotationPermission() {
 
-        rotationPermissionBypass = Permissions.hasBypassForCheck(bukkitPlayer, "aim-ai");
+        rotationPermissionBypass = PermissionKey.hasBypassForCheck(platformPlayer, "aim-ai");
 
     }
 
@@ -237,7 +237,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
      */
     public boolean rotationBypassed(final @NotNull String check) {
 
-        return rotationPermissionBypass || bypassActive(StorageConstants.ALL_CHECKS) || bypassActive(check);
+        return rotationPermissionBypass || bypassActive(StorageConstant.ALL_CHECKS) || bypassActive(check);
 
     }
 
@@ -337,7 +337,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     private static @NotNull String bypassKey(final @Nullable String check) {
 
-        return check == null ? StorageConstants.ALL_CHECKS : check.toLowerCase(Locale.ROOT);
+        return check == null ? StorageConstant.ALL_CHECKS : check.toLowerCase(Locale.ROOT);
 
     }
 

@@ -5,9 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.BYPASS_TABLE;
-import static com.g4vrk.react.storage.constant.StorageConstants.INFERENCE_TABLE;
-import static com.g4vrk.react.storage.constant.StorageConstants.VIOLATIONS_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.BYPASS_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.INFERENCE_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.VIOLATIONS_TABLE;
 
 public enum JdbcDialect {
     SQLITE(

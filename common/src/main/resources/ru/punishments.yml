@@ -6,7 +6,7 @@
 #
 
 # Lines: [console], [alert], [log], [reset-vl] and every action of actions.yml.
-# Placeholders: <player>, <check>, <vl>
+# PlaceholderResolver: <player>, <check>, <vl>
 punishments:
   aim:
 

@@ -2,22 +2,21 @@ package com.g4vrk.react.command.argument.impl;
 
 import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
-import com.g4vrk.react.Permissions;
+import com.g4vrk.react.PermissionKey;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
 import com.g4vrk.react.command.argument.LocalArgument;
-import com.g4vrk.react.command.argument.PlayerSelectorArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
+import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.registry.PlayerRegistry;
-import com.g4vrk.react.storage.constant.StorageConstants;
+import com.g4vrk.react.storage.constant.StorageConstant;
 import io.leangen.geantyref.TypeToken;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.incendo.cloud.Command;
-import org.incendo.cloud.bukkit.data.MultiplePlayerSelector;
 import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.ArgumentParser;
 import org.incendo.cloud.parser.standard.DurationParser;
@@ -28,8 +27,8 @@ import org.incendo.cloud.type.Either;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.Duration;
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,20 +40,16 @@ import java.util.stream.IntStream;
 
 /**
  * {@code /react bypass}: temporary bypasses, stored in the database.
- *
- * <p>{@code /react bypass <players> [duration|forever] [check]} grants one, e.g.
- * {@code /react bypass Steve 1h30m aim-ai}. A check id in place of the duration means forever.
- * {@code /react bypass remove <players> [check]} lifts it and {@code /react bypass list} shows
- * the online players that have one. The {@code react.bypass.<check>} permission is a lasting
- * bypass this command does not touch.</p>
  */
 public final class BypassArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
     private static final String FOREVER = "forever";
+    private static final CloudKey<Collection<PlatformPlayer>> PLAYERS = CloudKey.of("players", new TypeToken<Collection<PlatformPlayer>>() {});
     private static final CloudKey<Either<Duration, String>> DURATION = CloudKey.of("duration", new TypeToken<Either<Duration, String>>() {});
     private static final CloudKey<String> CHECK = CloudKey.of("check", String.class);
 
     private final CommandBuilderFactory builderFactory;
+    private final PlatformCommandBridge platformCommands;
     private final ActionParser<Audience> actionParser;
     private final PlayerRegistry playerRegistry;
 
@@ -71,18 +66,25 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
 
     public BypassArgument(
             final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull PlatformCommandBridge platformCommands,
             final @NotNull ActionParser<Audience> actionParser,
             final @NotNull ActionsConfig config,
             final @NotNull PlayerRegistry playerRegistry
     ) {
+
         this.builderFactory = builderFactory;
+        this.platformCommands = platformCommands;
         this.actionParser = actionParser;
         this.playerRegistry = playerRegistry;
         this.onReload(config);
+
     }
 
     @Override
-    public void onReload(final @NotNull ActionsConfig config) {
+    public void onReload(
+            final @NotNull ActionsConfig config
+    ) {
+
         final ActionsConfig.Bypass bypass = config.bypass();
         this.granted = actionParser.parseAll(bypass.granted());
         this.removed = actionParser.parseAll(bypass.removed());
@@ -94,12 +96,14 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         this.listEmpty = actionParser.parseAll(bypass.listEmpty());
         this.allChecks = bypass.allChecks();
         this.forever = bypass.forever();
+
     }
 
     @Override
-    public @NotNull Command.Builder<CommandSender> build() {
+    public @NotNull Command.Builder<PlatformSender> build() {
+
         return root()
-                .argument(PlayerSelectorArgument.players(true))
+                .argument(platformCommands.multiplePlayersArgument(PLAYERS, true))
                 .optional(
                         DURATION,
                         ArgumentParser.firstOf(DurationParser.durationParser(), StringParser.stringParser()),
@@ -108,7 +112,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                 )
                 .optional(CHECK, StringParser.stringParser(), checkSuggestions())
                 .handler(context -> {
-                    final MultiplePlayerSelector selector = context.get(PlayerSelectorArgument.PLAYERS);
+                    final Collection<PlatformPlayer> players = context.get(PLAYERS);
                     final Either<Duration, String> time = context.getOrDefault(DURATION, null);
                     String check = context.getOrDefault(CHECK, null);
                     Duration duration = null;
@@ -123,40 +127,46 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                             check = text;
                         }
                     }
-                    grant(context.sender(), selector.values(), duration, check);
+                    grant(context.sender(), players, duration, check);
                 });
+
     }
 
     @Override
-    public @NotNull List<Command.Builder<CommandSender>> builds() {
+    public @NotNull List<Command.Builder<PlatformSender>> builds() {
+
         return List.of(
                 build(),
                 root()
                         .literal("remove")
-                        .argument(PlayerSelectorArgument.players(true))
+                        .argument(platformCommands.multiplePlayersArgument(PLAYERS, true))
                         .optional(CHECK, StringParser.stringParser(), checkSuggestions())
                         .handler(context -> {
-                            final MultiplePlayerSelector selector = context.get(PlayerSelectorArgument.PLAYERS);
-                            remove(context.sender(), selector.values(), context.getOrDefault(CHECK, null));
+                            final Collection<PlatformPlayer> players = context.get(PLAYERS);
+                            remove(context.sender(), players, context.getOrDefault(CHECK, null));
                         }),
                 root()
                         .literal("list")
                         .handler(context -> list(context.sender()))
         );
+
     }
 
-    private @NotNull Command.Builder<CommandSender> root() {
+    private @NotNull Command.Builder<PlatformSender> root() {
+
         return builderFactory.create()
                 .literal("bypass")
-                .permission(Permissions.BYPASS_COMMAND);
+                .permission(PermissionKey.BYPASS_COMMAND);
+
     }
 
     private void grant(
-            final @NotNull CommandSender sender,
-            final @NotNull Collection<Player> players,
+            final @NotNull PlatformSender sender,
+            final @NotNull Collection<PlatformPlayer> players,
             final @Nullable Duration duration,
             final @Nullable String check
     ) {
+
         if (!validCheck(sender, check)) {
             return;
         }
@@ -166,12 +176,12 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             return;
         }
         final List<String> names = new ArrayList<>(players.size());
-        for (final Player player : players) {
-            final TrackedPlayerImpl tracked = playerRegistry.get(player.getUniqueId());
+        for (final PlatformPlayer player : players) {
+            final TrackedPlayerImpl tracked = playerRegistry.get(player.uniqueId());
             if (tracked != null && tracked.bypass(check, until)) {
-                names.add(player.getName());
+                names.add(player.name());
             } else {
-                cancelled.run(sender, text -> text.replace("<player>", player.getName()));
+                cancelled.run(sender, text -> text.replace("<player>", player.name()));
             }
         }
         if (names.isEmpty()) {
@@ -187,9 +197,13 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                         .replace("<check>", checkName)
                         .replace("<duration>", time)
         );
+
     }
 
-    static @Nullable Instant expiration(final @NotNull Instant now, final @NotNull Duration duration) {
+    static @Nullable Instant expiration(
+            final @NotNull Instant now,
+            final @NotNull Duration duration
+    ) {
 
         if (duration.isNegative() || duration.isZero()) {
             return null;
@@ -204,20 +218,21 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
     }
 
     private void remove(
-            final @NotNull CommandSender sender,
-            final @NotNull Collection<Player> players,
+            final @NotNull PlatformSender sender,
+            final @NotNull Collection<PlatformPlayer> players,
             final @Nullable String check
     ) {
+
         if (!validCheck(sender, check)) {
             return;
         }
         final List<String> names = new ArrayList<>(players.size());
-        for (final Player player : players) {
-            final TrackedPlayerImpl tracked = playerRegistry.get(player.getUniqueId());
+        for (final PlatformPlayer player : players) {
+            final TrackedPlayerImpl tracked = playerRegistry.get(player.uniqueId());
             if (tracked != null && tracked.removeBypass(check)) {
-                names.add(player.getName());
+                names.add(player.name());
             } else {
-                cancelled.run(sender, text -> text.replace("<player>", player.getName()));
+                cancelled.run(sender, text -> text.replace("<player>", player.name()));
             }
         }
         if (names.isEmpty()) {
@@ -231,9 +246,13 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                         .replace("<players>", joined)
                         .replace("<check>", checkName)
         );
+
     }
 
-    private void list(final @NotNull CommandSender sender) {
+    private void list(
+            final @NotNull PlatformSender sender
+    ) {
+
         final List<TrackedPlayerImpl> holders = playerRegistry.stream()
                 .filter(player -> !player.bypasses().isEmpty())
                 .toList();
@@ -246,7 +265,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         final Instant now = Instant.now();
         for (final TrackedPlayerImpl player : holders) {
             for (final Map.Entry<String, Instant> entry : player.bypasses().entrySet()) {
-                final String checkName = entry.getKey().equals(StorageConstants.ALL_CHECKS) ? allChecks : entry.getKey();
+                final String checkName = entry.getKey().equals(StorageConstant.ALL_CHECKS) ? allChecks : entry.getKey();
                 final String left = entry.getValue() == null ? forever : format(Duration.between(now, entry.getValue()));
                 listEntry.run(
                         sender,
@@ -257,17 +276,27 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                 );
             }
         }
+
     }
 
-    private @NotNull String checkName(final @Nullable String check) {
+    private @NotNull String checkName(
+            final @Nullable String check
+    ) {
+
         return check == null ? allChecks : check.toLowerCase(Locale.ROOT);
+
     }
 
     private static @NotNull List<String> checkIds() {
+
         return List.copyOf(React.INSTANCE.configs().checks().keySet());
+
     }
 
-    private boolean validCheck(final @NotNull CommandSender sender, final @Nullable String check) {
+    private boolean validCheck(
+            final @NotNull PlatformSender sender,
+            final @Nullable String check
+    ) {
 
         if (check == null || checkIds().contains(check.toLowerCase(Locale.ROOT))) {
             return true;
@@ -277,12 +306,17 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
 
     }
 
-    private static @NotNull SuggestionProvider<CommandSender> checkSuggestions() {
+    private static @NotNull SuggestionProvider<PlatformSender> checkSuggestions() {
+
         return SuggestionProvider.blocking((context, input) ->
                 checkIds().stream().map(Suggestion::suggestion).toList());
+
     }
 
-    private static @NotNull String format(final @NotNull Duration duration) {
+    private static @NotNull String format(
+            final @NotNull Duration duration
+    ) {
+
         final long seconds = Math.max(0, duration.getSeconds());
         final long[] parts = {seconds / 86_400, seconds / 3_600 % 24, seconds / 60 % 60, seconds % 60};
         final String[] units = {"d", "h", "m", "s"};
@@ -291,6 +325,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                 .mapToObj(index -> parts[index] + units[index])
                 .collect(Collectors.joining(" "));
         return text.isEmpty() ? "0s" : text;
+
     }
 
 }

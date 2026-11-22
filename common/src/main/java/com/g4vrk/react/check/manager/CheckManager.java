@@ -1,6 +1,6 @@
 package com.g4vrk.react.check.manager;
 
-import com.g4vrk.react.config.ReactConfigs;
+import com.g4vrk.react.config.ConfigManager;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.check.Check;
@@ -56,7 +56,7 @@ public final class CheckManager {
     }
 
     public void reload() {
-        final ReactConfigs configs = React.INSTANCE.configs();
+        final ConfigManager configs = React.INSTANCE.configs();
         for (final Check check : checksValues) {
             if (check instanceof final ReloadObserver<?> observer) {
                 reload(observer, configs.check(check.id()));

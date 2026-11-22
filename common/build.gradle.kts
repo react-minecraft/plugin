@@ -3,32 +3,26 @@ plugins {
     id("react.base-conventions")
 }
 
-repositories {
-    maven {
-        url = uri("https://libraries.minecraft.net/")
-        content {
-            includeModule("com.mojang", "brigadier")
-        }
-    }
-
-    maven {
-        url = uri("https://repo.extendedclip.com/content/repositories/placeholderapi/")
-    }
-}
-
 tasks.named<ProcessResources>("processResources") {
     enabled = false
 }
 
 dependencies {
 
+    compileOnly(libs.schedula.common)
+
     api(project(":api"))
 
-    compileOnly(libs.paper.api)
-
-    compileOnly(libs.placeholderapi)
-    compileOnly(libs.packetevents)
-
+    compileOnly("com.google.guava:guava:31.1-jre")
+    compileOnly("com.google.code.gson:gson:2.8.9")
+    compileOnly("net.kyori:adventure-text-serializer-legacy:4.10.0")
+    compileOnly(libs.adventure.api)
+    compileOnly(libs.adventure.minimessage) {
+        isTransitive = false
+    }
+    compileOnly(libs.slf4j.api)
+    compileOnly(libs.jetbrains.annotations)
+    compileOnly(libs.fastutil)
 
     compileOnly(libs.hikari) {
         exclude(group = "org.slf4j", module = "slf4j-api")
@@ -39,27 +33,25 @@ dependencies {
     }
 
     compileOnly(libs.configurate.yaml)
-
-    compileOnly(libs.cloud.paper)
-    compileOnly(libs.brigadier)
-    compileOnly(libs.xseries)
-
-    compileOnly(libs.adventure.minimessage) {
-        isTransitive = false
-    }
-
+    compileOnly(libs.cloud.core)
     compileOnly(libs.textserializer.legacy)
     compileOnly(libs.actions)
-    compileOnly(libs.schedula.common)
 
-    testImplementation(libs.paper.api)
+    testImplementation(libs.schedula.common)
+    testImplementation("com.google.code.gson:gson:2.8.9")
+    testImplementation("net.kyori:adventure-text-serializer-legacy:4.10.0")
+    testImplementation("net.kyori:adventure-text-serializer-plain:4.10.0")
+    testImplementation(libs.adventure.api)
+    testImplementation(libs.adventure.minimessage)
+    testImplementation(libs.slf4j.api)
+    testImplementation(libs.jetbrains.annotations)
+    testImplementation(libs.fastutil)
     testImplementation(libs.configurate.yaml)
     testImplementation(libs.cloud.core)
     testImplementation(libs.hikari)
     testImplementation(libs.mongodb)
     testImplementation(libs.textserializer.legacy)
     testImplementation(libs.actions)
-    testImplementation(libs.schedula.common)
     testRuntimeOnly(libs.h2)
     testRuntimeOnly(libs.mysql)
     testRuntimeOnly(libs.sqlite)

@@ -1,7 +1,7 @@
 package com.g4vrk.react.storage.backend.mongo;
 
 import com.g4vrk.react.storage.backend.StorageBackend;
-import com.g4vrk.react.storage.config.MongoSettings;
+import com.g4vrk.react.storage.config.MongoConfig;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
 import com.g4vrk.react.storage.model.StoredInference;
@@ -32,17 +32,17 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_CHECK;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_EXPIRES_AT;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_ID;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_PLAYER_UUID;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_PROBABILITY;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_TIMESTAMP;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_UPDATED_AT;
-import static com.g4vrk.react.storage.constant.StorageConstants.FIELD_VIOLATIONS;
-import static com.g4vrk.react.storage.constant.StorageConstants.MONGO_BYPASS_COLLECTION;
-import static com.g4vrk.react.storage.constant.StorageConstants.MONGO_INFERENCE_COLLECTION;
-import static com.g4vrk.react.storage.constant.StorageConstants.MONGO_VIOLATIONS_COLLECTION;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_CHECK;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_EXPIRES_AT;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_ID;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_PLAYER_UUID;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_PROBABILITY;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_TIMESTAMP;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_UPDATED_AT;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_VIOLATIONS;
+import static com.g4vrk.react.storage.constant.StorageConstant.MONGO_BYPASS_COLLECTION;
+import static com.g4vrk.react.storage.constant.StorageConstant.MONGO_INFERENCE_COLLECTION;
+import static com.g4vrk.react.storage.constant.StorageConstant.MONGO_VIOLATIONS_COLLECTION;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
@@ -62,7 +62,7 @@ public final class MongoStorageBackend implements StorageBackend {
     private final MongoCollection<Document> inference;
     private final MongoCollection<Document> bypasses;
 
-    public MongoStorageBackend(final @NotNull MongoSettings settings) {
+    public MongoStorageBackend(final @NotNull MongoConfig settings) {
 
         this.client = MongoClients.create(clientSettings(settings));
         this.database = client.getDatabase(settings.database());
@@ -216,7 +216,7 @@ public final class MongoStorageBackend implements StorageBackend {
 
     }
 
-    private static @NotNull MongoClientSettings clientSettings(final @NotNull MongoSettings settings) {
+    private static @NotNull MongoClientSettings clientSettings(final @NotNull MongoConfig settings) {
 
         final MongoClientSettings.Builder builder = MongoClientSettings.builder();
 

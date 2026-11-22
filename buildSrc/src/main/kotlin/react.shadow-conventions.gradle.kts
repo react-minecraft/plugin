@@ -12,4 +12,9 @@ tasks.named<ShadowJar>("shadowJar") {
 
     mergeServiceFiles()
 
+    val packetEvents = project.configurations.findByName("packetEventsBundle") ?: return@named
+    from({ packetEvents.files.map { zipTree(it) } }) {
+        into("META-INF/react-platform")
+    }
+
 }

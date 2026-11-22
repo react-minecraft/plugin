@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SimpleEventBusTest {
 
-    private final SimpleEventBus bus = new SimpleEventBus(NOPLogger.NOP_LOGGER);
+    private final SimpleEventDispatcher bus = new SimpleEventDispatcher(NOPLogger.NOP_LOGGER);
 
     @Test
     void runsHandlersByPriorityThenOrder() {
@@ -89,7 +89,7 @@ class SimpleEventBusTest {
     void scopedBusRemovesEverythingOnClose() {
 
         final List<String> calls = new ArrayList<>();
-        final ScopedEventBus scoped = new ScopedEventBus(bus);
+        final ScopedEventDispatcher scoped = new ScopedEventDispatcher(bus);
 
         scoped.register(new Listener(calls));
         scoped.register(new Listener(calls));
@@ -109,7 +109,7 @@ class SimpleEventBusTest {
         final Listener listener = new Listener(calls);
         bus.register(listener);
 
-        final ScopedEventBus scoped = new ScopedEventBus(bus);
+        final ScopedEventDispatcher scoped = new ScopedEventDispatcher(bus);
         scoped.unregister(listener);
         bus.post(new TestEvent());
 

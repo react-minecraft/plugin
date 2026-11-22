@@ -27,7 +27,7 @@ public final class LoadedExtension {
     private final ExtensionDescriptor descriptor;
     private final ExtensionClassLoader classLoader;
     private final ExtensionPlan plan;
-    private final ScopedExtensionServices services;
+    private final ScopedExtensionService services;
     private final ScopedEnvironment environment;
     private final Object instance;
 
@@ -38,7 +38,7 @@ public final class LoadedExtension {
             final @NotNull ExtensionDescriptor descriptor,
             final @NotNull ExtensionClassLoader classLoader,
             final @NotNull ExtensionPlan plan,
-            final @NotNull ScopedExtensionServices services,
+            final @NotNull ScopedExtensionService services,
             final @NotNull ScopedEnvironment environment,
             final @NotNull Object instance
     ) {
@@ -78,7 +78,7 @@ public final class LoadedExtension {
                 descriptor.jar().toUri().toURL(),
                 RCPLifecycle.class.getClassLoader()
         );
-        final ScopedExtensionServices services = new ScopedExtensionServices(plan, classLoader, dependencies);
+        final ScopedExtensionService services = new ScopedExtensionService(plan, classLoader, dependencies);
 
         ScopedEnvironment environment = null;
         try {
@@ -131,7 +131,7 @@ public final class LoadedExtension {
 
     }
 
-    ScopedExtensionServices services() {
+    ScopedExtensionService services() {
 
         return services;
 

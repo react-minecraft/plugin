@@ -14,7 +14,7 @@ class ReleaseClientTest {
     @Test
     void boundAcceptsMatchingRepositoryChannelAndVersion() throws ReleaseClient.VerificationException {
 
-        final Checksums checksums = Checksums.parse("""
+        final ChecksumManifest checksums = ChecksumManifest.parse("""
                 # repository: react-minecraft/plugin
                 # channel: release
                 # version: 2.0.0
@@ -30,7 +30,7 @@ class ReleaseClientTest {
     @Test
     void boundRejectsMismatchedRepositoryChannelOrVersion() {
 
-        final Checksums checksums = Checksums.parse("""
+        final ChecksumManifest checksums = ChecksumManifest.parse("""
                 # repository: react-minecraft/hologram-addon
                 # channel: nightly
                 # version: 1.2.0
@@ -56,7 +56,7 @@ class ReleaseClientTest {
     @Test
     void boundAcceptsLegacyChecksumsWithoutRepositoryOrChannelHeaders() throws ReleaseClient.VerificationException {
 
-        final Checksums checksums = Checksums.parse("""
+        final ChecksumManifest checksums = ChecksumManifest.parse("""
                 # version: 2.0.0
                 %s  react-paper-2.0.0.jar
                 """.formatted(HASH));

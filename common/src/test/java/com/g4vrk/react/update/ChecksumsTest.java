@@ -29,7 +29,7 @@ class ChecksumsTest {
     @Test
     void readsTheHeader() {
 
-        final Checksums checksums = Checksums.parse(RELEASE);
+        final ChecksumManifest checksums = ChecksumManifest.parse(RELEASE);
 
         assertEquals("1.4.0", checksums.version());
         assertEquals(1, checksums.apiVersion());
@@ -41,7 +41,7 @@ class ChecksumsTest {
     @Test
     void readsBothSha256sumModesAndSkipsBrokenLines() {
 
-        final Checksums checksums = Checksums.parse(RELEASE);
+        final ChecksumManifest checksums = ChecksumManifest.parse(RELEASE);
 
         assertEquals(
                 Map.of(
@@ -58,17 +58,17 @@ class ChecksumsTest {
     @Test
     void findsTheFirstJarWithThePrefix() {
 
-        final Map.Entry<String, String> jar = Checksums.parse(RELEASE).jar("react-rcp-1.4.0.");
+        final Map.Entry<String, String> jar = ChecksumManifest.parse(RELEASE).jar("react-rcp-1.4.0.");
 
         assertEquals(Map.entry("react-rcp-1.4.0.jar", JAR_HASH), jar);
-        assertEquals(Map.entry("react-rcp-1.4.0.jar", JAR_HASH), Checksums.parse(RELEASE).jar("other-"));
+        assertEquals(Map.entry("react-rcp-1.4.0.jar", JAR_HASH), ChecksumManifest.parse(RELEASE).jar("other-"));
 
     }
 
     @Test
     void fallsBackToTheOnlyJar() {
 
-        final Checksums checksums = Checksums.parse(JAR_HASH + "  hologram-addon-1.0.jar\n");
+        final ChecksumManifest checksums = ChecksumManifest.parse(JAR_HASH + "  hologram-addon-1.0.jar\n");
 
         assertEquals(Map.entry("hologram-addon-1.0.jar", JAR_HASH), checksums.jar("hologram"));
         assertEquals(Map.entry("hologram-addon-1.0.jar", JAR_HASH), checksums.jar("other"));
@@ -78,16 +78,16 @@ class ChecksumsTest {
     @Test
     void missingOrBrokenApiVersionIsZero() {
 
-        assertEquals(0, Checksums.parse("# version: 1\n").apiVersion());
-        assertEquals(0, Checksums.parse("# api-version: one\n").apiVersion());
-        assertNull(Checksums.parse("").version());
+        assertEquals(0, ChecksumManifest.parse("# version: 1\n").apiVersion());
+        assertEquals(0, ChecksumManifest.parse("# api-version: one\n").apiVersion());
+        assertNull(ChecksumManifest.parse("").version());
 
     }
 
     @Test
     void skipsDotfilesAndParentTraversalNames() {
 
-        final Checksums checksums = Checksums.parse("""
+        final ChecksumManifest checksums = ChecksumManifest.parse("""
                 %s  .hidden.jar
                 %s  ..
                 %s  ../escape.jar

@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 /**
- * One result of a check, sent to {@link BuiltinChannels#ALERTS} when the player is flagged and to
- * {@link BuiltinChannels#MONITOR} on every analysis. Debug lines go to {@link BuiltinChannels#DEBUG}.
+ * One result of a check, sent to {@link BuiltinChannelRegistry#ALERTS} when the player is flagged and to
+ * {@link BuiltinChannelRegistry#MONITOR} on every analysis. Debug lines go to {@link BuiltinChannelRegistry#DEBUG}.
  *
  * @param player     the checked player
  * @param playerName the player's name at the time of the check

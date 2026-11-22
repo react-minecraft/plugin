@@ -1,10 +1,9 @@
 package com.g4vrk.react.extension;
 
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.schedula.task.Task;
 import com.g4vrk.schedula.task.TickSchedule;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -12,13 +11,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public final class ScopedScheduler implements Scheduler, AutoCloseable {
+/**
+ * Pure-Java scoped scheduler wrapper that cancels every task owned by an extension on {@link #close()}.
+ */
+public final class ScopedScheduler implements TaskScheduler<PlatformPlayer>, AutoCloseable {
 
-    private final Scheduler delegate;
+    private final TaskScheduler<PlatformPlayer> delegate;
     private final Set<ScopedTask> tasks = new HashSet<>();
     private boolean closed;
 
-    public ScopedScheduler(final @NotNull Scheduler delegate) {
+    public ScopedScheduler(
+            final @NotNull TaskScheduler<PlatformPlayer> delegate
+    ) {
 
         this.delegate = delegate;
 
@@ -27,91 +31,69 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
     @Override
     public @NotNull Task schedule(
             final @NotNull Runnable runnable,
-            final @NotNull TickSchedule tickSchedule
+            final @NotNull TickSchedule schedule
     ) {
 
-        return submit(task -> runnable.run(), tickSchedule, delegate::schedule);
+        return submit(task -> runnable.run(), schedule, delegate::schedule);
 
     }
 
     @Override
     public @NotNull Task schedule(
             final @NotNull Consumer<Task> consumer,
-            final @NotNull TickSchedule tickSchedule
+            final @NotNull TickSchedule schedule
     ) {
 
-        return submit(consumer, tickSchedule, delegate::schedule);
+        return submit(consumer, schedule, delegate::schedule);
 
     }
 
     @Override
     public @NotNull Task scheduleAsync(
             final @NotNull Runnable runnable,
-            final @NotNull TickSchedule tickSchedule
+            final @NotNull TickSchedule schedule
     ) {
 
-        return submit(task -> runnable.run(), tickSchedule, delegate::scheduleAsync);
+        return submit(task -> runnable.run(), schedule, delegate::scheduleAsync);
 
     }
 
     @Override
     public @NotNull Task scheduleAsync(
             final @NotNull Consumer<Task> consumer,
-            final @NotNull TickSchedule tickSchedule
+            final @NotNull TickSchedule schedule
     ) {
 
-        return submit(consumer, tickSchedule, delegate::scheduleAsync);
+        return submit(consumer, schedule, delegate::scheduleAsync);
 
     }
 
     @Override
     public @NotNull Task scheduleEntity(
-            final @NotNull Entity entity,
+            final @NotNull PlatformPlayer entityHandle,
             final @NotNull Runnable runnable,
-            final @NotNull TickSchedule tickSchedule
+            final @NotNull TickSchedule schedule
     ) {
 
-        return scheduleEntity(entity, task -> runnable.run(), tickSchedule);
+        return scheduleEntity(entityHandle, task -> runnable.run(), schedule);
 
     }
 
     @Override
     public @NotNull Task scheduleEntity(
-            final @NotNull Entity entity,
+            final @NotNull PlatformPlayer entityHandle,
             final @NotNull Consumer<Task> consumer,
-            final @NotNull TickSchedule tickSchedule
+            final @NotNull TickSchedule schedule
     ) {
 
-        return submit(consumer, tickSchedule, (task, schedule) -> delegate.scheduleEntity(entity, task, schedule));
-
-    }
-
-    @Override
-    public @NotNull Task scheduleLocation(
-            final @NotNull Location location,
-            final @NotNull Runnable runnable,
-            final @NotNull TickSchedule tickSchedule
-    ) {
-
-        return scheduleLocation(location, task -> runnable.run(), tickSchedule);
-
-    }
-
-    @Override
-    public @NotNull Task scheduleLocation(
-            final @NotNull Location location,
-            final @NotNull Consumer<Task> consumer,
-            final @NotNull TickSchedule tickSchedule
-    ) {
-
-        return submit(consumer, tickSchedule, (task, schedule) -> delegate.scheduleLocation(location, task, schedule));
+        return submit(consumer, schedule, (task, taskSchedule) -> delegate.scheduleEntity(entityHandle, task, taskSchedule));
 
     }
 
     private @NotNull Task submit(
             final @NotNull Consumer<Task> action,
             final @NotNull TickSchedule schedule,
-            final @NotNull TaskScheduler scheduler
+            final @NotNull TaskSubmitter submitter
     ) {
 
         final ScopedTask task = new ScopedTask(action, schedule.isRepeating());
@@ -122,7 +104,7 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
             tasks.add(task);
         }
         try {
-            task.attach(scheduler.schedule(task, schedule));
+            task.attach(submitter.schedule(task, schedule));
             return task;
         } catch (final RuntimeException | Error failure) {
             task.cancel();
@@ -145,7 +127,7 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
     }
 
     @FunctionalInterface
-    private interface TaskScheduler {
+    private interface TaskSubmitter {
 
         @NotNull Task schedule(
                 @NotNull Consumer<Task> action,
@@ -171,7 +153,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
 
         }
 
-        private void attach(final @NotNull Task task) {
+        private void attach(
+                final @NotNull Task task
+        ) {
 
             this.task = task;
             if (cancelled) {
@@ -183,7 +167,9 @@ public final class ScopedScheduler implements Scheduler, AutoCloseable {
         }
 
         @Override
-        public void accept(final @NotNull Task task) {
+        public void accept(
+                final @NotNull Task task
+        ) {
 
             attach(task);
             if (isCancelled()) {

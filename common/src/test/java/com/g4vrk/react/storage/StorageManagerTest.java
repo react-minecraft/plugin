@@ -2,7 +2,7 @@ package com.g4vrk.react.storage;
 
 import com.g4vrk.react.check.decay.impl.LinearDecay;
 import com.g4vrk.react.storage.backend.StorageBackend;
-import com.g4vrk.react.storage.config.DatabaseSettings;
+import com.g4vrk.react.storage.config.DatabaseConfig;
 import com.g4vrk.react.storage.config.DatabaseType;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
@@ -36,7 +36,7 @@ final class StorageManagerTest {
     @Test
     void keepsNewWritesWhenFailedBatchReturnsToFullQueue() throws Exception {
 
-        final DatabaseSettings settings = settings(Duration.ofMillis(10), 2);
+        final DatabaseConfig settings = settings(Duration.ofMillis(10), 2);
         final CountDownLatch writing = new CountDownLatch(1);
         final CountDownLatch failWrite = new CountDownLatch(1);
         final BlockingQueue<List<StorageMutation>> written = new ArrayBlockingQueue<>(1);
@@ -160,11 +160,11 @@ final class StorageManagerTest {
 
     }
 
-    private static @NotNull DatabaseSettings settings(final @NotNull Duration flushInterval, final int bufferCapacity) {
+    private static @NotNull DatabaseConfig settings(final @NotNull Duration flushInterval, final int bufferCapacity) {
 
         final Duration retryDelay = Duration.ofMillis(10);
         final Duration timeout = Duration.ofSeconds(5);
-        return new DatabaseSettings(
+        return new DatabaseConfig(
                 true,
                 DatabaseType.H2,
                 Duration.ofDays(1),

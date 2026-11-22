@@ -4,19 +4,20 @@ import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.extension.ExtensionManager;
-import com.g4vrk.react.reboot.PluginReboot;
-import com.g4vrk.schedula.task.TickSchedule;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
+import com.g4vrk.react.platform.reboot.PluginRebootMessage;
+import com.g4vrk.react.platform.reboot.PreparedPluginReboot;
+import com.g4vrk.react.platform.ReactPlatform;
 import com.g4vrk.text.LegacySerializerRegistry;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -27,44 +28,48 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * {@code /react reboot}: unloads React and loads it again from the jar in plugins/, so a
- * replaced jar takes effect without restarting the server.
- *
- * <p>{@code /react reboot <target>} reboots only extensions: {@code all}, {@code rcp},
- * {@code addons} or one name. Their staged updates are put in place on the way.</p>
+ * {@code /react reboot}: reboots React (when supported by the active platform) or extensions.
  */
 public final class RebootArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
     private static final CloudKey<String> TARGET = CloudKey.of("target", String.class);
 
     private final CommandBuilderFactory builderFactory;
+    private final ReactPlatform platform;
     private final ActionParser<Audience> actionParser;
     private final ExtensionManager extensions;
-    private final Scheduler scheduler;
+    private final TaskScheduler<PlatformPlayer> scheduler;
 
     private volatile ExecutableActionList<? super Audience> starting;
     private volatile ExecutableActionList<? super Audience> cancelled;
     private volatile ExecutableActionList<? super Audience> extensionsStarting;
     private volatile ExecutableActionList<? super Audience> extensionsDone;
     private volatile ExecutableActionList<? super Audience> extensionsUnknown;
-    private volatile PluginReboot.Messages messages;
+    private volatile PluginRebootMessage messages;
 
     public RebootArgument(
             final @NotNull CommandBuilderFactory builderFactory,
+            final @NotNull ReactPlatform platform,
             final @NotNull ActionParser<Audience> actionParser,
             final @NotNull ActionsConfig config,
             final @NotNull ExtensionManager extensions,
-            final @NotNull Scheduler scheduler
+            final @NotNull TaskScheduler<PlatformPlayer> scheduler
     ) {
+
         this.builderFactory = builderFactory;
+        this.platform = platform;
         this.actionParser = actionParser;
         this.extensions = extensions;
         this.scheduler = scheduler;
         this.onReload(config);
+
     }
 
     @Override
-    public void onReload(final @NotNull ActionsConfig config) {
+    public void onReload(
+            final @NotNull ActionsConfig config
+    ) {
+
         final ActionsConfig.Reboot reboot = config.reboot();
         this.starting = actionParser.parseAll(reboot.starting());
         this.cancelled = actionParser.parseAll(reboot.cancelled());
@@ -74,11 +79,17 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
         /*
          * Sent after the class loader closed: turned into plain legacy strings now.
          */
-        this.messages = new PluginReboot.Messages(legacy(reboot.unloaded()), legacy(reboot.loaded()), legacy(reboot.failed()));
+        this.messages = new PluginRebootMessage(
+                legacy(reboot.unloaded()),
+                legacy(reboot.loaded()),
+                legacy(reboot.failed())
+        );
+
     }
 
     @Override
-    public @NotNull Command.Builder<CommandSender> build() {
+    public @NotNull Command.Builder<PlatformSender> build() {
+
         return builderFactory.create()
                 .literal("reboot")
                 .permission("react.command.reboot")
@@ -89,16 +100,15 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                                 extensions.targets().stream().map(Suggestion::suggestion).toList())
                 )
                 .handler(context -> {
-                    final CommandSender sender = context.sender();
+                    final PlatformSender sender = context.sender();
                     final String target = context.getOrDefault(TARGET, null);
                     if (target != null) {
                         rebootExtensions(sender, target);
                         return;
                     }
-                    final Plugin plugin = React.INSTANCE.plugin();
-                    final PluginReboot reboot;
+                    final PreparedPluginReboot reboot;
                     try {
-                        reboot = PluginReboot.prepare(plugin, sender, messages);
+                        reboot = platform.preparePluginReboot(sender, messages);
                     } catch (final IllegalStateException refused) {
                         React.INSTANCE.logger().warn("React reboot refused: {}", refused.getMessage());
                         final String reason = String.valueOf(refused.getMessage());
@@ -108,17 +118,19 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                     starting.run(
                             sender,
                             text -> text
-                                    .replace("<jar>", reboot.jar().getName())
+                                    .replace("<jar>", reboot.artifactName())
                                     .replace("<version>", reboot.newVersion())
                     );
-                    /*
-                     * Run outside the command dispatch: disabling React tears down this command manager.
-                     */
-                    Bukkit.getScheduler().runTask(plugin, reboot);
+                    reboot.schedule();
                 });
+
     }
 
-    private void rebootExtensions(final @NotNull CommandSender sender, final @NotNull String target) {
+    private void rebootExtensions(
+            final @NotNull PlatformSender sender,
+            final @NotNull String target
+    ) {
+
         extensionsStarting.run(sender, text -> text.replace("<target>", target));
         extensions.reboot(target).whenComplete((result, failure) -> {
             scheduler.schedule(() -> {
@@ -139,15 +151,24 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                 );
             }, TickSchedule.instant());
         });
+
     }
 
-    private static @NotNull String names(final @NotNull List<String> names) {
+    private static @NotNull String names(
+            final @NotNull List<String> names
+    ) {
+
         return names.isEmpty() ? "-" : String.join(", ", names);
+
     }
 
-    private static String legacy(final String text) {
+    private static String legacy(
+            final String text
+    ) {
+
         return LegacyComponentSerializer.legacySection()
                 .serialize(LegacySerializerRegistry.INSTANCE.universalSerializer().serialize(text));
+
     }
 
 }

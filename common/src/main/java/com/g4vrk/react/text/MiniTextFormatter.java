@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  *
  * <p>The library carries its own MiniMessage, which is what lets the plugin run below 1.18.2 where
  * the server has none. Because that copy lives under a relocated package, resolvers cross the
- * boundary as {@link TagMapper}s: plain strings instead of Adventure types. Placeholders of the
+ * boundary as {@link TagMapper}s: plain strings instead of Adventure types. PlaceholderResolver of the
  * plugin go that way, so they work on every version.</p>
  *
  * <p>A caller that passes real {@link TagResolver}s asks for styling the mapper cannot express,

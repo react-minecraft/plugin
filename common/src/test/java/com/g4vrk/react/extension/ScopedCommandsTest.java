@@ -1,15 +1,20 @@
 package com.g4vrk.react.extension;
 
-import org.bukkit.command.CommandSender;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
+import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import org.incendo.cloud.CloudCapability;
 import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.component.CommandComponent;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.internal.CommandRegistrationHandler;
+import org.incendo.cloud.key.CloudKey;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.NOPLogger;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -19,15 +24,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScopedCommandsTest {
 
     private final TestManager manager = new TestManager();
-    private final Consumer<String> commandsChanged = ignored -> {
-    };
+    private final PlatformCommandBridge platformCommands = new TestPlatformCommands(manager);
 
     @Test
     void removesOnlyOwnSubcommandsUnderSharedRoot() {
 
         manager.command(manager.commandBuilder("react", "ac").literal("reload").handler(context -> { }));
-        final ScopedCommands rcp = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "rcp", commandsChanged);
-        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
+        final ScopedCommandRegistry rcp = new ScopedCommandRegistry(platformCommands, NOPLogger.NOP_LOGGER, "rcp");
+        final ScopedCommandRegistry addon = new ScopedCommandRegistry(platformCommands, NOPLogger.NOP_LOGGER, "addon");
 
         rcp.register("react", rcp.command("react").literal("link").handler(context -> { }));
         addon.register("react", addon.command("react").literal("punish").handler(context -> { }));
@@ -42,7 +46,7 @@ class ScopedCommandsTest {
     @Test
     void removesOwnRoot() {
 
-        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
+        final ScopedCommandRegistry addon = new ScopedCommandRegistry(platformCommands, NOPLogger.NOP_LOGGER, "addon");
         addon.register("punish", addon.command("punish").handler(context -> { }));
 
         assertTrue(addon.unregister("punish"));
@@ -53,7 +57,7 @@ class ScopedCommandsTest {
     @Test
     void rejectsMismatchedLabelAndClosedScope() {
 
-        final ScopedCommands addon = new ScopedCommands(manager, NOPLogger.NOP_LOGGER, "addon", commandsChanged);
+        final ScopedCommandRegistry addon = new ScopedCommandRegistry(platformCommands, NOPLogger.NOP_LOGGER, "addon");
         assertThrows(
                 IllegalArgumentException.class,
                 () -> addon.register("other", addon.command("punish").handler(context -> { }))
@@ -76,7 +80,49 @@ class ScopedCommandsTest {
 
     }
 
-    private static final class TestManager extends CommandManager<CommandSender> {
+    private static final class TestPlatformCommands implements PlatformCommandBridge {
+
+        private final CommandManager<PlatformSender> manager;
+
+        private TestPlatformCommands(
+                final @NotNull CommandManager<PlatformSender> manager
+        ) {
+
+            this.manager = manager;
+
+        }
+
+        @Override
+        public @NotNull CommandManager<PlatformSender> manager() {
+
+            return manager;
+
+        }
+
+        @Override
+        public CommandComponent.@NotNull Builder<PlatformSender, PlatformPlayer> singlePlayerArgument(
+                final @NotNull CloudKey<PlatformPlayer> key,
+                final boolean required
+        ) {
+
+            throw new UnsupportedOperationException();
+
+        }
+
+        @Override
+        public CommandComponent.@NotNull Builder<PlatformSender, Collection<PlatformPlayer>> multiplePlayersArgument(
+                final @NotNull CloudKey<Collection<PlatformPlayer>> key,
+                final boolean required
+        ) {
+
+            throw new UnsupportedOperationException();
+
+        }
+
+    }
+
+    private static final class TestManager extends CommandManager<PlatformSender> {
+
         TestManager() {
 
             super(ExecutionCoordinator.simpleCoordinator(), CommandRegistrationHandler.nullCommandRegistrationHandler());
@@ -85,10 +131,15 @@ class ScopedCommandsTest {
         }
 
         @Override
-        public boolean hasPermission(final CommandSender sender, final String permission) {
+        public boolean hasPermission(
+                final PlatformSender sender,
+                final String permission
+        ) {
 
             return true;
 
         }
+
     }
+
 }

@@ -2,14 +2,14 @@ package com.g4vrk.react.update;
 
 import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
-import com.g4vrk.react.Permissions;
+import com.g4vrk.react.PermissionKey;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.channel.BuiltinChannels;
-import com.g4vrk.react.api.event.EventBus;
+import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
+import com.g4vrk.react.api.event.EventDispatcher;
 import com.g4vrk.react.api.event.plugin.UpdateDownloadedEvent;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.config.model.ActionsConfig;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BooleanSupplier;
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  */
 public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, ReloadObserver<ActionsConfig> {
 
-    private final EventBus events;
+    private final EventDispatcher events;
     private final ActionParser<Audience> parser;
     private final BooleanSupplier notify;
     private final Supplier<Iterable<UpdateDownloadedEvent>> pending;
@@ -31,7 +31,7 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
     private volatile ExecutableActionList<? super Audience> extension;
 
     public UpdateNotifier(
-            final @NotNull EventBus events,
+            final @NotNull EventDispatcher events,
             final @NotNull ActionParser<Audience> parser,
             final @NotNull ActionsConfig config,
             final @NotNull BooleanSupplier notify,
@@ -61,7 +61,7 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
         if (!notify.getAsBoolean()) {
             return;
         }
-        for (final Audience recipient : BuiltinChannels.ALERTS.recipients()) {
+        for (final Audience recipient : BuiltinChannelRegistry.ALERTS.recipients()) {
             send(recipient, event);
         }
 
@@ -72,9 +72,9 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
      *
      * @param player the player
      */
-    public void join(final @NotNull Player player) {
+    public void join(final @NotNull PlatformPlayer player) {
 
-        if (!notify.getAsBoolean() || !player.hasPermission(Permissions.NOTIFY_UPDATE)) {
+        if (!notify.getAsBoolean() || !player.hasPermission(PermissionKey.NOTIFY_UPDATE)) {
             return;
         }
         for (final UpdateDownloadedEvent event : pending.get()) {

@@ -3,9 +3,9 @@ package com.g4vrk.react.update.config;
 import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.config.ConfigMigrationChain;
 import com.g4vrk.react.extension.ExtensionKind;
-import com.g4vrk.react.update.ComponentSettings;
+import com.g4vrk.react.update.ComponentUpdateConfig;
 import com.g4vrk.react.update.UpdateChannel;
-import com.g4vrk.react.update.UpdateSettings;
+import com.g4vrk.react.update.UpdateConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public final class UpdateConfiguration {
     private final Path folder;
     private final String language;
     private final Logger logger;
-    private final ConfigFile<UpdateSettings> settingsFile;
+    private final ConfigFile<UpdateConfig> settingsFile;
 
     /**
      * Creates a loader for the updater's YAML files.
@@ -50,7 +50,7 @@ public final class UpdateConfiguration {
         this.folder = folder;
         this.language = language;
         this.logger = logger;
-        this.settingsFile = ConfigFile.builder(UpdateSettings.class)
+        this.settingsFile = ConfigFile.builder(UpdateConfig.class)
                 .path(folder.resolve("settings.yml"))
                 .defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/settings.yml")
                 .migrations(settingsMigrations())
@@ -65,7 +65,7 @@ public final class UpdateConfiguration {
      * @param previous the settings to keep on failure
      * @return the loaded settings, or {@code previous}
      */
-    public @NotNull UpdateSettings reload(final @NotNull UpdateSettings previous) {
+    public @NotNull UpdateConfig reload(final @NotNull UpdateConfig previous) {
 
         try {
             return settingsFile.load();
@@ -102,7 +102,7 @@ public final class UpdateConfiguration {
      * @param name the component name
      * @return the component settings, or disabled defaults when the file cannot be read
      */
-    public @NotNull ComponentSettings component(
+    public @NotNull ComponentUpdateConfig component(
             final @Nullable ExtensionKind kind,
             final @NotNull String name
     ) {
@@ -111,7 +111,7 @@ public final class UpdateConfiguration {
                 ? folder.resolve("plugin.yml")
                 : folder.resolve(kind == ExtensionKind.RCP ? "rcp" : "addons").resolve(name + ".yml");
         try {
-            return ConfigFile.builder(ComponentSettings.class)
+            return ConfigFile.builder(ComponentUpdateConfig.class)
                     .path(file)
                     .defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/component.yml")
                     .logger(logger)
@@ -119,7 +119,7 @@ public final class UpdateConfiguration {
                     .load();
         } catch (final ConfigurateException failure) {
             logger.error("Could not read {}, not updating {}", file, name, failure);
-            return new ComponentSettings(false, UpdateChannel.RELEASE, "");
+            return new ComponentUpdateConfig(false, UpdateChannel.RELEASE, "");
         }
 
     }

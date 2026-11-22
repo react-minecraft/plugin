@@ -2,8 +2,8 @@ package com.g4vrk.react.storage.backend.jdbc;
 
 import com.g4vrk.react.storage.backend.StorageBackend;
 import com.g4vrk.react.storage.config.DatabaseType;
-import com.g4vrk.react.storage.config.JdbcSettings;
-import com.g4vrk.react.storage.config.PoolSettings;
+import com.g4vrk.react.storage.config.JdbcConfig;
+import com.g4vrk.react.storage.config.PoolConfig;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
 import com.g4vrk.react.storage.model.StoredInference;
@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.BYPASS_TABLE;
-import static com.g4vrk.react.storage.constant.StorageConstants.INFERENCE_TABLE;
-import static com.g4vrk.react.storage.constant.StorageConstants.LEGACY_INFERENCE_TABLE;
-import static com.g4vrk.react.storage.constant.StorageConstants.VIOLATIONS_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.BYPASS_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.INFERENCE_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.LEGACY_INFERENCE_TABLE;
+import static com.g4vrk.react.storage.constant.StorageConstant.VIOLATIONS_TABLE;
 
 /**
  * Stores player data in a JDBC database.
@@ -47,7 +47,7 @@ public final class JdbcStorageBackend implements StorageBackend {
 
     public JdbcStorageBackend(
             final @NotNull DatabaseType type,
-            final @NotNull JdbcSettings settings
+            final @NotNull JdbcConfig settings
     ) {
 
         this.dialect = JdbcDialect.forType(type);
@@ -290,10 +290,10 @@ public final class JdbcStorageBackend implements StorageBackend {
 
     private static @NotNull HikariConfig hikariConfig(
             final @NotNull DatabaseType type,
-            final @NotNull JdbcSettings settings
+            final @NotNull JdbcConfig settings
     ) {
 
-        final PoolSettings pool = settings.pool();
+        final PoolConfig pool = settings.pool();
         final HikariConfig config = new HikariConfig();
         config.setPoolName("React-" + type.name());
         config.setJdbcUrl(settings.jdbcUrl());

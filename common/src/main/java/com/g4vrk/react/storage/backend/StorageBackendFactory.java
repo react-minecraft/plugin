@@ -1,9 +1,9 @@
 package com.g4vrk.react.storage.backend;
 
-import com.g4vrk.react.extension.library.RuntimeLibraries;
+import com.g4vrk.react.extension.library.RuntimeLibraryLoader;
 import com.g4vrk.react.storage.backend.jdbc.JdbcStorageBackend;
 import com.g4vrk.react.storage.backend.mongo.MongoStorageBackend;
-import com.g4vrk.react.storage.config.DatabaseSettings;
+import com.g4vrk.react.storage.config.DatabaseConfig;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -12,9 +12,9 @@ import java.io.IOException;
 
 public final class StorageBackendFactory {
 
-    public @NotNull StorageBackend create(final @NotNull DatabaseSettings settings) {
+    public @NotNull StorageBackend create(final @NotNull DatabaseConfig settings) {
 
-        if (StorageBackendFactory.class.getClassLoader() instanceof RuntimeLibraries libraries) {
+        if (StorageBackendFactory.class.getClassLoader() instanceof RuntimeLibraryLoader libraries) {
             try {
                 libraries.loadGroup("database-" + settings.type().name().toLowerCase(Locale.ROOT));
             } catch (final InterruptedException failure) {

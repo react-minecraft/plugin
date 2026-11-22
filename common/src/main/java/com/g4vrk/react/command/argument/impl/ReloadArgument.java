@@ -4,13 +4,14 @@ import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
-import com.g4vrk.schedula.task.TickSchedule;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +22,7 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
 
     private final CommandBuilderFactory builderFactory;
 
-    private final Scheduler scheduler;
+    private final TaskScheduler<PlatformPlayer> scheduler;
 
     private final ActionParser<Audience> actionParser;
 
@@ -31,7 +32,7 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
 
     public ReloadArgument(
             final @NotNull CommandBuilderFactory builderFactory,
-            final @NotNull Scheduler scheduler,
+            final @NotNull TaskScheduler<PlatformPlayer> scheduler,
             final @NotNull ActionParser<Audience> actionParser
     ) {
 
@@ -44,14 +45,14 @@ public final class ReloadArgument extends LocalArgument implements ReloadObserve
     }
 
     @Override
-    public @NotNull Command.Builder<CommandSender> build() {
+    public @NotNull Command.Builder<PlatformSender> build() {
 
         return builderFactory.create()
                 .literal("reload")
                 .permission("react.command.reload")
                 .handler(context -> {
 
-                    final CommandSender sender = context.sender();
+                    final PlatformSender sender = context.sender();
 
                     startActions.run(sender);
 

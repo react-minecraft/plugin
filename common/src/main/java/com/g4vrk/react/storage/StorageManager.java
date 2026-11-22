@@ -4,7 +4,7 @@ import com.g4vrk.react.check.Check;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.storage.backend.StorageBackend;
 import com.g4vrk.react.storage.backend.StorageBackendFactory;
-import com.g4vrk.react.storage.config.DatabaseSettings;
+import com.g4vrk.react.storage.config.DatabaseConfig;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
 import com.g4vrk.react.storage.model.StoredInference;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
-import static com.g4vrk.react.storage.constant.StorageConstants.FAILURE_LOG_INTERVAL_MILLIS;
+import static com.g4vrk.react.storage.constant.StorageConstant.FAILURE_LOG_INTERVAL_MILLIS;
 
 /**
  * Owns the storage connection, its workers and the bounded queue of pending writes.
@@ -46,8 +46,8 @@ import static com.g4vrk.react.storage.constant.StorageConstants.FAILURE_LOG_INTE
 public final class StorageManager {
 
     private final Logger logger;
-    private final DatabaseSettings settings;
-    private final Function<DatabaseSettings, StorageBackend> backendFactory;
+    private final DatabaseConfig settings;
+    private final Function<DatabaseConfig, StorageBackend> backendFactory;
 
     private final ThreadPoolExecutor executor;
     private final ScheduledThreadPoolExecutor scheduler;
@@ -69,7 +69,7 @@ public final class StorageManager {
 
     public StorageManager(
             final @NotNull Logger logger,
-            final @NotNull DatabaseSettings settings
+            final @NotNull DatabaseConfig settings
     ) {
 
         this(logger, settings, new StorageBackendFactory()::create);
@@ -78,8 +78,8 @@ public final class StorageManager {
 
     StorageManager(
             final @NotNull Logger logger,
-            final @NotNull DatabaseSettings settings,
-            final @NotNull Function<DatabaseSettings, StorageBackend> backendFactory
+            final @NotNull DatabaseConfig settings,
+            final @NotNull Function<DatabaseConfig, StorageBackend> backendFactory
     ) {
         this.logger = logger;
         this.settings = settings;

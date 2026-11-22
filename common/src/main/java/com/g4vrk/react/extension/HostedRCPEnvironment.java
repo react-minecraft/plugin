@@ -6,9 +6,9 @@ import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;
 import com.g4vrk.react.api.rcp.player.registry.RCPPlayerRegistry;
 import com.g4vrk.react.api.rcp.verdict.InferenceResult;
+import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.rcp.RCPHost;
-import com.g4vrk.schedula.task.TickSchedule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public final class HostedRCPEnvironment extends ScopedEnvironment implements RCP
         if (reactPlayer.inferenceResetting()) {
             return;
         }
-        scheduler().scheduleEntity(reactPlayer.bukkitPlayer, () -> {
+        scheduler().scheduleEntity(reactPlayer.platformPlayer, () -> {
             if (!closed) {
                 reactPlayer.applyInference(generation, result);
             }

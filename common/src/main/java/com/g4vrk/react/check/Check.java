@@ -2,7 +2,7 @@ package com.g4vrk.react.check;
 
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.CheckReport;
-import com.g4vrk.react.api.channel.BuiltinChannels;
+import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
 import com.g4vrk.react.api.event.channel.AlertEvent;
 import com.g4vrk.react.api.event.channel.MonitorEvent;
 import com.g4vrk.react.api.event.check.CheckFlagEvent;
@@ -143,7 +143,7 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
         final AlertEvent event = React.INSTANCE.events().post(new AlertEvent(this.report(details)));
 
         if (!event.cancelled()) {
-            BuiltinChannels.ALERTS.publish(event.report());
+            BuiltinChannelRegistry.ALERTS.publish(event.report());
         }
     }
 
@@ -153,14 +153,14 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
         final MonitorEvent event = React.INSTANCE.events().post(new MonitorEvent(this.report(details)));
 
         if (!event.cancelled()) {
-            BuiltinChannels.MONITOR.publish(event.report());
+            BuiltinChannelRegistry.MONITOR.publish(event.report());
         }
     }
 
     @Override
     public final void debug(final @NotNull String message) {
-        if (!BuiltinChannels.DEBUG.recipients().isEmpty()) {
-            BuiltinChannels.DEBUG.publish(this.report(message));
+        if (!BuiltinChannelRegistry.DEBUG.recipients().isEmpty()) {
+            BuiltinChannelRegistry.DEBUG.publish(this.report(message));
         }
     }
 

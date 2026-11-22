@@ -1,16 +1,18 @@
 package com.g4vrk.react.api.rcp.player;
 
-import org.bukkit.entity.Player;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
 /**
  * A player as the plugin tracks it, seen from an RCP.
  *
- * <p>The snapshot methods are safe to call from any thread. The {@link #bukkit()} handle must
- * only be used on the thread that owns the player's entity.</p>
+ * <p>The snapshot methods are safe to call from any thread. Operations on the native platform
+ * handle obtained via {@link #platform()} or {@link #unwrap(Class)} must follow the threading
+ * rules of the active server platform.</p>
  */
 @ApiStatus.AvailableSince("2.0")
 public interface RCPPlayer {
@@ -20,14 +22,26 @@ public interface RCPPlayer {
     @NotNull String name();
 
     /**
-     * Gives the Bukkit player handle.
+     * Returns the platform-independent player handle.
      *
-     * <p>Use it only on the thread that owns the player's entity. This method may be called from
-     * any thread, but most Bukkit operations on the returned player are not thread-safe.</p>
-     *
-     * @return the Bukkit player
+     * @return the platform player
      */
-    @NotNull Player bukkit();
+    @NotNull PlatformPlayer platform();
+
+    /**
+     * Convenience shortcut for {@code platform().unwrap(type)}.
+     *
+     * @param type the expected native player type
+     * @param <T>  the native player type
+     * @return the native player, or {@code null} when running on a different platform
+     */
+    default <T> @Nullable T unwrap(
+            final @NotNull Class<T> type
+    ) {
+
+        return platform().unwrap(type);
+
+    }
 
     /**
      * Whether the player is in combat right now, by the plugin's own combat tracking.

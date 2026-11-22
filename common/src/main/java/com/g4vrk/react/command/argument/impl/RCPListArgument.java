@@ -3,6 +3,7 @@ package com.g4vrk.react.command.argument.impl;
 import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.ReloadObserver;
+import com.g4vrk.react.api.platform.sender.PlatformSender;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
@@ -12,7 +13,6 @@ import com.g4vrk.react.rcp.RCPHost;
 import com.g4vrk.react.update.UpdateChannel;
 import com.g4vrk.react.update.UpdateService;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
 import org.incendo.cloud.Command;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,13 +68,13 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
     }
 
     @Override
-    public @NotNull Command.Builder<CommandSender> build() {
+    public @NotNull Command.Builder<PlatformSender> build() {
 
         return builderFactory.create()
                 .literal("rcps")
                 .permission("react.command.rcps")
                 .handler(context -> {
-                    final CommandSender sender = context.sender();
+                    final PlatformSender sender = context.sender();
                     final List<HostedRCPEnvironment> environments = host.environments();
 
                     run(header, sender, Map.of("<count>", Integer.toString(environments.size())));
@@ -143,7 +143,7 @@ public final class RCPListArgument extends LocalArgument implements ReloadObserv
 
     private static void run(
             final ExecutableActionList<? super Audience> actions,
-            final CommandSender sender,
+            final PlatformSender sender,
             final Map<String, String> placeholders
     ) {
 

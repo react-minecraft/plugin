@@ -5,11 +5,12 @@ import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.extension.ConfigFactory;
 import com.g4vrk.react.api.extension.ExtensionEnvironment;
 import com.g4vrk.react.api.extension.ExtensionId;
-import com.g4vrk.react.api.extension.ExtensionServices;
+import com.g4vrk.react.api.extension.ExtensionService;
+import com.g4vrk.react.api.platform.PlatformServer;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.text.TextFormatter;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
@@ -25,14 +26,14 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     private final Path directory;
     private final ClassLoader classLoader;
     private final Logger logger;
-    private final Plugin plugin;
+    private final PlatformServer platform;
     private final TextFormatter text;
     private final ActionParser<Audience> actions;
     private final ScopedScheduler scheduler;
-    private final ScopedCommands commands;
-    private final ScopedListeners listeners;
-    private final ScopedPlaceholders placeholders;
-    private ScopedExtensionServices extensionServices;
+    private final ScopedCommandRegistry commands;
+    private final ScopedListenerRegistry listeners;
+    private final ScopedPlaceholderRegistry placeholders;
+    private ScopedExtensionService extensionServices;
 
     protected ScopedEnvironment(
             final @NotNull ExtensionContext context,
@@ -45,13 +46,13 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
         this.directory = directory;
         this.classLoader = classLoader;
         this.logger = context.logger(descriptor.name());
-        this.plugin = context.plugin();
+        this.platform = context.platform();
         this.text = context.text();
         this.actions = context.actions();
         this.scheduler = new ScopedScheduler(context.scheduler());
-        this.commands = new ScopedCommands(context.commands(), logger, descriptor.name(), context.commandsChanged());
-        this.listeners = new ScopedListeners(plugin, context.events(), logger);
-        this.placeholders = new ScopedPlaceholders(context.placeholders());
+        this.commands = new ScopedCommandRegistry(context.commands(), logger, descriptor.name());
+        this.listeners = new ScopedListenerRegistry(context.events(), context.listeners().createExtensionScope(logger));
+        this.placeholders = new ScopedPlaceholderRegistry(context.placeholders());
 
     }
 
@@ -66,21 +67,25 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     }
 
-    void attachServices(final ScopedExtensionServices services) {
+    void attachServices(
+            final ScopedExtensionService services
+    ) {
 
         this.extensionServices = services;
 
     }
 
     @Override
-    public @NotNull ExtensionServices services() {
+    public @NotNull ExtensionService services() {
 
         return extensionServices;
 
     }
 
     @Override
-    public boolean dependencyAvailable(final @NotNull ExtensionId id) {
+    public boolean dependencyAvailable(
+            final @NotNull ExtensionId id
+    ) {
 
         return extensionServices.available(id);
 
@@ -108,35 +113,35 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     }
 
     @Override
-    public @NotNull Plugin plugin() {
+    public @NotNull PlatformServer platform() {
 
-        return plugin;
+        return platform;
 
     }
 
     @Override
-    public @NotNull Scheduler scheduler() {
+    public @NotNull TaskScheduler<PlatformPlayer> scheduler() {
 
         return scheduler;
 
     }
 
     @Override
-    public @NotNull ScopedCommands commands() {
+    public @NotNull ScopedCommandRegistry commands() {
 
         return commands;
 
     }
 
     @Override
-    public @NotNull ScopedListeners listeners() {
+    public @NotNull ScopedListenerRegistry listeners() {
 
         return listeners;
 
     }
 
     @Override
-    public @NotNull ScopedPlaceholders placeholders() {
+    public @NotNull ScopedPlaceholderRegistry placeholders() {
 
         return placeholders;
 
@@ -164,7 +169,10 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     }
 
     @Override
-    public <T> ConfigFile.@NotNull Builder<T> file(final @NotNull String name, final @NotNull Class<T> type) {
+    public <T> ConfigFile.@NotNull Builder<T> file(
+            final @NotNull String name,
+            final @NotNull Class<T> type
+    ) {
 
         return ConfigFile.builder(type)
                 .path(directory.resolve(name))
@@ -183,7 +191,9 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     }
 
-    private void closeQuietly(final @NotNull AutoCloseable resource) {
+    private void closeQuietly(
+            final @NotNull AutoCloseable resource
+    ) {
 
         try {
             resource.close();

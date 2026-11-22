@@ -19,7 +19,7 @@ class ExtensionManagerShutdownTest {
 
         final ExtensionContext context = new ExtensionContext(null, directory, LoggerFactory.getLogger(getClass()),
                 null, null, null, null, null, null, null, null, null, null);
-        final ExtensionManager manager = new ExtensionManager(context, StagedUpdates.NONE);
+        final ExtensionManager manager = new ExtensionManager(context, StagedUpdateRegistry.NONE);
         final CountDownLatch checking = new CountDownLatch(1);
         final CountDownLatch release = new CountDownLatch(1);
         try {

@@ -1,37 +1,43 @@
 package com.g4vrk.react.player.factory;
 
-import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.player.TrackedPlayerImpl;
-import com.g4vrk.react.util.platform.PlayerPlatformUtil;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.function.Predicate;
 
+/**
+ * Creates {@link TrackedPlayerImpl} instances while applying Bedrock filtering rules.
+ */
 public final class PlayerFactory implements ReloadObserver<MainConfig> {
 
+    private final Predicate<UUID> bedrockDetector;
     private volatile boolean checkBedrockPlayers;
 
-    public PlayerFactory() {
+    public PlayerFactory(
+            final @NotNull Predicate<UUID> bedrockDetector
+    ) {
 
+        this.bedrockDetector = bedrockDetector;
         this.reload();
 
     }
 
     public @Nullable TrackedPlayerImpl create(
-            final @NotNull UUID uniqueId,
-            final @NotNull String name,
-            final @NotNull Player bukkitPlayer
+            final @NotNull PlatformPlayer player
     ) {
 
-        if (!checkBedrockPlayers && PlayerPlatformUtil.bedrockPlayer(uniqueId)) {
+        final UUID uniqueId = player.uniqueId();
+        if (!checkBedrockPlayers && bedrockDetector.test(uniqueId)) {
             return null;
         }
 
-        return new TrackedPlayerImpl(uniqueId, name, bukkitPlayer);
+        return new TrackedPlayerImpl(uniqueId, player.name(), player);
 
     }
 
@@ -42,7 +48,9 @@ public final class PlayerFactory implements ReloadObserver<MainConfig> {
     }
 
     @Override
-    public void onReload(final @NotNull MainConfig config) {
+    public void onReload(
+            final @NotNull MainConfig config
+    ) {
 
         this.checkBedrockPlayers = config.player().checkBedrockPlayers();
 

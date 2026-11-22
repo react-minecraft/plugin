@@ -8,7 +8,7 @@ import com.g4vrk.react.extension.ExtensionDescriptor;
 import com.g4vrk.react.extension.ExtensionKind;
 import com.g4vrk.react.extension.ExtensionManager;
 import com.g4vrk.react.extension.InvalidExtensionException;
-import com.g4vrk.react.extension.StagedUpdates;
+import com.g4vrk.react.extension.StagedUpdateRegistry;
 import com.g4vrk.react.update.config.UpdateConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ import java.util.function.Supplier;
  * addon jars are staged in {@code update/staged} and put in place when the extension is
  * loaded again, on start or with {@code /react reboot}.</p>
  */
-public final class UpdateService implements StagedUpdates, AutoCloseable {
+public final class UpdateService implements StagedUpdateRegistry, AutoCloseable {
 
     private static final String PLUGIN_REPOSITORY = "react-minecraft/plugin";
     private static final String REACT_RCP_PREFIX = "react-inference-rcp";
@@ -64,7 +64,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
     private final Map<String, String> warned = new ConcurrentHashMap<>();
     private final Object checks = new Object();
 
-    private volatile UpdateSettings settings = new UpdateSettings(Duration.ofHours(6), true, true);
+    private volatile UpdateConfig settings = new UpdateConfig(Duration.ofHours(6), true, true);
     private volatile @Nullable ScheduledExecutorService timer;
     private volatile boolean closed;
 
@@ -321,7 +321,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
             }
         }
 
-        final ComponentSettings component = configuration.component(ExtensionKind.RCP, "React");
+        final ComponentUpdateConfig component = configuration.component(ExtensionKind.RCP, "React");
         install(
                 "React RCP",
                 ReleaseClient.REACT_RCP,
@@ -555,7 +555,7 @@ public final class UpdateService implements StagedUpdates, AutoCloseable {
      */
     private boolean check(final @NotNull Component component) {
 
-        final ComponentSettings componentSettings = component.extension() == null
+        final ComponentUpdateConfig componentSettings = component.extension() == null
                 ? configuration.component(null, component.name())
                 : configuration.component(component.extension(), component.name());
         final UpdateChannel channel = componentSettings.effectiveChannel();

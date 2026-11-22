@@ -3,6 +3,7 @@ rootProject.name = "react"
 include(
     "api",
     "common",
+    "bukkit",
     "paper",
     "folia"
 )

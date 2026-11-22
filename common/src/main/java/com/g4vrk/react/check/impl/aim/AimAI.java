@@ -67,7 +67,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
     public void onResult(final @NotNull InferenceResult result) {
 
-        if (!player.bukkitPlayer.isOnline() || !active()) {
+        if (!player.platformPlayer.online() || !active()) {
             return;
         }
 

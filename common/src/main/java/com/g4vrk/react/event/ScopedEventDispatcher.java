@@ -1,0 +1,99 @@
+package com.g4vrk.react.event;
+
+import com.g4vrk.react.api.event.Event;
+import com.g4vrk.react.api.event.EventDispatcher;
+import com.g4vrk.react.api.event.EventPriority;
+import com.g4vrk.react.api.event.Subscription;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Set;
+import java.util.function.Consumer;
+
+/**
+ * View of an {@link EventDispatcher} for one addon or RCP that remembers what it added.
+ *
+ * <p>{@link #close()} removes all of it, so a rebooted extension leaves no handlers behind.</p>
+ */
+public final class ScopedEventDispatcher implements EventDispatcher, AutoCloseable {
+
+    private final EventDispatcher delegate;
+
+    private final Set<Object> listeners = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<Subscription> subscriptions = new HashSet<>();
+    private boolean closed;
+
+    public ScopedEventDispatcher(final @NotNull EventDispatcher delegate) {
+
+        this.delegate = delegate;
+
+    }
+
+    @Override
+    public synchronized void register(final @NotNull Object listener) {
+
+        requireOpen();
+        delegate.register(listener);
+        listeners.add(listener);
+
+    }
+
+    @Override
+    public synchronized void unregister(final @NotNull Object listener) {
+
+        if (listeners.remove(listener)) {
+            delegate.unregister(listener);
+        }
+
+    }
+
+    @Override
+    public synchronized <E extends Event> @NotNull Subscription subscribe(
+            final @NotNull Class<E> type,
+            final @NotNull EventPriority priority,
+            final boolean ignoreCancelled,
+            final @NotNull Consumer<? super E> handler
+    ) {
+
+        requireOpen();
+        final Subscription subscription = delegate.subscribe(type, priority, ignoreCancelled, handler);
+        subscriptions.add(subscription);
+        return () -> {
+            synchronized (this) {
+                if (subscriptions.remove(subscription)) {
+                    subscription.unsubscribe();
+                }
+            }
+        };
+
+    }
+
+    @Override
+    public <E extends Event> @NotNull E post(final @NotNull E event) {
+
+        return delegate.post(event);
+
+    }
+
+    @Override
+    public synchronized void close() {
+
+        closed = true;
+        listeners.forEach(delegate::unregister);
+        listeners.clear();
+        subscriptions.forEach(Subscription::unsubscribe);
+        subscriptions.clear();
+
+    }
+
+    private void requireOpen() {
+
+        if (closed) {
+            throw new IllegalStateException("The extension event bus is closed");
+        }
+
+    }
+
+}

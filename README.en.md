@@ -48,7 +48,7 @@
 
 * Server software: `Paper / Folia`. Paper support starts at `1.16.5`.
 * Java: at least 17 for the Paper JAR and 21 for the Folia JAR. Your server may require a newer version.
-* Required plugin: [PacketEvents for Bukkit](https://github.com/retrooper/packetevents/releases). PlaceholderAPI is optional.
+* React bundles [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0) and uses a compatible installed plugin when available. PlaceholderAPI is optional.
 
 1. Download `react-paper-*.jar` or `react-folia-*.jar` for your server.
 2. Move it to the `plugins/` folder.

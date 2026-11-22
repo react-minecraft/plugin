@@ -1,51 +1,52 @@
 package com.g4vrk.react.extension;
 
 import com.g4vrk.functionalActions.parser.ActionParser;
-import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
-import com.g4vrk.react.api.event.EventBus;
+import com.g4vrk.react.api.event.EventDispatcher;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
+import com.g4vrk.react.api.platform.PlatformServer;
+import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.text.TextFormatter;
+import com.g4vrk.react.platform.command.PlatformCommandBridge;
+import com.g4vrk.react.platform.listener.PlatformListenerBridge;
 import com.g4vrk.react.player.registry.PlayerRegistry;
 import com.g4vrk.react.rcp.RCPHost;
-import com.g4vrk.schedula.task.scheduler.Scheduler;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
-import org.incendo.cloud.CommandManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.util.function.Consumer;
 
 /**
- * The plugin services every extension environment is built from.
+ * The core services every extension environment is built from.
  *
- * @param plugin       the React plugin
- * @param dataFolder   the plugin folder
- * @param logger       the plugin logger
- * @param scheduler    the plugin scheduler
+ * @param platform     the active platform server facade
+ * @param dataFolder   the plugin data directory
+ * @param logger       the core logger
+ * @param scheduler    the core scheduler
  * @param events       the React event bus
  * @param placeholders the shared placeholder registry
  * @param text         the MiniMessage formatter
- * @param commands     the Cloud command tree of the plugin
- * @param commandsChanged schedules a client command tree refresh when required by the server
+ * @param actions      the shared action parser
+ * @param commands     the platform command bridge
+ * @param listeners    the platform listener bridge
  * @param players      the tracked players
  * @param rcpHost      where RCP environments attach
  * @param punishments  the rules of punishments.yml
  */
 public record ExtensionContext(
-        @NotNull Plugin plugin,
+        @NotNull PlatformServer platform,
         @NotNull Path dataFolder,
         @NotNull Logger logger,
-        @NotNull Scheduler scheduler,
-        @NotNull EventBus events,
+        @NotNull TaskScheduler<PlatformPlayer> scheduler,
+        @NotNull EventDispatcher events,
         @NotNull PlaceholderRegistry placeholders,
         @NotNull TextFormatter text,
         @NotNull ActionParser<Audience> actions,
-        @NotNull CommandManager<CommandSender> commands,
-        @NotNull Consumer<String> commandsChanged,
+        @NotNull PlatformCommandBridge commands,
+        @NotNull PlatformListenerBridge listeners,
         @NotNull PlayerRegistry players,
         @NotNull RCPHost rcpHost,
         @NotNull PunishmentRegistry punishments
@@ -57,9 +58,11 @@ public record ExtensionContext(
      * @param name the extension name
      * @return the logger
      */
-    public @NotNull Logger logger(final @NotNull String name) {
+    public @NotNull Logger logger(
+            final @NotNull String name
+    ) {
 
-        if (plugin.getName().equalsIgnoreCase(name)) {
+        if (platform.pluginName().equalsIgnoreCase(name)) {
             return logger;
         }
         return LoggerFactory.getLogger(logger.getName() + "#" + name);

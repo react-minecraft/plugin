@@ -1,7 +1,7 @@
 package com.g4vrk.react.config;
 
 import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.config.ConfigMigrationChain;
+import com.g4vrk.react.api.config.migration.ConfigMigrationChain;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.config.model.AimAIConfig;
 import com.g4vrk.react.config.model.CheckConfig;

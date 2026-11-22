@@ -1,6 +1,6 @@
 package com.g4vrk.react.api.extension.bootstrap;
 
-import com.g4vrk.react.api.extension.ExtensionId;
+import com.g4vrk.react.api.extension.meta.ExtensionId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

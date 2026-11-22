@@ -1,7 +1,7 @@
 package com.g4vrk.react.extension.descriptor;
 
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
-import com.g4vrk.react.api.extension.GitHubSource;
+import com.g4vrk.react.api.extension.meta.GitHubSource;
 import com.g4vrk.react.api.rcp.RCPAPI;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import org.jetbrains.annotations.NotNull;

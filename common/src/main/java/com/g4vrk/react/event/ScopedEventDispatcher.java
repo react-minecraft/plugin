@@ -1,9 +1,9 @@
 package com.g4vrk.react.event;
 
 import com.g4vrk.react.api.event.Event;
-import com.g4vrk.react.api.event.EventDispatcher;
+import com.g4vrk.react.api.event.bus.EventDispatcher;
 import com.g4vrk.react.api.event.EventPriority;
-import com.g4vrk.react.api.event.Subscription;
+import com.g4vrk.react.api.event.bus.Subscription;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

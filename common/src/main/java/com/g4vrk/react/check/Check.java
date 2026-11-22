@@ -2,7 +2,7 @@ package com.g4vrk.react.check;
 
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.channel.CheckReport;
-import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
+import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
 import com.g4vrk.react.api.event.channel.AlertEvent;
 import com.g4vrk.react.api.event.channel.MonitorEvent;
 import com.g4vrk.react.api.event.check.CheckFlagEvent;

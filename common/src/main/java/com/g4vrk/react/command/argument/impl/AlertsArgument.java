@@ -2,7 +2,7 @@ package com.g4vrk.react.command.argument.impl;
 
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.PermissionKey;
-import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
+import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
 import com.g4vrk.react.command.builder.CommandBuilderFactory;
 import com.g4vrk.react.config.model.ActionsConfig;
 import com.g4vrk.react.platform.command.PlatformCommandBridge;

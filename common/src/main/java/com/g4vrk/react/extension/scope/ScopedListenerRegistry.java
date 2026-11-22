@@ -1,10 +1,10 @@
 package com.g4vrk.react.extension.scope;
 
 import com.g4vrk.react.api.event.Event;
-import com.g4vrk.react.api.event.EventDispatcher;
+import com.g4vrk.react.api.event.bus.EventDispatcher;
 import com.g4vrk.react.api.event.EventPriority;
-import com.g4vrk.react.api.event.Subscription;
-import com.g4vrk.react.api.extension.ListenerRegistry;
+import com.g4vrk.react.api.event.bus.Subscription;
+import com.g4vrk.react.api.extension.listener.ListenerRegistry;
 import com.g4vrk.react.event.ScopedEventDispatcher;
 import com.g4vrk.react.platform.listener.PlatformListenerScope;
 import org.jetbrains.annotations.NotNull;

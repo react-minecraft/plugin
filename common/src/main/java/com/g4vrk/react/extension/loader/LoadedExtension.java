@@ -13,7 +13,7 @@ import com.g4vrk.react.extension.scope.ScopedExtensionService;
 import com.g4vrk.react.api.addon.JavaAddon;
 import com.g4vrk.react.api.event.addon.AddonDisableEvent;
 import com.g4vrk.react.api.event.addon.AddonEnableEvent;
-import com.g4vrk.react.api.extension.ExtensionId;
+import com.g4vrk.react.api.extension.meta.ExtensionId;
 import com.g4vrk.react.api.rcp.RCPLifecycle;
 import com.g4vrk.react.api.rcp.environment.RCPEnvironment;
 import com.g4vrk.react.api.rcp.provider.RCPProvider;

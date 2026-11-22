@@ -1,7 +1,7 @@
 package com.g4vrk.react.extension.environment;
 
 import com.g4vrk.functionalActions.parser.ActionParser;
-import com.g4vrk.react.api.event.EventDispatcher;
+import com.g4vrk.react.api.event.bus.EventDispatcher;
 import com.g4vrk.react.api.placeholder.registry.PlaceholderRegistry;
 import com.g4vrk.react.api.platform.PlatformServer;
 import com.g4vrk.react.api.punish.registry.PunishmentRegistry;

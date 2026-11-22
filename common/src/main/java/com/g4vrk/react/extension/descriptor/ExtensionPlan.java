@@ -2,7 +2,7 @@ package com.g4vrk.react.extension.descriptor;
 
 import com.g4vrk.react.extension.loader.ExtensionClassLoader;
 
-import com.g4vrk.react.api.extension.ExtensionId;
+import com.g4vrk.react.api.extension.meta.ExtensionId;
 import com.g4vrk.react.api.extension.bootstrap.ExtensionBootstrap;
 import com.g4vrk.react.api.extension.bootstrap.ExtensionBootstrapContext;
 import com.g4vrk.react.extension.library.LibraryCache;

@@ -1,6 +1,6 @@
 package com.g4vrk.react.api.rcp.environment;
 
-import com.g4vrk.react.api.extension.ExtensionEnvironment;
+import com.g4vrk.react.api.extension.environment.ExtensionEnvironment;
 import com.g4vrk.react.api.rcp.event.RCPPlayerListener;
 import com.g4vrk.react.api.rcp.meta.RCPMetadata;
 import com.g4vrk.react.api.rcp.player.RCPPlayer;

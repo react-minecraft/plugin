@@ -8,7 +8,7 @@ import com.g4vrk.react.extension.environment.ExtensionContext;
 import com.g4vrk.react.extension.loader.LoadedExtension;
 import com.g4vrk.react.extension.update.StagedUpdateRegistry;
 
-import com.g4vrk.react.api.extension.ExtensionId;
+import com.g4vrk.react.api.extension.meta.ExtensionId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;

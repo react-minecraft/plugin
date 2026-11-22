@@ -1,6 +1,6 @@
 package com.g4vrk.react.api.addon;
 
-import com.g4vrk.react.api.extension.AddonEnvironment;
+import com.g4vrk.react.api.extension.environment.AddonEnvironment;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;

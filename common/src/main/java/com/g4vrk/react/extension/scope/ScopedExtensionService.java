@@ -3,8 +3,8 @@ package com.g4vrk.react.extension.scope;
 import com.g4vrk.react.extension.descriptor.ExtensionPlan;
 import com.g4vrk.react.extension.loader.LoadedExtension;
 
-import com.g4vrk.react.api.extension.ExtensionId;
-import com.g4vrk.react.api.extension.ExtensionService;
+import com.g4vrk.react.api.extension.meta.ExtensionId;
+import com.g4vrk.react.api.extension.service.ExtensionService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

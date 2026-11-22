@@ -3,7 +3,7 @@ package com.g4vrk.react.service;
 import com.g4vrk.react.PermissionKey;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
-import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
+import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.schedula.task.TickSchedule;

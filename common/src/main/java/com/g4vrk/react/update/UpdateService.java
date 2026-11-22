@@ -5,7 +5,7 @@ import com.g4vrk.react.update.config.ComponentUpdateConfig;
 import com.g4vrk.react.update.config.UpdateConfig;
 
 import com.g4vrk.react.api.event.plugin.UpdateDownloadedEvent;
-import com.g4vrk.react.api.extension.GitHubSource;
+import com.g4vrk.react.api.extension.meta.GitHubSource;
 import com.g4vrk.react.api.rcp.RCPAPI;
 import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.extension.descriptor.ExtensionDescriptor;

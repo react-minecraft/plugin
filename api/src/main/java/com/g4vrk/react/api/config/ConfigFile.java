@@ -1,5 +1,7 @@
 package com.g4vrk.react.api.config;
 
+import com.g4vrk.react.api.config.migration.ConfigMigrationChain;
+
 import com.g4vrk.react.api.config.serializer.DurationSerializer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

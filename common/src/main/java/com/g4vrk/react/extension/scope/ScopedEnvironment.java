@@ -5,10 +5,10 @@ import com.g4vrk.react.extension.environment.ExtensionContext;
 
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.extension.ConfigFactory;
-import com.g4vrk.react.api.extension.ExtensionEnvironment;
-import com.g4vrk.react.api.extension.ExtensionId;
-import com.g4vrk.react.api.extension.ExtensionService;
+import com.g4vrk.react.api.extension.config.ConfigFactory;
+import com.g4vrk.react.api.extension.environment.ExtensionEnvironment;
+import com.g4vrk.react.api.extension.meta.ExtensionId;
+import com.g4vrk.react.api.extension.service.ExtensionService;
 import com.g4vrk.react.api.platform.PlatformServer;
 import com.g4vrk.schedula.task.scheduler.TaskScheduler;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;

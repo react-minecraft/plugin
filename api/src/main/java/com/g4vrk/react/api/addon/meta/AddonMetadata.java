@@ -1,6 +1,6 @@
 package com.g4vrk.react.api.addon.meta;
 
-import com.g4vrk.react.api.extension.GitHubSource;
+import com.g4vrk.react.api.extension.meta.GitHubSource;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

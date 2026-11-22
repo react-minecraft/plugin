@@ -1,5 +1,7 @@
 package com.g4vrk.react.api.event;
 
+import com.g4vrk.react.api.event.bus.EventDispatcher;
+
 import org.jetbrains.annotations.ApiStatus;
 
 /**

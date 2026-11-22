@@ -6,7 +6,7 @@ import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
 import com.g4vrk.react.action.PlaySoundAction;
-import com.g4vrk.react.api.channel.BuiltinChannelRegistry;
+import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
 import com.g4vrk.react.api.channel.impl.ReportChannel;
 import com.g4vrk.react.api.event.plugin.ReloadEvent;
 import com.g4vrk.schedula.task.scheduler.TaskScheduler;

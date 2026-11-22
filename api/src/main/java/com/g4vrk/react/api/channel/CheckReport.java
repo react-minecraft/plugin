@@ -1,5 +1,7 @@
 package com.g4vrk.react.api.channel;
 
+import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
+
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

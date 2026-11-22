@@ -1,5 +1,7 @@
 package com.g4vrk.react.api.config;
 
+import com.g4vrk.react.api.config.migration.ConfigMigrationChain;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;

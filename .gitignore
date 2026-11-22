@@ -54,3 +54,5 @@ lib/
 .env
 .env.*
 !.env.example
+
+bin/

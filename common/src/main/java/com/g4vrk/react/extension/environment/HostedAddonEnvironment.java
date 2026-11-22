@@ -4,7 +4,7 @@ import com.g4vrk.react.extension.descriptor.ExtensionDescriptor;
 import com.g4vrk.react.extension.scope.ScopedEnvironment;
 
 import com.g4vrk.react.api.addon.meta.AddonMetadata;
-import com.g4vrk.react.api.extension.AddonEnvironment;
+import com.g4vrk.react.api.extension.environment.AddonEnvironment;
 import com.g4vrk.react.api.player.registry.TrackedPlayerRegistry;
 import com.g4vrk.react.api.punish.registry.PunishmentRegistry;
 import org.jetbrains.annotations.NotNull;

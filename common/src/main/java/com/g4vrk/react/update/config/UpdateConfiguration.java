@@ -1,7 +1,7 @@
 package com.g4vrk.react.update.config;
 
 import com.g4vrk.react.api.config.ConfigFile;
-import com.g4vrk.react.api.config.ConfigMigrationChain;
+import com.g4vrk.react.api.config.migration.ConfigMigrationChain;
 import com.g4vrk.react.extension.descriptor.ExtensionKind;
 import com.g4vrk.react.update.UpdateChannel;
 import org.jetbrains.annotations.NotNull;

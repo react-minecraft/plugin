@@ -14,6 +14,8 @@ java {
 
 extensions.configure<SpotlessExtension> {
 
+    lineEndings = com.diffplug.spotless.LineEnding.UNIX
+
     java {
 
         endWithNewline()

@@ -108,10 +108,13 @@ public final class UpdateConfiguration {
         final Path file = kind == null
                 ? folder.resolve("plugin.yml")
                 : folder.resolve(kind == ExtensionKind.RCP ? "rcp" : "addons").resolve(name + ".yml");
+        final String defaults = kind == null
+                ? language + "/update/component.yml"
+                : language + "/update/extension-component.yml";
         try {
             return ConfigFile.builder(ComponentUpdateConfig.class)
                     .path(file)
-                    .defaults(UpdateConfiguration.class.getClassLoader(), language + "/update/component.yml")
+                    .defaults(UpdateConfiguration.class.getClassLoader(), defaults)
                     .logger(logger)
                     .build()
                     .load();

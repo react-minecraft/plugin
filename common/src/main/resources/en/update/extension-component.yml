@@ -1,0 +1,13 @@
+# Updates of one addon or provider RCP
+
+# Whether this component is updated
+enabled: true
+
+# Follow development builds until the React 2 compatible stable releases are published
+channel: prerelease
+
+# A version to stay on, e.g. "2.0.1". Empty - follow the channel
+pinned-version: ""
+
+# Do not change
+config-version: 1

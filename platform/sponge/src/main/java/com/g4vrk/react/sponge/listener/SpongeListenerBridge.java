@@ -41,8 +41,8 @@ public final class SpongeListenerBridge implements PlatformListenerBridge {
         final Object combat = new SpongeCombatListener(callbacks);
         try {
             PacketEvents.getAPI().getEventManager().registerListener(rotation);
-            Sponge.eventManager().registerListeners(container, connection);
-            Sponge.eventManager().registerListeners(container, combat);
+            SpongeListenerRegistrar.register(container, connection);
+            SpongeListenerRegistrar.register(container, combat);
             this.packetListeners = new PacketListenerCommon[]{rotation};
             this.spongeListeners = new Object[]{connection, combat};
         } catch (final RuntimeException | Error failure) {

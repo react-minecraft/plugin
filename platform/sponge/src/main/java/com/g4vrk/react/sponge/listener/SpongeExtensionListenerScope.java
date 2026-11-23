@@ -41,7 +41,7 @@ final class SpongeExtensionListenerScope implements PlatformListenerScope {
             return;
         }
         if (spongeListeners.add(listener)) {
-            Sponge.eventManager().registerListeners(container, listener);
+            SpongeListenerRegistrar.register(container, listener);
         }
 
     }

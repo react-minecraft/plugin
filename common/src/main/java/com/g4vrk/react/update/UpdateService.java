@@ -84,8 +84,20 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             @Nullable Path jar,
             @NotNull Path updateFolder,
             @NotNull String prefix,
-            @NotNull String version
+            @NotNull String version,
+            @NotNull String platform
     ) {
+
+        public Plugin(
+                final @Nullable Path jar,
+                final @NotNull Path updateFolder,
+                final @NotNull String prefix,
+                final @NotNull String version
+        ) {
+
+            this(jar, updateFolder, prefix, version, "bukkit");
+
+        }
 
     }
 
@@ -424,7 +436,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
                 );
                 return;
             }
-            final Map.Entry<String, String> jar = release.checksums().jar(prefix);
+            final Map.Entry<String, String> jar = release.checksums().jar(prefix, plugin.platform());
             if (jar == null) {
                 statuses.put(key(repository), new UpdateState(release.version(), channel, Instant.now(), "no jar"));
                 return;
@@ -601,7 +613,9 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
                 needsNewerPlugin(component, release);
                 return false;
             }
-            final Map.Entry<String, String> jar = release.checksums().jar(component.prefix());
+            final Map.Entry<String, String> jar = component.extension() == null
+                    ? release.checksums().jar(component.prefix())
+                    : release.checksums().jar(component.prefix(), plugin.platform());
             if (jar == null) {
                 statuses.put(key(component.repository()), new UpdateState(release.version(), channel, now, "no jar"));
                 return false;

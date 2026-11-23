@@ -76,6 +76,38 @@ class ChecksumsTest {
     }
 
     @Test
+    void selectsOnlyTheRequestedNonBukkitPlatformArtifact() {
+
+        final ChecksumManifest checksums = ChecksumManifest.parse("""
+                %s  hologram-addon-bukkit-1.0.jar
+                %s  hologram-addon-fabric-1.0.jar
+                %s  hologram-addon-sponge-1.0.jar
+                %s  hologram-addon-minestom-1.0.jar
+                """.formatted(JAR_HASH, SOURCES_HASH, JAR_HASH, SOURCES_HASH));
+
+        assertEquals(Map.entry("hologram-addon-fabric-1.0.jar", SOURCES_HASH.toLowerCase()), checksums.jar("hologram-addon", "fabric"));
+        assertEquals(Map.entry("hologram-addon-sponge-1.0.jar", JAR_HASH), checksums.jar("hologram-addon", "sponge"));
+        assertEquals(Map.entry("hologram-addon-minestom-1.0.jar", SOURCES_HASH.toLowerCase()), checksums.jar("hologram-addon", "minestom"));
+        assertNull(checksums.jar("hologram-addon", "unknown"));
+
+    }
+
+    @Test
+    void bukkitPlatformsPreferTheirArtifactThenUseTheLegacyJar() {
+
+        final ChecksumManifest variants = ChecksumManifest.parse("""
+                # version: 1.0
+                %s  menu-addon-fabric-1.0.jar
+                %s  menu-addon-bukkit-1.0.jar
+                """.formatted(JAR_HASH, SOURCES_HASH));
+        final ChecksumManifest legacy = ChecksumManifest.parse("# version: 1.0\n" + JAR_HASH + "  menu-addon-1.0.jar\n");
+
+        assertEquals(Map.entry("menu-addon-bukkit-1.0.jar", SOURCES_HASH.toLowerCase()), variants.jar("menu-addon", "paper"));
+        assertEquals(Map.entry("menu-addon-1.0.jar", JAR_HASH), legacy.jar("menu-addon", "folia"));
+
+    }
+
+    @Test
     void missingOrBrokenApiVersionIsZero() {
 
         assertEquals(0, ChecksumManifest.parse("# version: 1\n").apiVersion());

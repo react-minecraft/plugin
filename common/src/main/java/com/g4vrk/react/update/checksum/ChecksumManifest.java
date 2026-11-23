@@ -99,4 +99,71 @@ public record ChecksumManifest(@NotNull Map<String, String> header, @NotNull Map
 
     }
 
+    /**
+     * Finds the JAR for a server platform. Bukkit-derived platforms may use the legacy
+     * unclassified artifact; non-Bukkit platforms require an explicit platform artifact.
+     *
+     * @param prefix   the artifact name prefix
+     * @param platform the normalized platform id
+     * @return the platform JAR, or {@code null} when the release has no compatible artifact
+     */
+    public @Nullable Map.Entry<String, String> jar(
+            final @NotNull String prefix,
+            final @NotNull String platform
+    ) {
+
+        final String normalizedPlatform = platform.toLowerCase(Locale.ROOT);
+        final String artifactPlatform = isBukkitPlatform(normalizedPlatform) ? "bukkit" : normalizedPlatform;
+        final String platformPrefix = prefix + "-" + artifactPlatform;
+        for (final Map.Entry<String, String> entry : files.entrySet()) {
+            if (isJar(entry.getKey()) && hasPrefix(entry.getKey(), platformPrefix)) {
+                return entry;
+            }
+        }
+        if (!isBukkitPlatform(normalizedPlatform)) {
+            return null;
+        }
+        return genericJar(prefix);
+
+    }
+
+    private @Nullable Map.Entry<String, String> genericJar(final @NotNull String prefix) {
+
+        final String version = version();
+        if (version == null || version.isBlank()) {
+            return null;
+        }
+        final String genericPrefix = prefix + "-" + version;
+        for (final Map.Entry<String, String> entry : files.entrySet()) {
+            final String name = entry.getKey();
+            if (isJar(name) && hasPrefix(name, genericPrefix)) {
+                return entry;
+            }
+        }
+        return null;
+
+    }
+
+    private static boolean isJar(final @NotNull String name) {
+
+        return name.endsWith(".jar") && !name.endsWith("-sources.jar") && !name.endsWith("-javadoc.jar");
+
+    }
+
+    private static boolean hasPrefix(final @NotNull String name, final @NotNull String prefix) {
+
+        return name.startsWith(prefix) && (name.length() == prefix.length()
+                || name.charAt(prefix.length()) == '-' || name.charAt(prefix.length()) == '.');
+
+    }
+
+    private static boolean isBukkitPlatform(final @NotNull String value) {
+
+        return switch (value) {
+            case "bukkit", "paper", "spigot", "folia" -> true;
+            default -> false;
+        };
+
+    }
+
 }

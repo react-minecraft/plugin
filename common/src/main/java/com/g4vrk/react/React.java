@@ -174,7 +174,8 @@ public class React {
                         source.pluginJar(),
                         source.updateDirectory(),
                         source.artifactPrefix(),
-                        source.currentVersion()
+                        source.currentVersion(),
+                        platform.platformName()
                 ),
                 () -> configs.main(),
                 updateNotifier

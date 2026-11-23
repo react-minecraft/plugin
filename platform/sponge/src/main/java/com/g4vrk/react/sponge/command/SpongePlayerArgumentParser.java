@@ -86,7 +86,9 @@ final class SpongePlayerArgumentParser {
 
             }
 
-        }, new TypeToken<Collection<PlatformPlayer>>() {});
+        }, new TypeToken<Collection<PlatformPlayer>>() {
+
+        });
 
     }
 

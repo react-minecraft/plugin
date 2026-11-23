@@ -28,8 +28,12 @@ public final class FabricRuntime {
         final React react = React.INSTANCE;
         final AtomicBoolean running = new AtomicBoolean();
         ServerLifecycleEvents.SERVER_STARTED.register(server -> start(server, fabricLoader, react, running));
-        return new Runnable[]{() -> {
-        }, () -> stop(react, running)};
+        return new Runnable[]{
+                () -> {
+
+                },
+                () -> stop(react, running)
+        };
 
     }
 

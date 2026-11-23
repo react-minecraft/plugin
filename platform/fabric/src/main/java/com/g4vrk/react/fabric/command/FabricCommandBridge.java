@@ -12,8 +12,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.leangen.geantyref.TypeToken;
@@ -22,6 +24,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.selector.EntitySelector;
 import net.minecraft.server.level.ServerPlayer;
 import org.incendo.cloud.CloudCapability;
+import org.incendo.cloud.Command;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.component.CommandComponent;
 import org.incendo.cloud.execution.ExecutionCoordinator;
@@ -125,7 +128,7 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
     public void registerExistingCommands() {
 
         synchronized (manager) {
-            for (final org.incendo.cloud.Command<PlatformSender> command : manager.commands()) {
+            for (final Command<PlatformSender> command : manager.commands()) {
                 registerCloudCommand(command);
             }
         }
@@ -134,7 +137,7 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
     }
 
     private boolean registerCloudCommand(
-            final org.incendo.cloud.@NotNull Command<PlatformSender> command
+            final @NotNull Command<PlatformSender> command
     ) {
 
         synchronized (manager) {
@@ -157,7 +160,8 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
             final List<String> registeredAliases = new ArrayList<>();
             for (final String alias : root.aliases()) {
                 final String normalizedAlias = alias.toLowerCase(Locale.ROOT);
-                if (nativeRoots.containsKey(normalizedAlias) || dispatcher.getRoot().getChild(normalizedAlias) != null) {
+                if (nativeRoots.containsKey(normalizedAlias)
+                        || dispatcher.getRoot().getChild(normalizedAlias) != null) {
                     continue;
                 }
                 nativeRoots.put(normalizedAlias, register(dispatcher, normalizedAlias));
@@ -204,7 +208,7 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
         if (nativeRoots.containsKey(rootLabel.toLowerCase(Locale.ROOT))) {
             return;
         }
-        for (final org.incendo.cloud.Command<PlatformSender> command : manager.commands()) {
+        for (final Command<PlatformSender> command : manager.commands()) {
             if (command.rootComponent().name().equalsIgnoreCase(rootLabel)) {
                 registerCloudCommand(command);
                 return;
@@ -229,9 +233,10 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
             final @NotNull String label
     ) {
 
-        final LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder.<CommandSourceStack>literal(label)
+        final LiteralArgumentBuilder<CommandSourceStack> root = LiteralArgumentBuilder
+                .<CommandSourceStack>literal(label)
                 .executes(context -> execute(context, label))
-                .then(com.mojang.brigadier.builder.RequiredArgumentBuilder.<CommandSourceStack, String>argument(
+                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument(
                         "arguments",
                         StringArgumentType.greedyString()
                 )
@@ -261,7 +266,7 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
 
     }
 
-    private CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggest(
+    private CompletableFuture<Suggestions> suggest(
             final @NotNull CommandContext<CommandSourceStack> context,
             final @NotNull SuggestionsBuilder builder,
             final @NotNull String label
@@ -340,6 +345,9 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
 
     }
 
+    /**
+     * Applies React's permission checks to command sources provided by Fabric.
+     */
     private final class ReactCommandManager extends CommandManager<PlatformSender> {
 
         private ReactCommandManager(
@@ -363,11 +371,14 @@ public final class FabricCommandBridge implements PlatformCommandBridge {
 
     }
 
+    /**
+     * Registers and removes Cloud command roots in Fabric's Brigadier dispatcher.
+     */
     private final class FabricRegistrationHandler implements CommandRegistrationHandler<PlatformSender> {
 
         @Override
         public boolean registerCommand(
-                final org.incendo.cloud.@NotNull Command<PlatformSender> command
+                final @NotNull Command<PlatformSender> command
         ) {
 
             return registerCloudCommand(command);

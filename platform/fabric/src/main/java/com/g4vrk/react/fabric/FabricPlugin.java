@@ -25,8 +25,14 @@ public final class FabricPlugin implements ModInitializer {
         final URL codeSource = getClass().getProtectionDomain().getCodeSource().getLocation();
         final File dataDirectory = fabricLoader.getConfigDir().resolve("react").toFile();
         final ClassLoader packetEventsLoader = compatiblePacketEvents(fabricLoader);
-        System.getLogger("React").log(System.Logger.Level.INFO, "Using PacketEvents "
-                + fabricLoader.getModContainer("packetevents").orElseThrow().getMetadata().getVersion().getFriendlyString());
+        System.getLogger("React").log(
+                System.Logger.Level.INFO,
+                "Using PacketEvents " + fabricLoader.getModContainer("packetevents")
+                        .orElseThrow()
+                        .getMetadata()
+                        .getVersion()
+                        .getFriendlyString()
+        );
         this.lifecycle = RuntimeLibraryLoader.start(
                 codeSource,
                 getClass().getClassLoader(),

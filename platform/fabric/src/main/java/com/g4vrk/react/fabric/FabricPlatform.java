@@ -241,7 +241,8 @@ public final class FabricPlatform implements ReactPlatform {
 
     private @NotNull ModContainer mod() {
 
-        return fabricLoader.getModContainer("react").orElseThrow(() -> new IllegalStateException("React mod container is unavailable"));
+        return fabricLoader.getModContainer("react")
+                .orElseThrow(() -> new IllegalStateException("React mod container is unavailable"));
 
     }
 

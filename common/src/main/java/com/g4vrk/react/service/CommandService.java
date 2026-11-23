@@ -10,6 +10,7 @@ import com.g4vrk.react.command.HelpActionRegistry;
 import com.g4vrk.react.command.argument.LocalArgument;
 import com.g4vrk.react.command.argument.impl.AlertsArgument;
 import com.g4vrk.react.command.argument.impl.BypassArgument;
+import com.g4vrk.react.command.argument.impl.CheckListArgument;
 import com.g4vrk.react.command.argument.impl.DebugArgument;
 import com.g4vrk.react.command.argument.impl.HistoryArgument;
 import com.g4vrk.react.command.argument.impl.MonitorArgument;
@@ -97,6 +98,9 @@ public final class CommandService {
 
         manager.command(builderFactory.create().handler(context -> help.root(context.sender())));
         manager.command(builderFactory.create()
+                .literal("help")
+                .handler(context -> help.root(context.sender())));
+        manager.command(builderFactory.create()
                 .required(UNKNOWN, StringParser.greedyStringParser())
                 .handler(context -> help.unknownCommand(context.sender())));
         manager.exceptionController()
@@ -114,7 +118,8 @@ public final class CommandService {
                 reload,
                 reboot,
                 new HistoryArgument(builderFactory, platformCommands, historyPrinter, playerRegistry, help::playerOnly),
-                rcps
+                rcps,
+                new CheckListArgument(builderFactory)
         )) {
             argument.builds().forEach(manager::command);
         }

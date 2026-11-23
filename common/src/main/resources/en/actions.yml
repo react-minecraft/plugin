@@ -216,6 +216,8 @@ help:
   # /react with no arguments
   root:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Commands:"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react help</color> <white>Show this help"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react checks</color> <white>List configured checks"
     - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react alerts [players]</color> <white>Toggle alerts"
     - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react monitor [players]</color> <white>Toggle analysis monitoring"
     - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react history [player] [page]</color> <white>View analysis history"

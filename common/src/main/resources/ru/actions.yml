@@ -215,6 +215,8 @@ help:
   # /react без аргументов
   root:
     - "[msg] <b><gradient:#eb2544:#ff3655>⚡ ʀᴇᴀᴄᴛ</gradient></b> <gray>»</gray> <white>Команды:"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react help</color> <white>Показать эту справку"
+    - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react checks</color> <white>Список настроенных проверок"
     - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react alerts [игроки]</color> <white>Управление оповещениями"
     - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react monitor [игроки]</color> <white>Мониторинг аналитики"
     - "[msg]   <dark_gray>•</dark_gray> <color:#eb2544>/react history [игрок] [страница]</color> <white>История анализа"

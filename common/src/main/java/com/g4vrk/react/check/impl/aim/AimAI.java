@@ -26,6 +26,14 @@ import org.jetbrains.annotations.NotNull;
 )
 public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
+    enum ResultAction {
+
+        OBSERVE,
+        FLAG,
+        REWARD
+
+    }
+
     private volatile double alertThreshold;
 
     private volatile DecayStrategy decayStrategy;
@@ -79,12 +87,15 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         final double threshold = result.hasThreshold() ? result.threshold() : alertThreshold;
         final boolean flagged = result.hasThreshold() ? probability >= threshold : probability > threshold;
 
-        if (flagged) {
+        final ResultAction action = resultAction(result, flagged);
+        if (action == ResultAction.FLAG) {
             debug("Flagged (" + result.displayName() + "): " + probability + " > " + threshold);
             failAndAlert(1, details);
-        } else {
+        } else if (action == ResultAction.REWARD) {
             debug("Reward (" + result.displayName() + "): " + probability + " <= " + threshold);
             reward();
+        } else {
+            debug("Observed (" + result.displayName() + "): " + probability + " / " + threshold);
         }
 
         monitor(details);
@@ -94,6 +105,18 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
         player.inferenceHistory.add(entry);
 
         React.INSTANCE.events().post(new InferenceResultEvent(this, probability, entry.getTimestamp()));
+
+    }
+
+    static @NotNull ResultAction resultAction(
+            final @NotNull InferenceResult result,
+            final boolean flagged
+    ) {
+
+        if (!result.enforcement()) {
+            return ResultAction.OBSERVE;
+        }
+        return flagged ? ResultAction.FLAG : ResultAction.REWARD;
 
     }
 

@@ -32,7 +32,7 @@ public final class BukkitCombatListener implements Listener {
             return;
         }
         if (victim instanceof Player || CombatTarget.isMannequinType(victim.getType().getKey().toString())) {
-            callbacks.onCombatHit(damager.getUniqueId());
+            callbacks.onCombatHit(damager.getUniqueId(), victim.getEntityId());
         }
 
     }

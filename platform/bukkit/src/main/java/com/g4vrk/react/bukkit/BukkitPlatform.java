@@ -1,30 +1,40 @@
 package com.g4vrk.react.bukkit;
 
 import com.cryptomorin.xseries.XSound;
-import org.bukkit.entity.Entity;
+import com.g4vrk.react.api.platform.AimSnapshot;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.platform.sender.PlatformSender;
-import com.g4vrk.schedula.task.scheduler.TaskScheduler;
 import com.g4vrk.react.bukkit.command.BukkitCommandBridge;
 import com.g4vrk.react.bukkit.listener.BukkitListenerBridge;
 import com.g4vrk.react.bukkit.placeholder.ReactPlaceholderExpansion;
 import com.g4vrk.react.bukkit.reboot.PluginReboot;
 import com.g4vrk.react.bukkit.sender.BukkitPlatformPlayer;
 import com.g4vrk.react.bukkit.util.BukkitBedrockDetector;
+import com.g4vrk.react.bukkit.util.BukkitEntityRegion;
+import com.g4vrk.react.bukkit.util.BukkitServerFingerprint;
 import com.g4vrk.react.placeholder.registry.SimplePlaceholderRegistry;
+import com.g4vrk.react.platform.ReactPlatform;
 import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import com.g4vrk.react.platform.listener.PlatformListenerBridge;
-import com.g4vrk.react.platform.update.PlatformUpdateSource;
 import com.g4vrk.react.platform.reboot.PluginRebootMessage;
 import com.g4vrk.react.platform.reboot.PreparedPluginReboot;
-import com.g4vrk.react.platform.ReactPlatform;
+import com.g4vrk.react.platform.update.PlatformUpdateSource;
 import com.g4vrk.react.player.registry.PlayerRegistry;
+import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.github.retrooper.packetevents.PacketEvents;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Keyed;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.util.BoundingBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -33,6 +43,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -94,6 +105,88 @@ public final class BukkitPlatform implements ReactPlatform {
     public @NotNull Path dataDirectory() {
 
         return plugin.getDataFolder().toPath();
+
+    }
+
+    @Override
+    public @NotNull String serverFingerprint() {
+
+        return BukkitServerFingerprint.of(Bukkit.getServer());
+
+    }
+
+    @Override
+    public @Nullable AimSnapshot aimSnapshot(
+            final @NotNull PlatformPlayer platformPlayer,
+            final int targetEntityId
+    ) {
+
+        final Player player = platformPlayer.unwrap(Player.class);
+        if (player == null || !player.isOnline() || !BukkitEntityRegion.ownsNearbyChunks(player)) {
+            return null;
+        }
+        final Location position = player.getLocation();
+        final double x = position.getX();
+        final double y = position.getY();
+        final double z = position.getZ();
+        Entity target = null;
+        for (final Entity nearby : BukkitEntityRegion.nearby(player)) {
+            if (nearby.getEntityId() == targetEntityId) {
+                target = nearby;
+                break;
+            }
+        }
+        final boolean targetValid = target != null && target.isValid() && !target.isDead()
+                && target.getWorld().equals(player.getWorld()) && BukkitEntityRegion.owns(target);
+        final BoundingBox box = targetValid ? target.getBoundingBox() : null;
+        int targetsInRange = 0;
+        for (final Entity entity : BukkitEntityRegion.nearby(player)) {
+            if (!(entity instanceof LivingEntity) || !BukkitEntityRegion.owns(entity) || entity.isDead()) {
+                continue;
+            }
+            if (entity instanceof final Player other && other.getGameMode() == GameMode.SPECTATOR) {
+                continue;
+            }
+            final Location targetPosition = entity.getLocation();
+            final double dx = targetPosition.getX() - x;
+            final double dy = targetPosition.getY() - y;
+            final double dz = targetPosition.getZ() - z;
+            if (dx * dx + dy * dy + dz * dz <= 36.0) {
+                targetsInRange++;
+            }
+        }
+        final ItemStack item = player.getInventory().getItemInMainHand();
+        final Material material = item.getType();
+        final float ping = ping(player);
+        return new AimSnapshot(
+                x,
+                y,
+                z,
+                player.getEyeHeight(),
+                targetValid,
+                box == null ? 0.0 : box.getMinX(),
+                box == null ? 0.0 : box.getMinY(),
+                box == null ? 0.0 : box.getMinZ(),
+                box == null ? 0.0 : box.getMaxX(),
+                box == null ? 0.0 : box.getMaxY(),
+                box == null ? 0.0 : box.getMaxZ(),
+                targetsInRange,
+                "minecraft:" + material.name().toLowerCase(Locale.ROOT),
+                material.isEdible(),
+                material.isBlock(),
+                ping,
+                -1
+        );
+
+    }
+
+    private static float ping(final @NotNull Player player) {
+
+        try {
+            return Math.max(0.0f, PacketEvents.getAPI().getPlayerManager().getPing(player));
+        } catch (final RuntimeException ignored) {
+            return 0.0f;
+        }
 
     }
 

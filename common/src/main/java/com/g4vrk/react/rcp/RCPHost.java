@@ -77,6 +77,27 @@ public final class RCPHost extends RegistryView<UUID, RCPPlayer, TrackedPlayerIm
 
     }
 
+    public void attack(
+            final @NotNull TrackedPlayerImpl player,
+            final int targetEntityId
+    ) {
+
+        final List<HostedRCPEnvironment> attached = this.environments;
+        for (int i = 0; i < attached.size(); i++) {
+            final HostedRCPEnvironment environment = attached.get(i);
+            final List<RCPPlayerListener> listeners = environment.playerListeners();
+            for (int index = 0; index < listeners.size(); index++) {
+                final RCPPlayerListener listener = listeners.get(index);
+                try {
+                    listener.onAttack(player, targetEntityId);
+                } catch (final Throwable failure) {
+                    environment.logger().warn("A player listener of RCP '{}' failed", environment.name(), failure);
+                }
+            }
+        }
+
+    }
+
     public void reload(final @NotNull TrackedPlayerImpl player) {
 
         dispatch(listener -> listener.onReload(player));

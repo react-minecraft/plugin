@@ -44,7 +44,8 @@ public interface CoreListenerCallback {
      * @param attackerId the attacking player UUID
      */
     void onCombatHit(
-            final @NotNull UUID attackerId
+            final @NotNull UUID attackerId,
+            final int targetEntityId
     );
 
     /**

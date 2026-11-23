@@ -88,7 +88,7 @@ public final class MinestomListenerBridge implements PlatformListenerBridge {
                 .build());
         node.addListener(EntityAttackEvent.class, event -> {
             if (event.getEntity() instanceof final Player player) {
-                callbacks.onCombatHit(player.getUuid());
+                callbacks.onCombatHit(player.getUuid(), event.getTarget().getEntityId());
             }
         });
         for (final Player player : MinecraftServer.getConnectionManager().getOnlinePlayers()) {

@@ -212,10 +212,15 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
 
     @Override
     public void onCombatHit(
-            final @NotNull UUID attackerId
+            final @NotNull UUID attackerId,
+            final int targetEntityId
     ) {
 
-        activateCombat(playerRegistry.get(attackerId));
+        final TrackedPlayerImpl attacker = playerRegistry.get(attackerId);
+        activateCombat(attacker);
+        if (attacker != null) {
+            rcpHost.attack(attacker, targetEntityId);
+        }
 
     }
 

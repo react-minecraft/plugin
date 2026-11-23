@@ -32,7 +32,7 @@ public final class SpongeCombatListener {
                 && !CombatTarget.isMannequinType(event.entity().type().key(RegistryTypes.ENTITY_TYPE).asString())) {
             return;
         }
-        event.cause().first(ServerPlayer.class).ifPresent(attacker -> callbacks.onCombatHit(attacker.uniqueId()));
+        event.cause().first(ServerPlayer.class).ifPresent(attacker -> callbacks.onCombatHit(attacker.uniqueId(), -1));
 
     }
 

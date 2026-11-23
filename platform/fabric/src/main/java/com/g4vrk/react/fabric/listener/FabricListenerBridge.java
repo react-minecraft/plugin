@@ -116,7 +116,7 @@ public final class FabricListenerBridge implements PlatformListenerBridge {
             if (killer instanceof final ServerPlayer player && isCombatTarget(killed)) {
                 final CoreListenerCallback current = callbacks;
                 if (current != null) {
-                    current.onCombatHit(player.getUUID());
+                    current.onCombatHit(player.getUUID(), killed.getId());
                 }
             }
         });
@@ -138,7 +138,7 @@ public final class FabricListenerBridge implements PlatformListenerBridge {
         if (attacker instanceof final ServerPlayer player) {
             final CoreListenerCallback current = callbacks;
             if (current != null) {
-                current.onCombatHit(player.getUUID());
+                current.onCombatHit(player.getUUID(), entity.getId());
             }
         }
 

@@ -18,6 +18,19 @@ import java.util.UUID;
 public interface RCPPlayerListener {
 
     /**
+     * Called when the player attacks a combat target.
+     *
+     * @param player         the attacker
+     * @param targetEntityId the target's server entity id
+     */
+    default void onAttack(
+            final @NotNull RCPPlayer player,
+            final int targetEntityId
+    ) {
+
+    }
+
+    /**
      * Called after every rotation the plugin recorded for a player it checks.
      *
      * <p>{@code sample} is a flat array of {@link RotationSample#STRIDE} floats, laid out as

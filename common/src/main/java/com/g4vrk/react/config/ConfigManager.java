@@ -45,27 +45,6 @@ public final class ConfigManager {
             })
             .build();
 
-    private static final ConfigMigrationChain HISTORY_MIGRATIONS = ConfigMigrationChain.builder()
-            .step(root -> {
-            })
-            .step(root -> {
-                BracePlaceholderResolver.rewrite(root, text -> HISTORY_LINK.matcher(text).replaceAll(match -> {
-                    final String tag = match.group(1).equals("previous") ? "prev" : "next";
-                    return Matcher.quoteReplacement("<" + tag + ">" + match.group(2) + "</" + tag + ">");
-                }));
-                BracePlaceholderResolver.migrate(root, Map.of(
-                        "{page:current}", "<page>",
-                        "{page:max}", "<pages>",
-                        "{page:previous}", "<previous-page>",
-                        "{page:next}", "<next-page>",
-                        "{avg-probability:colored}", "<avg-probability>",
-                        "{avg-probability}", "<avg-probability-plain>",
-                        "{probability:colored}", "<probability>",
-                        "{probability}", "<probability-plain>"
-                ));
-            })
-            .build();
-
     private static final ConfigMigrationChain PUNISHMENTS_MIGRATIONS = ConfigMigrationChain.builder()
             .step(root -> {
             })
@@ -148,11 +127,68 @@ public final class ConfigManager {
 
         this.mainFile = file(MainConfig.class, "main-config.yml").migrations(MAIN_MIGRATIONS).build();
         this.actionsFile = file(ActionsConfig.class, "actions.yml").migrations(actionsMigrations()).build();
-        this.historyFile = file(HistoryConfig.class, "history.yml").migrations(HISTORY_MIGRATIONS).build();
+        this.historyFile = file(HistoryConfig.class, "history.yml").migrations(historyMigrations()).build();
         this.punishmentsFile = file(ConfigurationNode.class, "punishments.yml").keepMissing()
                 .migrations(PUNISHMENTS_MIGRATIONS).build();
         this.databaseFile = file(ConfigurationNode.class, "database.yml").build();
         this.aimAIFile = file(AimAIConfig.class, "checks/aim-ai.yml").migrations(AIM_AI_MIGRATIONS).build();
+    }
+
+    private @NotNull ConfigMigrationChain historyMigrations() {
+
+        return ConfigMigrationChain.builder()
+                .step(root -> {
+                })
+                .step(root -> {
+                    BracePlaceholderResolver.rewrite(root, text -> HISTORY_LINK.matcher(text).replaceAll(match -> {
+                        final String tag = match.group(1).equals("previous") ? "prev" : "next";
+                        return Matcher.quoteReplacement("<" + tag + ">" + match.group(2) + "</" + tag + ">");
+                    }));
+                    BracePlaceholderResolver.migrate(root, Map.of(
+                            "{page:current}", "<page>",
+                            "{page:max}", "<pages>",
+                            "{page:previous}", "<previous-page>",
+                            "{page:next}", "<next-page>",
+                            "{avg-probability:colored}", "<avg-probability>",
+                            "{avg-probability}", "<avg-probability-plain>",
+                            "{probability:colored}", "<probability>",
+                            "{probability}", "<probability-plain>"
+                    ));
+                })
+                .step(root -> addProvenanceLine(root.node("history", "inference", "format", "entry-format")))
+                .build();
+
+    }
+
+    private void addProvenanceLine(final @NotNull ConfigurationNode entryFormat) throws SerializationException {
+
+        if (!entryFormat.isList()) {
+            return;
+        }
+        boolean hasModel = false;
+        boolean hasVersion = false;
+        boolean hasThreshold = false;
+        boolean hasMode = false;
+        boolean hasViolationsBefore = false;
+        boolean hasViolationsAfter = false;
+        for (final ConfigurationNode line : entryFormat.childrenList()) {
+            final String text = line.getString("");
+            hasModel |= text.contains("<model>");
+            hasVersion |= text.contains("<version>");
+            hasThreshold |= text.contains("<threshold>");
+            hasMode |= text.contains("<mode>");
+            hasViolationsBefore |= text.contains("<vl-before>");
+            hasViolationsAfter |= text.contains("<vl-after>");
+        }
+        if (hasModel && hasVersion && hasThreshold && hasMode && hasViolationsBefore && hasViolationsAfter) {
+            return;
+        }
+
+        final String line = language.equalsIgnoreCase("ru")
+                ? " <dark_gray>[<model> | <version>] порог: <threshold> · режим: <mode> · VL <vl-before> → <vl-after></dark_gray>"
+                : " <dark_gray>[<model> | <version>] threshold: <threshold> · mode: <mode> · VL <vl-before> → <vl-after></dark_gray>";
+        entryFormat.appendListNode().set(line);
+
     }
 
     /**

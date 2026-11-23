@@ -11,6 +11,7 @@ import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.util.ProbabilityFormatter;
 import net.kyori.adventure.audience.Audience;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -20,7 +21,8 @@ import java.util.List;
  * <p>Every line knows {@code <player>}, {@code <size>}, {@code <page>}, {@code <pages>},
  * {@code <avg-probability>} (colored) and {@code <avg-probability-plain>}, plus the clickable
  * {@code <prev>} and {@code <next>} that open the neighbour pages. Entry lines also know
- * {@code <probability>}, {@code <probability-plain>} and {@code <check>}.</p>
+ * {@code <probability>}, {@code <probability-plain>}, {@code <check>}, {@code <model>},
+ * {@code <version>}, {@code <threshold>}, {@code <mode>}, {@code <vl-before>} and {@code <vl-after>}.</p>
  */
 public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConfig> {
 
@@ -114,7 +116,8 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
                             public boolean has(final @NotNull String name) {
 
                                 return common.has(name) || switch (name) {
-                                    case "probability", "probability-plain", "check" -> true;
+                                    case "probability", "probability-plain", "check", "model", "version",
+                                            "threshold", "mode", "vl-before", "vl-after" -> true;
                                     default -> false;
                                 };
 
@@ -127,6 +130,14 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
                                     case "probability" -> ProbabilityColor.miniMessage(entry.getProbability());
                                     case "probability-plain" -> ProbabilityFormatter.format(entry.getProbability());
                                     case "check" -> escape(entry.getCheck().name());
+                                    case "model" -> entry.getModelId() == null ? "unknown" : escape(entry.getModelId());
+                                    case "version" -> entry.getRunId() == null ? "unknown" : escape(entry.getRunId());
+                                    case "threshold" -> entry.getThreshold() == null
+                                            ? "unknown" : ProbabilityFormatter.format(entry.getThreshold());
+                                    case "mode" -> entry.getEnforcement() == null
+                                            ? "unknown" : entry.getEnforcement() ? "enforce" : "observe";
+                                    case "vl-before" -> formatViolations(entry.getViolationsBefore());
+                                    case "vl-after" -> formatViolations(entry.getViolationsAfter());
                                     default -> common.map(name, args);
                                 };
 
@@ -146,6 +157,12 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
     private static @NotNull String pageLink(final @NotNull TrackedPlayerImpl player, final int page) {
 
         return "<click:run_command:'/react history " + player.name() + " " + page + "'>";
+
+    }
+
+    private static @NotNull String formatViolations(final @Nullable Double violations) {
+
+        return violations == null ? "unknown" : Double.toString(violations);
 
     }
 

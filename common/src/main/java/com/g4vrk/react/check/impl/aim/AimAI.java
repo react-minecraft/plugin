@@ -86,6 +86,7 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
         final double threshold = result.hasThreshold() ? result.threshold() : alertThreshold;
         final boolean flagged = result.hasThreshold() ? probability >= threshold : probability > threshold;
+        final double violationsBefore = violations();
 
         final ResultAction action = resultAction(result, flagged);
         if (action == ResultAction.FLAG) {
@@ -100,7 +101,16 @@ public final class AimAI extends Check implements ReloadObserver<AimAIConfig> {
 
         monitor(details);
 
-        final InferenceHistoryEntry entry = new InferenceHistoryEntry(this, probability);
+        final InferenceHistoryEntry entry = new InferenceHistoryEntry(
+                this,
+                probability,
+                result.modelId(),
+                result.runId(),
+                result.hasThreshold() ? result.threshold() : null,
+                result.enforcement(),
+                violationsBefore,
+                violations()
+        );
 
         player.inferenceHistory.add(entry);
 

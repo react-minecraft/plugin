@@ -66,10 +66,12 @@ class ReactConfigsMigrationTest {
         assertTrue(header.contains("<page> / <pages>"));
         assertTrue(header.contains("<avg-probability>"));
         assertTrue(format.entryFormat().get(0).contains("<probability>"));
+        assertTrue(format.entryFormat().stream().anyMatch(line -> line.contains("<model>") && line.contains("<vl-after>")));
         assertTrue(footer.contains("<prev><hover:show_text:"));
         assertTrue(footer.contains("</next>"));
         assertFalse(footer.contains("click:"));
         assertFalse(Files.readString(directory.resolve("history.yml")).contains("{"));
+        assertTrue(Files.readString(directory.resolve("history.yml")).contains("config-version: 3"));
 
     }
 

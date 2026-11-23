@@ -10,18 +10,24 @@ import com.g4vrk.react.storage.model.StoredInference;
 import com.g4vrk.react.storage.model.StoredViolation;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
+import java.sql.DatabaseMetaData;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.g4vrk.react.storage.constant.StorageConstant.BYPASS_TABLE;
@@ -35,7 +41,7 @@ import static com.g4vrk.react.storage.constant.StorageConstant.VIOLATIONS_TABLE;
 public final class JdbcStorageBackend implements StorageBackend {
 
     private static final String LOAD_VIOLATIONS = "SELECT check_name, violations, updated_at FROM " + VIOLATIONS_TABLE + " WHERE player_uuid = ?";
-    private static final String LOAD_INFERENCE = "SELECT check_name, recorded_at, probability FROM " + INFERENCE_TABLE + " WHERE player_uuid = ? AND recorded_at >= ? ORDER BY recorded_at ASC";
+    private static final String LOAD_INFERENCE = "SELECT check_name, recorded_at, probability, model_id, run_id, decision_threshold, enforcement_enabled, violations_before, violations_after FROM " + INFERENCE_TABLE + " WHERE player_uuid = ? AND recorded_at >= ? ORDER BY recorded_at ASC";
     private static final String LOAD_BYPASSES = "SELECT check_name, expires_at FROM " + BYPASS_TABLE + " WHERE player_uuid = ? AND expires_at > ?";
     private static final String DELETE_BYPASS = "DELETE FROM " + BYPASS_TABLE + " WHERE player_uuid = ? AND check_name = ?";
     private static final String DELETE_EXPIRED_BYPASSES = "DELETE FROM " + BYPASS_TABLE + " WHERE expires_at <= ?";
@@ -65,9 +71,80 @@ public final class JdbcStorageBackend implements StorageBackend {
                     statement.execute(sql);
                 }
             }
+            migrateInferenceColumns(connection);
             migrateLegacyHistory(connection);
             return null;
         });
+
+    }
+
+    private void migrateInferenceColumns(final @NotNull Connection connection) throws SQLException {
+
+        final DatabaseMetaData metadata = connection.getMetaData();
+        String tableName = null;
+        String tableSchema = null;
+        try (final ResultSet tables = metadata.getTables(connection.getCatalog(), null, "%", new String[]{"TABLE"})) {
+            while (tables.next()) {
+                if (INFERENCE_TABLE.equalsIgnoreCase(tables.getString("TABLE_NAME"))) {
+                    tableName = tables.getString("TABLE_NAME");
+                    tableSchema = tables.getString("TABLE_SCHEM");
+                    break;
+                }
+            }
+        }
+        if (tableName == null) {
+            throw new SQLException("Inference history table was not created: " + INFERENCE_TABLE);
+        }
+
+        final Set<String> columns = new HashSet<>();
+        try (final ResultSet rows = metadata.getColumns(connection.getCatalog(), tableSchema, tableName, "%")) {
+            while (rows.next()) {
+                columns.add(rows.getString("COLUMN_NAME").toLowerCase(Locale.ROOT));
+            }
+        }
+        final List<String> definitions = List.of(
+                "model_id VARCHAR(128)",
+                "run_id VARCHAR(1024)",
+                "decision_threshold DOUBLE",
+                "enforcement_enabled BOOLEAN",
+                "violations_before DOUBLE",
+                "violations_after DOUBLE"
+        );
+        try (final Statement statement = connection.createStatement()) {
+            for (final String definition : definitions) {
+                final int separator = definition.indexOf(' ');
+                final String name = definition.substring(0, separator);
+                if (!columns.contains(name)) {
+                    try {
+                        statement.execute("ALTER TABLE " + INFERENCE_TABLE + " ADD COLUMN " + definition);
+                    } catch (final SQLException migrationFailure) {
+                        if (!hasColumn(metadata, connection.getCatalog(), tableSchema, tableName, name)) {
+                            throw migrationFailure;
+                        }
+                    }
+                    columns.add(name);
+                }
+            }
+        }
+
+    }
+
+    private static boolean hasColumn(
+            final @NotNull DatabaseMetaData metadata,
+            final @Nullable String catalog,
+            final @Nullable String schema,
+            final @NotNull String table,
+            final @NotNull String column
+    ) throws SQLException {
+
+        try (final ResultSet rows = metadata.getColumns(catalog, schema, table, "%")) {
+            while (rows.next()) {
+                if (column.equalsIgnoreCase(rows.getString("COLUMN_NAME"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
 
     }
 
@@ -234,7 +311,13 @@ public final class JdbcStorageBackend implements StorageBackend {
                     values.add(new StoredInference(
                             result.getLong("recorded_at"),
                             result.getString("check_name"),
-                            result.getDouble("probability")
+                            result.getDouble("probability"),
+                            result.getString("model_id"),
+                            result.getString("run_id"),
+                            nullableDouble(result, "decision_threshold"),
+                            nullableBoolean(result, "enforcement_enabled"),
+                            nullableDouble(result, "violations_before"),
+                            nullableDouble(result, "violations_after")
                     ));
                 }
             }
@@ -285,6 +368,60 @@ public final class JdbcStorageBackend implements StorageBackend {
         statement.setString(3, value.check());
         statement.setLong(4, value.timestamp());
         statement.setDouble(5, value.probability());
+        statement.setString(6, value.modelId());
+        statement.setString(7, value.runId());
+        setNullableDouble(statement, 8, value.threshold());
+        setNullableBoolean(statement, 9, value.enforcement());
+        setNullableDouble(statement, 10, value.violationsBefore());
+        setNullableDouble(statement, 11, value.violationsAfter());
+
+    }
+
+    private static @Nullable Double nullableDouble(
+            final @NotNull ResultSet result,
+            final @NotNull String column
+    ) throws SQLException {
+
+        final double value = result.getDouble(column);
+        return result.wasNull() ? null : value;
+
+    }
+
+    private static @Nullable Boolean nullableBoolean(
+            final @NotNull ResultSet result,
+            final @NotNull String column
+    ) throws SQLException {
+
+        final boolean value = result.getBoolean(column);
+        return result.wasNull() ? null : value;
+
+    }
+
+    private static void setNullableDouble(
+            final @NotNull PreparedStatement statement,
+            final int index,
+            final @Nullable Double value
+    ) throws SQLException {
+
+        if (value == null) {
+            statement.setNull(index, Types.DOUBLE);
+        } else {
+            statement.setDouble(index, value);
+        }
+
+    }
+
+    private static void setNullableBoolean(
+            final @NotNull PreparedStatement statement,
+            final int index,
+            final @Nullable Boolean value
+    ) throws SQLException {
+
+        if (value == null) {
+            statement.setNull(index, Types.BOOLEAN);
+        } else {
+            statement.setBoolean(index, value);
+        }
 
     }
 

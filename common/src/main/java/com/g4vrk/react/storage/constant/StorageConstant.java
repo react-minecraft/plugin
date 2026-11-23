@@ -25,6 +25,12 @@ public final class StorageConstant {
     public static final String FIELD_VIOLATIONS = "violations";
     public static final String FIELD_TIMESTAMP = "timestamp";
     public static final String FIELD_PROBABILITY = "probability";
+    public static final String FIELD_MODEL_ID = "model_id";
+    public static final String FIELD_RUN_ID = "run_id";
+    public static final String FIELD_DECISION_THRESHOLD = "decision_threshold";
+    public static final String FIELD_ENFORCEMENT = "enforcement_enabled";
+    public static final String FIELD_VIOLATIONS_BEFORE = "violations_before";
+    public static final String FIELD_VIOLATIONS_AFTER = "violations_after";
     public static final String FIELD_UPDATED_AT = "updated_at";
     public static final String FIELD_EXPIRES_AT = "expires_at";
 

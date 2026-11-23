@@ -30,11 +30,11 @@ history:
         - " <white>- Записей нет"
 
       entry-format:
-        - " <gray>•</gray> <white>Проверка: <check></white> <dark_gray>·</dark_gray> <white>Вероятность:</white> <probability>"
+        - " <gray>•</gray> <white><check>:</white> <probability> <dark_gray>· модель <model> v<version> · порог <threshold> · режим <mode> · VL <vl-before> → <vl-after></dark_gray>"
 
       footer:
         - ""
         - "  <gradient:#eb2544:#ff3655><prev><hover:show_text:'<white>Предыдущая страница'>‹ Назад</hover></prev></gradient> <gray>|</gray> <gradient:#eb2544:#ff3655><next><hover:show_text:'<white>Следующая страница'>Далее ›</hover></next></gradient>"
 
 # Не меняйте / Do not change
-config-version: 2
+config-version: 3

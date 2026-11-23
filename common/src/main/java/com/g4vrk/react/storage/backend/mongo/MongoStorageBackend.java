@@ -23,6 +23,7 @@ import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import org.bson.Document;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,11 +36,17 @@ import java.util.concurrent.TimeUnit;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_CHECK;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_EXPIRES_AT;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_ID;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_MODEL_ID;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_PLAYER_UUID;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_PROBABILITY;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_DECISION_THRESHOLD;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_ENFORCEMENT;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_RUN_ID;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_TIMESTAMP;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_UPDATED_AT;
 import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_VIOLATIONS;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_VIOLATIONS_AFTER;
+import static com.g4vrk.react.storage.constant.StorageConstant.FIELD_VIOLATIONS_BEFORE;
 import static com.g4vrk.react.storage.constant.StorageConstant.MONGO_BYPASS_COLLECTION;
 import static com.g4vrk.react.storage.constant.StorageConstant.MONGO_INFERENCE_COLLECTION;
 import static com.g4vrk.react.storage.constant.StorageConstant.MONGO_VIOLATIONS_COLLECTION;
@@ -105,7 +112,13 @@ public final class MongoStorageBackend implements StorageBackend {
             history.add(new StoredInference(
                     document.getLong(FIELD_TIMESTAMP),
                     document.getString(FIELD_CHECK),
-                    number(document, FIELD_PROBABILITY)
+                    number(document, FIELD_PROBABILITY),
+                    document.getString(FIELD_MODEL_ID),
+                    document.getString(FIELD_RUN_ID),
+                    nullableNumber(document, FIELD_DECISION_THRESHOLD),
+                    document.getBoolean(FIELD_ENFORCEMENT),
+                    nullableNumber(document, FIELD_VIOLATIONS_BEFORE),
+                    nullableNumber(document, FIELD_VIOLATIONS_AFTER)
             ));
         }
         final Map<String, Long> loadedBypasses = new LinkedHashMap<>();
@@ -159,7 +172,13 @@ public final class MongoStorageBackend implements StorageBackend {
                         .append(FIELD_PLAYER_UUID, stored.playerUuid().toString())
                         .append(FIELD_CHECK, value.check())
                         .append(FIELD_TIMESTAMP, value.timestamp())
-                        .append(FIELD_PROBABILITY, value.probability());
+                        .append(FIELD_PROBABILITY, value.probability())
+                        .append(FIELD_MODEL_ID, value.modelId())
+                        .append(FIELD_RUN_ID, value.runId())
+                        .append(FIELD_DECISION_THRESHOLD, value.threshold())
+                        .append(FIELD_ENFORCEMENT, value.enforcement())
+                        .append(FIELD_VIOLATIONS_BEFORE, value.violationsBefore())
+                        .append(FIELD_VIOLATIONS_AFTER, value.violationsAfter());
                 inferenceWrites.add(new ReplaceOneModel<>(eq(FIELD_ID, stored.id().toString()), document, upsert));
             } else if (mutation instanceof final StorageMutation.BypassMutation bypass) {
                 final String id = bypass.playerUuid() + ":" + bypass.check();
@@ -213,6 +232,13 @@ public final class MongoStorageBackend implements StorageBackend {
 
         final Number value = document.get(field, Number.class);
         return value == null ? 0L : value.longValue();
+
+    }
+
+    private static @Nullable Double nullableNumber(final @NotNull Document document, final @NotNull String field) {
+
+        final Number value = document.get(field, Number.class);
+        return value == null ? null : value.doubleValue();
 
     }
 

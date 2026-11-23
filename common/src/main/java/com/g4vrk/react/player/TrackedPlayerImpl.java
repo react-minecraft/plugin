@@ -78,7 +78,13 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
                         new StoredInference(
                                 entry.getTimestamp(),
                                 entry.getCheck().id(),
-                                entry.getProbability()
+                                entry.getProbability(),
+                                entry.getModelId(),
+                                entry.getRunId(),
+                                entry.getThreshold(),
+                                entry.getEnforcement(),
+                                entry.getViolationsBefore(),
+                                entry.getViolationsAfter()
                         )
                 )
         );
@@ -253,7 +259,9 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
         final HistoryEntry[] out = new HistoryEntry[entries.length];
         for (int i = 0; i < entries.length; i++) {
             final InferenceHistoryEntry entry = entries[i];
-            out[i] = new HistoryEntry(entry.getTimestamp(), entry.getCheck().id(), entry.getProbability());
+            out[i] = new HistoryEntry(entry.getTimestamp(), entry.getCheck().id(), entry.getProbability(),
+                    entry.getModelId(), entry.getRunId(), entry.getThreshold(), entry.getEnforcement(),
+                    entry.getViolationsBefore(), entry.getViolationsAfter());
         }
         final List<HistoryEntry> list = List.of(out);
         this.historySnapshot = new HistorySnapshot(revision, list);
@@ -372,7 +380,13 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
                 loadedHistory.add(new InferenceHistoryEntry(
                         stored.timestamp(),
                         check,
-                        stored.probability()
+                        stored.probability(),
+                        stored.modelId(),
+                        stored.runId(),
+                        stored.threshold(),
+                        stored.enforcement(),
+                        stored.violationsBefore(),
+                        stored.violationsAfter()
                 ));
             }
         }

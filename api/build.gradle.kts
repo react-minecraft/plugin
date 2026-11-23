@@ -3,6 +3,15 @@ plugins {
     id("react.base-conventions")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(16)
+}
+
 dependencies {
 
     compileOnly(libs.schedula.common)

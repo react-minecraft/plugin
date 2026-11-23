@@ -37,7 +37,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Shared {@link ReactPlatform} implementation for Bukkit-derived servers (Paper and Folia).
+ * Shared {@link ReactPlatform} implementation for Bukkit-derived servers (Spigot, Paper, and Folia).
  */
 public final class BukkitPlatform implements ReactPlatform {
 

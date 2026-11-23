@@ -123,9 +123,12 @@ Use JDK 21.
 |----------|-----------------------------------------------|
 | `api`    | RCP and addon API, including server platform contracts |
 | `common` | Checks, data, and extension loading |
-| `platform/bukkit` | Shared Bukkit and PacketEvents integration for Paper and Folia |
-| `platform/paper`  | Implementation for Paper servers                               |
-| `platform/folia`  | Implementation for Folia servers                               |
+| `platform/bukkit` | Shared Bukkit/Spigot adapter for Paper, Folia, and Spigot; embeds PacketEvents and reuses a compatible installed version |
+| `platform/paper`  | Entry point for Paper servers |
+| `platform/folia`  | Entry point for Folia servers |
+| `platform/fabric` | Adapter for Fabric |
+| `platform/minestom` | Adapter for Minestom |
+| `platform/sponge` | Adapter for Sponge |
 
 ---
 

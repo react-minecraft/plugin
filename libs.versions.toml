@@ -1,7 +1,21 @@
 [versions]
 
 paper-api = "1.18.2-R0.1-SNAPSHOT"
+spigot-api = "1.16.5-R0.1-SNAPSHOT"
 folia-api = "1.21.11-R0.1-SNAPSHOT"
+sponge-api = "17.0.0"
+minestom = "2026.10.07-26.2"
+fabric-loom = "1.16.2"
+fabric-loader = "0.18.4"
+fabric-api = "0.161.0+26.2"
+fabric-entity-events = "5.0.5+06488ac19e"
+fabric-lifecycle-events = "4.1.4+29b6eb019e"
+fabric-minecraft = "26.2"
+fabric-adventure = "5.2.0"
+fabric-adventure-platform = "7.1.1"
+packetevents-fabric = "2.14.0"
+packetevents-api-fabric = "2.14.0"
+packetevents-adventure = "4.26.1"
 
 minecraft = "1.18.2"
 
@@ -25,11 +39,12 @@ sqlite = "3.53.2.1"
 
 configurate = "4.2.0"
 cloud-paper = "2.0.1"
+examination = "1.3.0"
 
-textserializer = "944d27b"
-actions = "a0508d1"
+textserializer = "9ee70c7"
+actions = "afb26f3"
 
-schedula = "c0ebc41"
+schedula = "f7fcce3"
 
 
 junit = "6.1.3"
@@ -45,7 +60,24 @@ jetbrains-annotations = { module = "org.jetbrains:annotations", version = "24.1.
 fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.12" }
 
 paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
+spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
 folia-api = { module = "io.papermc.paper:paper-api", version.ref = "folia-api" }
+sponge-api = { module = "org.spongepowered:spongeapi", version.ref = "sponge-api" }
+minestom = { module = "net.minestom:minestom", version.ref = "minestom" }
+fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric-api" }
+fabric-entity-events = { module = "net.fabricmc.fabric-api:fabric-entity-events-v1", version.ref = "fabric-entity-events" }
+fabric-lifecycle-events = { module = "net.fabricmc.fabric-api:fabric-lifecycle-events-v1", version.ref = "fabric-lifecycle-events" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric-loader" }
+packetevents-fabric = { module = "com.github.retrooper:packetevents-fabric", version.ref = "packetevents-fabric" }
+packetevents-api-fabric = { module = "com.github.retrooper:packetevents-api", version.ref = "packetevents-api-fabric" }
+fabric-adventure-api = { module = "net.kyori:adventure-api", version.ref = "fabric-adventure" }
+fabric-adventure-legacy = { module = "net.kyori:adventure-text-serializer-legacy", version.ref = "fabric-adventure" }
+fabric-adventure-platform = { module = "net.kyori:adventure-platform-fabric", version.ref = "fabric-adventure-platform" }
+packetevents-adventure-gson = { module = "net.kyori:adventure-text-serializer-gson", version.ref = "packetevents-adventure" }
+packetevents-adventure-json = { module = "net.kyori:adventure-text-serializer-json", version.ref = "packetevents-adventure" }
+packetevents-adventure-commons = { module = "net.kyori:adventure-text-serializer-commons", version.ref = "packetevents-adventure" }
+packetevents-adventure-option = { module = "net.kyori:option", version = "1.1.0" }
+packetevents-sponge = { module = "com.github.retrooper:packetevents-sponge", version.ref = "packetevents" }
 
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 
@@ -62,6 +94,8 @@ mongodb = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb" 
 sqlite = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite" }
 
 configurate-yaml = { module = "org.spongepowered:configurate-yaml", version.ref = "configurate" }
+examination-api = { module = "net.kyori:examination-api", version.ref = "examination" }
+examination-string = { module = "net.kyori:examination-string", version.ref = "examination" }
 cloud-core = { module = "org.incendo:cloud-core", version = "2.0.0" }
 cloud-paper = { module = "org.incendo:cloud-paper", version.ref = "cloud-paper" }
 brigadier = { module = "com.mojang:brigadier", version = "1.0.18" }
@@ -73,6 +107,9 @@ actions = { module = "com.github.g4vrk:FunctionalActions", version.ref = "action
 schedula-common = { module = "com.github.g4vrk.Schedula:common", version.ref = "schedula" }
 schedula-bukkit = { module = "com.github.g4vrk.Schedula:bukkit", version.ref = "schedula" }
 schedula-folia = { module = "com.github.g4vrk.Schedula:folia", version.ref = "schedula" }
+schedula-sponge = { module = "com.github.g4vrk.Schedula:sponge", version.ref = "schedula" }
+schedula-minestom = { module = "com.github.g4vrk.Schedula:minestom", version.ref = "schedula" }
+schedula-fabric = { module = "com.github.g4vrk.Schedula:fabric", version.ref = "schedula" }
 
 
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
@@ -84,4 +121,5 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 run-paper = { id = "xyz.jpenilla.run-paper", version.ref = "run-task" }
+fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

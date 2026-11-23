@@ -1,0 +1,16 @@
+{
+  "loader": {
+    "name": "java_plain",
+    "version": "1.0"
+  },
+  "license": "GPL-3.0-only",
+  "plugins": [
+    {
+      "id": "react",
+      "name": "React",
+      "version": "${version}",
+      "entrypoint": "com.g4vrk.react.sponge.SpongePlugin",
+      "description": "An AI powered anti-cheat plugin."
+    }
+  ]
+}

@@ -124,9 +124,12 @@
 |----------|----------------------------------------------------|
 | `api`    | API для RCP и аддонов, контракты серверной платформы |
 | `common` | Проверки, данные и загрузка расширений |
-| `platform/bukkit` | Общая интеграция Paper и Folia с Bukkit и PacketEvents |
-| `platform/paper`  | Реализация для Paper серверов                          |
-| `platform/folia`  | Реализация для Folia серверов                          |
+| `platform/bukkit` | Общий адаптер Bukkit/Spigot для Paper, Folia и Spigot; встроенный PacketEvents с переиспользованием совместимой установленной версии |
+| `platform/paper`  | Точка входа для Paper серверов |
+| `platform/folia`  | Точка входа для Folia серверов |
+| `platform/fabric` | Адаптер для Fabric |
+| `platform/minestom` | Адаптер для Minestom |
+| `platform/sponge` | Адаптер для Sponge |
 
 ---
 

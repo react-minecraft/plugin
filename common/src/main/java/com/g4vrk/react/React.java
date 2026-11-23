@@ -1,15 +1,14 @@
 package com.g4vrk.react;
 
-import com.g4vrk.functionalActions.defaults.DefaultActionSet;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.functionalActions.parser.impl.SimpleActionParser;
 import com.g4vrk.functionalActions.registry.ActionRegistry;
 import com.g4vrk.functionalActions.registry.impl.SimpleActionRegistry;
-import com.g4vrk.react.action.PlaySoundAction;
 import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
 import com.g4vrk.react.api.channel.impl.ReportChannel;
 import com.g4vrk.react.api.event.plugin.ReloadEvent;
 import com.g4vrk.schedula.task.scheduler.TaskScheduler;
+import com.g4vrk.react.action.defaults.DefaultActionRegistry;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.text.TextFormatter;
 import com.g4vrk.react.channel.DebugActionRegistry;
@@ -131,13 +130,16 @@ public class React {
         this.configs = new ConfigManager(dataPath, languageName, logger);
         this.loadConfigs();
 
+        this.scheduler = platform.createScheduler();
         final ActionRegistry<Audience> actionRegistry = new SimpleActionRegistry<>(true);
-        DefaultActionSet.Adventure.registerDefaults(
+        DefaultActionRegistry.register(
                 actionRegistry,
+                platform,
+                scheduler,
+                logger,
                 text -> serializers.universalSerializer().serialize(text),
                 ";"
         );
-        actionRegistry.register(new PlaySoundAction(logger, platform::resolveSoundKey), "sound", "play-sound");
         this.actionParser = new SimpleActionParser<>(actionRegistry);
 
         logger.info("Creating Data management modules...");
@@ -150,7 +152,6 @@ public class React {
 
         this.playerFactory = new PlayerFactory(platform::isBedrockPlayer);
         this.playerRegistry = new PlayerRegistry();
-        this.scheduler = platform.createScheduler();
         this.rcpHost = new RCPHost(playerRegistry);
 
         final PlatformCommandBridge platformCommands = platform.createCommands(scheduler);

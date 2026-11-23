@@ -11,6 +11,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -28,8 +30,7 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
 
     private static final String CORE_PACKAGE = "com.g4vrk.react.";
     private static final String LOADER_PACKAGE = CORE_PACKAGE + "extension.library.";
-    private final ClassLoader platformLoader;
-    private final URLClassLoader ownedPlatformLoader;
+    private final ClassLoader ownedPlatformLoader;
     private final Set<String> platformPackages;
     private final Path directory;
     private final LibraryCache cache = new LibraryCache();
@@ -39,16 +40,20 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
             final @NotNull URL codeSource,
             final @NotNull ClassLoader parent,
             final @NotNull Path directory,
-            final ClassLoader platformLoader,
+            final ClassLoader externalPlatformLoader,
             final @NotNull Set<String> platformPackages,
             final @NotNull Set<String> isolatedPackages
     ) {
 
         super("React runtime", new URL[]{codeSource}, parent);
         this.directory = directory;
-        this.ownedPlatformLoader = platformLoader == null
-                ? new PlatformClassLoader(platformArchive(codeSource), parent, isolatedPackages) : null;
-        this.platformLoader = platformLoader == null ? ownedPlatformLoader : platformLoader;
+        this.ownedPlatformLoader = new PlatformClassLoader(
+                this,
+                parent,
+                externalPlatformLoader,
+                Set.of("com.github.retrooper.packetevents.", "io.github.retrooper.packetevents."),
+                isolatedPackages
+        );
         this.platformPackages = Set.copyOf(platformPackages);
 
     }
@@ -56,23 +61,33 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
     @Override
     public void close() throws IOException {
 
-        try {
-            super.close();
-        } finally {
-            if (ownedPlatformLoader != null) {
-                ownedPlatformLoader.close();
-            }
-        }
+        super.close();
 
     }
 
-    private static final class PlatformClassLoader extends URLClassLoader {
+    private static final class PlatformClassLoader extends ClassLoader {
 
+        private static final String RESOURCE_ROOT = "META-INF/react-platform/";
+
+        private final RuntimeLibraryLoader runtimeLibraryLoader;
+        private final ClassLoader externalPlatformLoader;
+        private final ClassLoader platformResourceLoader;
+        private final Set<String> externalPackages;
         private final Set<String> isolatedPackages;
 
-        private PlatformClassLoader(final URL archive, final ClassLoader parent, final Set<String> isolatedPackages) {
+        private PlatformClassLoader(
+                final RuntimeLibraryLoader runtimeLibraryLoader,
+                final ClassLoader parent,
+                final ClassLoader externalPlatformLoader,
+                final Set<String> externalPackages,
+                final Set<String> isolatedPackages
+        ) {
 
-            super("React platform libraries", new URL[]{archive}, parent);
+            super(parent);
+            this.runtimeLibraryLoader = runtimeLibraryLoader;
+            this.externalPlatformLoader = externalPlatformLoader;
+            this.platformResourceLoader = parent;
+            this.externalPackages = Set.copyOf(externalPackages);
             this.isolatedPackages = Set.copyOf(isolatedPackages);
 
         }
@@ -80,30 +95,71 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
         @Override
         protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
 
-            if (isolatedPackages.stream().noneMatch(name::startsWith)) {
-                return super.loadClass(name, resolve);
+            if (externalPlatformLoader != null && matchesPackage(externalPackages, name)) {
+                try {
+                    return externalPlatformLoader.loadClass(name);
+                } catch (final ClassNotFoundException unavailable) {
+                    /*
+                     * Use the bundled platform library when the installed provider lacks this class.
+                     */
+                }
             }
-            synchronized (getClassLoadingLock(name)) {
-                Class<?> type = findLoadedClass(name);
-                if (type == null) {
-                    type = findClass(name);
+            if (matchesPackage(isolatedPackages, name)) {
+                synchronized (getClassLoadingLock(name)) {
+                    Class<?> type = findLoadedClass(name);
+                    if (type == null) {
+                        type = findClass(name);
+                    }
+                    if (resolve) {
+                        resolveClass(type);
+                    }
+                    return type;
                 }
-                if (resolve) {
-                    resolveClass(type);
-                }
-                return type;
+            }
+            return super.loadClass(name, resolve);
+
+        }
+
+        @Override
+        public URL getResource(final String name) {
+
+            final URL parentResource = platformResourceLoader.getResource(name);
+            return parentResource == null ? findResource(name) : parentResource;
+
+        }
+
+        @Override
+        protected Class<?> findClass(final String name) throws ClassNotFoundException {
+
+            final String resourceName = RESOURCE_ROOT + name.replace('.', '/') + ".class";
+            final URL resource = platformResourceLoader.getResource(resourceName);
+            if (resource == null) {
+                return runtimeLibraryLoader.findRuntimeLibraryClass(name);
+            }
+            try (InputStream input = resource.openStream()) {
+                final byte[] bytecode = input.readAllBytes();
+                return defineClass(name, bytecode, 0, bytecode.length);
+            } catch (final IOException failure) {
+                throw new ClassNotFoundException(name, failure);
             }
 
         }
 
-    }
+        @Override
+        protected URL findResource(final String name) {
 
-    private static URL platformArchive(final URL codeSource) {
+            return platformResourceLoader.getResource(RESOURCE_ROOT + name);
 
-        try {
-            return URI.create("jar:" + codeSource.toExternalForm() + "!/META-INF/react-platform/").toURL();
-        } catch (final java.net.MalformedURLException failure) {
-            throw new IllegalArgumentException("Invalid runtime archive", failure);
+        }
+
+        @Override
+        protected Enumeration<URL> findResources(final String name) {
+
+            final URL resource = findResource(name);
+            return resource == null
+                    ? Collections.emptyEnumeration()
+                    : Collections.enumeration(Set.of(resource));
+
         }
 
     }
@@ -198,17 +254,27 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
 
     }
 
+    private Class<?> findRuntimeLibraryClass(
+            final @NotNull String name
+    ) throws ClassNotFoundException {
+
+        synchronized (getClassLoadingLock(name)) {
+            final Class<?> type = findLoadedClass(name);
+            return type == null ? findClass(name) : type;
+        }
+
+    }
+
     @Override
     protected Class<?> loadClass(
             final String name,
             final boolean resolve
     ) throws ClassNotFoundException {
 
-        final boolean platformClass = platformPackages.stream().anyMatch(name::startsWith);
-        if (platformClass) {
-            return platformLoader.loadClass(name);
+        if (matchesPackage(platformPackages, name)) {
+            return ownedPlatformLoader.loadClass(name);
         }
-        if (!platformClass && (!name.startsWith(CORE_PACKAGE) || name.startsWith(LOADER_PACKAGE))) {
+        if (!name.startsWith(CORE_PACKAGE) || name.startsWith(LOADER_PACKAGE)) {
             return super.loadClass(name, resolve);
         }
         synchronized (getClassLoadingLock(name)) {
@@ -221,6 +287,20 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
             }
             return type;
         }
+
+    }
+
+    private static boolean matchesPackage(
+            final Set<String> packages,
+            final String name
+    ) {
+
+        for (final String packageName : packages) {
+            if (name.startsWith(packageName)) {
+                return true;
+            }
+        }
+        return false;
 
     }
 

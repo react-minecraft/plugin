@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "react",
+  "version": "${version}",
+  "name": "React",
+  "description": "An AI powered anti-cheat product.",
+  "authors": ["g4vrk"],
+  "contact": {
+    "homepage": "https://www.react-ac.space",
+    "sources": "https://github.com/react-minecraft/plugin"
+  },
+  "license": "GPL-3.0-only",
+  "environment": "server",
+  "entrypoints": {
+    "main": ["com.g4vrk.react.fabric.FabricPlugin"]
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/packetevents-fabric-2.14.0-react.jar"
+    },
+    {
+      "file": "META-INF/jars/adventure-platform-fabric-7.1.1.jar"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*",
+    "packetevents": ">=2.14.0",
+    "adventure-platform-fabric": ">=7.1.1"
+  }
+}

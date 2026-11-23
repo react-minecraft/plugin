@@ -8,11 +8,24 @@ plugins {
 }
 
 val catalog = rootProject.extensions.getByType<VersionCatalogsExtension>().named("libs")
+val commandLibrary = if (project.name in setOf("sponge", "fabric", "minestom")) "cloud-core" else "cloud-paper"
+val schedulerLibrary = when (project.name) {
+    "folia" -> "schedula-folia"
+    "sponge" -> "schedula-sponge"
+    "fabric" -> "schedula-fabric"
+    "minestom" -> "schedula-minestom"
+    else -> "schedula-bukkit"
+}
+val platformRuntimeLibraries = if (project.name == "minestom") {
+    listOf("examination-api", "examination-string")
+} else {
+    emptyList()
+}
 val libraryGroups = mapOf(
-    "core" to listOf(
-        "configurate-yaml", "cloud-paper", "textserializer-legacy", "actions", "xseries",
-        "schedula-common", if (project.name == "folia") "schedula-folia" else "schedula-bukkit"
-    ),
+    "core" to (listOf(
+        "configurate-yaml", commandLibrary, "textserializer-legacy", "actions", "xseries",
+        "schedula-common", schedulerLibrary
+    ) + platformRuntimeLibraries),
     "database-sqlite" to listOf("hikari", "sqlite"),
     "database-h2" to listOf("hikari", "h2"),
     "database-mysql" to listOf("hikari", "mysql"),
@@ -27,6 +40,9 @@ libraryGroups.forEach { (groupName, aliases) ->
         exclude(group = "org.slf4j", module = "slf4j-api")
         exclude(group = "com.google.guava", module = "guava")
         exclude(group = "com.google.code.gson", module = "gson")
+        if (groupName == "database-mongodb") {
+            exclude(group = "org.mongodb", module = "bson-record-codec")
+        }
     }
     aliases.forEach { alias ->
         val dependency = dependencies.create(catalog.findLibrary(alias).get().get().toString()) as ExternalModuleDependency

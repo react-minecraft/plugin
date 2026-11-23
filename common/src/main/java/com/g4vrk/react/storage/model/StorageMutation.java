@@ -9,11 +9,7 @@ import java.util.function.DoubleUnaryOperator;
 /**
  * A queued change to persistent player data.
  */
-public sealed interface StorageMutation permits
-        StorageMutation.Violation,
-        StorageMutation.PendingViolation,
-        StorageMutation.Inference,
-        StorageMutation.BypassMutation {
+public interface StorageMutation {
 
     @NotNull UUID playerUuid();
 

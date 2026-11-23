@@ -1,3 +1,15 @@
+pluginManagement {
+
+    repositories {
+
+        maven("https://maven.fabricmc.net/")
+        gradlePluginPortal()
+        mavenCentral()
+
+    }
+
+}
+
 rootProject.name = "react"
 
 include(
@@ -5,7 +17,10 @@ include(
     "common",
     "platform:bukkit",
     "platform:paper",
-    "platform:folia"
+    "platform:folia",
+    "platform:fabric",
+    "platform:minestom",
+    "platform:sponge"
 )
 
 dependencyResolutionManagement {

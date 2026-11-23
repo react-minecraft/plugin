@@ -5,6 +5,7 @@ import com.g4vrk.react.update.UpdateChannel;
 import com.g4vrk.react.update.checksum.ChecksumManifest;
 
 import com.g4vrk.react.api.rcp.RCPAPI;
+import com.g4vrk.react.util.HexCodec;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -33,7 +34,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.Map;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -286,7 +286,7 @@ public final class ReleaseClient {
         }
         try {
             final byte[] digest = digest(file);
-            return MessageDigest.isEqual(digest, HexFormat.of().parseHex(sha256));
+            return MessageDigest.isEqual(digest, HexCodec.decode(sha256));
         } catch (final IllegalArgumentException ex) {
             return false;
         }

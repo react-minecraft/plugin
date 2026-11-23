@@ -39,8 +39,8 @@ public abstract class BukkitPlugin extends JavaPlugin {
                 JavaPlugin.class,
                 this,
                 packetEventsLoader,
-                Set.of("com.github.retrooper.packetevents.", "io.github.retrooper.packetevents."),
-                Set.of("com.github.retrooper.packetevents.", "io.github.retrooper.packetevents.", "net.kyori.")
+                Set.of("com.github.retrooper.packetevents.", "io.github.retrooper.packetevents.", "net.kyori."),
+                Set.of("com.github.retrooper.packetevents.", "io.github.retrooper.packetevents.")
         );
 
     }

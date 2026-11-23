@@ -143,12 +143,23 @@ public final class PluginReloadBridge {
 
     }
 
-    private static void unregisterCommands(final @NotNull Plugin plugin, final @NotNull ClassLoader oldLoader) {
+    private static void unregisterCommands(final @NotNull Plugin plugin, final @NotNull ClassLoader oldLoader)
+            throws ReflectiveOperationException {
 
-        final CommandMap commandMap = Bukkit.getServer().getCommandMap();
-        final Iterator<Map.Entry<String, Command>> commands = commandMap.getKnownCommands().entrySet().iterator();
+        final Object server = Bukkit.getServer();
+        final Method getCommandMap = server.getClass().getMethod("getCommandMap");
+        final Object commandMapHandle = getCommandMap.invoke(server);
+        final @Nullable Object knownCommands = readField(commandMapHandle, "knownCommands");
+        if (!(knownCommands instanceof final Map<?, ?> commandEntries)) {
+            throw new IllegalStateException("Unsupported server command map");
+        }
+        final CommandMap commandMap = (CommandMap) commandMapHandle;
+        final Iterator<?> commands = commandEntries.entrySet().iterator();
         while (commands.hasNext()) {
-            final Command command = commands.next().getValue();
+            final Object value = ((Map.Entry<?, ?>) commands.next()).getValue();
+            if (!(value instanceof final Command command)) {
+                continue;
+            }
             final boolean owned = command instanceof PluginIdentifiableCommand identifiable ? identifiable.getPlugin() == plugin : command.getClass().getClassLoader() == oldLoader;
             if (owned) {
                 commands.remove();

@@ -1,5 +1,6 @@
 package com.g4vrk.react.extension.library;
 
+import com.g4vrk.react.util.HexCodec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,7 +17,6 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.util.HexFormat;
 
 /**
  * Downloads and verifies pinned libraries before exposing them to a class loader.
@@ -94,7 +94,7 @@ public final class LibraryCache {
                 output.write(buffer, 0, read);
             }
         }
-        return HexFormat.of().formatHex(digest.digest());
+        return HexCodec.encode(digest.digest());
 
     }
 
@@ -118,7 +118,7 @@ public final class LibraryCache {
                 digest.update(buffer, 0, read);
             }
         }
-        return HexFormat.of().formatHex(digest.digest());
+        return HexCodec.encode(digest.digest());
 
     }
 

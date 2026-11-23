@@ -15,7 +15,7 @@ concurrency:
 
 env:
   TITLE: "React"
-  JARS: "platform/paper/build/libs/react-paper-*.jar platform/folia/build/libs/react-folia-*.jar"
+  JARS: "platform/bukkit/build/libs/react-bukkit-*.jar platform/paper/build/libs/react-paper-*.jar platform/folia/build/libs/react-folia-*.jar platform/fabric/build/libs/react-fabric-*.jar platform/minestom/build/libs/react-minestom-*.jar platform/sponge/build/libs/react-sponge-*.jar"
   PUBLISH: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch }}
   REACT_RELEASE: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && contains(github.event.head_commit.message, '[release]') }}
   GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
@@ -31,10 +31,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up JDK 21
+    - name: Set up JDK 25
       uses: actions/setup-java@v6
       with:
-        java-version: '21'
+        java-version: '25'
         distribution: 'temurin'
 
     - name: Setup Gradle

@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 
 /**
- * Refreshes the Paper dispatcher when extensions change the Cloud tree after startup.
+ * Refreshes supported Bukkit command dispatchers when extensions change the Cloud tree.
  */
 final class BukkitCommandTreeRefresh implements Consumer<String> {
 
@@ -95,7 +95,10 @@ final class BukkitCommandTreeRefresh implements Consumer<String> {
                 final Server server = plugin.getServer();
                 sync.invoke(server);
                 for (final Player player : server.getOnlinePlayers()) {
-                    player.updateCommands();
+                    final Method updateCommands = findMethod(player.getClass(), "updateCommands");
+                    if (updateCommands != null) {
+                        updateCommands.invoke(player);
+                    }
                 }
             } catch (final ReflectiveOperationException failure) {
                 plugin.getLogger().log(Level.WARNING, "Could not refresh the legacy Brigadier tree", failure);
@@ -130,6 +133,19 @@ final class BukkitCommandTreeRefresh implements Consumer<String> {
         try {
             return server.getClass().getMethod("syncCommands");
         } catch (final NoSuchMethodException unavailable) {
+            return null;
+        }
+
+    }
+
+    private static @Nullable Method findMethod(
+            final @NotNull Class<?> type,
+            final @NotNull String name
+    ) {
+
+        try {
+            return type.getMethod(name);
+        } catch (final NoSuchMethodException ignored) {
             return null;
         }
 

@@ -76,7 +76,9 @@ tasks {
     }
 
     named<Jar>("jar") {
-        enabled = false
+        archiveClassifier.set("adapter")
+        destinationDirectory.set(layout.buildDirectory.dir("intermediates"))
+        exclude("plugin.yml")
     }
 
 }

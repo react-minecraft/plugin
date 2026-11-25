@@ -45,12 +45,12 @@
 
 ## Требования & Установка
 
-- Ядро сервера: `Paper / Folia`. Paper поддерживается с `1.16.5`.
-- Java: от 17 для JAR Paper и от 21 для JAR Folia. Само ядро может требовать более новую версию.
+- Ядро сервера: `Paper / Spigot / Folia`. Paper поддерживается с `1.16.5`.
+- Java: от 17 для JAR Bukkit и от 21 для JAR Folia. Само ядро может требовать более новую версию.
 - React включает [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0). Если на сервере уже установлен совместимый PacketEvents, React использует его. PlaceholderAPI нужен только для его плейсхолдеров.
 
-1. Скачайте `react-paper-*.jar` или `react-folia-*.jar` под своё ядро
-2. Переместите его в папку `plugins/`
+1. Скачайте `react-bukkit-*.jar` для Paper или Spigot, `react-folia-*.jar` для Folia.
+2. Положите JAR в `plugins/`. При переходе со сборки `react-paper-*.jar` замените старый JAR вручную и сохраните папку `plugins/React/`.
 3. Запустите сервер. Плагин сам скачает React RCP в `plugins/React/.rcp/providers/`, когда есть подписанный стабильный релиз под API 2. Для проверки nightly [поставьте RCP вручную](https://github.com/react-minecraft/rcp#что-это).
 
 Для nightly React 2.0.0 используйте RCP и аддоны, собранные под новый API платформы. Выпущенные ранее hologram 1.2.0, menu 1.1.0 и punish 1.0.2 нужно заменить совместимыми сборками.
@@ -58,6 +58,22 @@
 
 > [!IMPORTANT]
 > При автоскачивании React проверяет SHA-256 и подпись Ed25519. Если проверка не прошла или GitHub недоступен, React всё равно может загрузить уже установленный совместимый RCP.
+
+### Настройка через окружение
+
+React читает переменные окружения и свойства JVM с теми же именами. Переменная окружения имеет приоритет перед `-D`. Значения `react.config.<файл>.<ключ>` применяются поверх YAML и действуют только в процессе сервера.
+
+Пример для Windows CMD:
+
+```bat
+set "react.language=ru"
+set "react.config.main.player.combat.time=3s"
+set "react.config.rcp-update.channel=prerelease"
+set "react.api.url=http://127.0.0.1:18765"
+set "react.api.token=<локальный токен>"
+```
+
+Язык задаётся значением `ru` или `en`. Доступные имена конфигов: `main`, `actions`, `history`, `punishments`, `database`, `database-driver`, `aim-ai`, `updates`, `plugin-update`, `rcp` и `rcp-update`. Используйте ключи из соответствующего YAML. Списки и карты можно задавать в виде `[...]` и `{...}`. Локальный токен RCP передаётся только на `127.0.0.1` или `[::1]`.
 
 ### React RCP
 
@@ -124,8 +140,7 @@
 |----------|----------------------------------------------------|
 | `api`    | API для RCP и аддонов, контракты серверной платформы |
 | `common` | Проверки, данные и загрузка расширений |
-| `platform/bukkit` | Общий адаптер Bukkit/Spigot для Paper, Folia и Spigot; встроенный PacketEvents с переиспользованием совместимой установленной версии |
-| `platform/paper`  | Точка входа для Paper серверов |
+| `platform/bukkit` | Единый JAR для Paper и Spigot и общий адаптер для Folia. Встроенный PacketEvents с переиспользованием совместимой установленной версии |
 | `platform/folia`  | Точка входа для Folia серверов |
 | `platform/fabric` | Адаптер для Fabric |
 | `platform/minestom` | Адаптер для Minestom |

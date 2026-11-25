@@ -2,6 +2,7 @@ package com.g4vrk.react.update.config;
 
 import com.g4vrk.react.api.config.ConfigFile;
 import com.g4vrk.react.api.config.migration.ConfigMigrationChain;
+import com.g4vrk.react.config.EnvironmentConfig;
 import com.g4vrk.react.extension.descriptor.ExtensionKind;
 import com.g4vrk.react.update.UpdateChannel;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,7 @@ public final class UpdateConfiguration {
     public @NotNull UpdateConfig reload(final @NotNull UpdateConfig previous) {
 
         try {
-            return settingsFile.load();
+            return EnvironmentConfig.load(settingsFile, UpdateConfig.class, "updates");
         } catch (final ConfigurateException failure) {
             logger.error("Could not read {}, keeping the previous update settings", settingsFile.path(), failure);
             return previous;
@@ -89,7 +90,7 @@ public final class UpdateConfiguration {
                 .migrations(rcpMigrations())
                 .logger(logger)
                 .build();
-        return config.load().settings().enabled();
+        return EnvironmentConfig.load(config, ReactRcpConfig.class, "rcp").settings().enabled();
 
     }
 
@@ -102,7 +103,7 @@ public final class UpdateConfiguration {
 
         final Path directory = folder.resolve("rcp");
         final boolean legacy = Files.notExists(directory.resolve("react-inference-rcp.yml")) && Files.isRegularFile(directory.resolve("React.yml"));
-        return component(ExtensionKind.RCP, legacy ? "React" : "react-inference-rcp");
+        return component(ExtensionKind.RCP, legacy ? "React" : "react-inference-rcp", "rcp-update");
 
     }
 
@@ -118,6 +119,16 @@ public final class UpdateConfiguration {
             final @NotNull String name
     ) {
 
+        return component(kind, name, kind == null ? "plugin-update" : null);
+
+    }
+
+    private @NotNull ComponentUpdateConfig component(
+            final @Nullable ExtensionKind kind,
+            final @NotNull String name,
+            final @Nullable String scope
+    ) {
+
         final Path file = kind == null
                 ? folder.resolve("plugin.yml")
                 : folder.resolve(kind == ExtensionKind.RCP ? "rcp" : "addons").resolve(name + ".yml");
@@ -125,12 +136,12 @@ public final class UpdateConfiguration {
                 ? language + "/update/component.yml"
                 : language + "/update/extension-component.yml";
         try {
-            return ConfigFile.builder(ComponentUpdateConfig.class)
+            final ConfigFile<ComponentUpdateConfig> config = ConfigFile.builder(ComponentUpdateConfig.class)
                     .path(file)
                     .defaults(UpdateConfiguration.class.getClassLoader(), defaults)
                     .logger(logger)
-                    .build()
-                    .load();
+                    .build();
+            return scope == null ? config.load() : EnvironmentConfig.load(config, ComponentUpdateConfig.class, scope);
         } catch (final ConfigurateException failure) {
             logger.error("Could not read {}, not updating {}", file, name, failure);
             return new ComponentUpdateConfig(false, UpdateChannel.RELEASE, "");

@@ -46,12 +46,12 @@
 
 ## Requirements & Installation
 
-* Server software: `Paper / Folia`. Paper support starts at `1.16.5`.
-* Java: at least 17 for the Paper JAR and 21 for the Folia JAR. Your server may require a newer version.
+* Server software: `Paper / Spigot / Folia`. Paper support starts at `1.16.5`.
+* Java: at least 17 for the Bukkit JAR and 21 for the Folia JAR. Your server may require a newer version.
 * React bundles [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0) and uses a compatible installed plugin when available. PlaceholderAPI is optional.
 
-1. Download `react-paper-*.jar` or `react-folia-*.jar` for your server.
-2. Move it to the `plugins/` folder.
+1. Download `react-bukkit-*.jar` for Paper or Spigot, or `react-folia-*.jar` for Folia.
+2. Place the JAR in `plugins/`. To migrate an existing `react-paper-*.jar` installation, replace the old JAR manually and keep `plugins/React/`.
 3. Start the server. React downloads its RCP into `plugins/React/.rcp/providers/` when a signed stable build for API 2 is available. To try a prerelease, [install the nightly RCP manually](https://github.com/react-minecraft/rcp#что-это).
 
 For React 2.0.0 nightly, use RCP and addon builds compiled against the new platform API. Replace earlier releases of hologram 1.2.0, menu 1.1.0, and punish 1.0.2 with compatible builds.
@@ -59,6 +59,22 @@ For React 2.0.0 nightly, use RCP and addon builds compiled against the new platf
 
 > [!IMPORTANT]
 > The updater checks automatic RCP downloads against SHA-256 and an Ed25519 signature. If verification fails or GitHub is unreachable, React can still load an existing compatible RCP.
+
+### Environment settings
+
+React accepts the same dotted names as environment variables and JVM properties. Environment variables override `-D`. Values under `react.config.<file>.<key>` override YAML in memory for the server process.
+
+Example for Windows CMD:
+
+```bat
+set "react.language=en"
+set "react.config.main.player.combat.time=3s"
+set "react.config.rcp-update.channel=prerelease"
+set "react.api.url=http://127.0.0.1:18765"
+set "react.api.token=<local token>"
+```
+
+Language can be `ru` or `en`. Config names are `main`, `actions`, `history`, `punishments`, `database`, `database-driver`, `aim-ai`, `updates`, `plugin-update`, `rcp`, and `rcp-update`. Use keys from the corresponding YAML. Lists and maps can be passed as `[...]` and `{...}`. The RCP process token is sent only to `127.0.0.1` or `[::1]`.
 
 ### React RCP
 
@@ -123,8 +139,7 @@ Use JDK 21.
 |----------|-----------------------------------------------|
 | `api`    | RCP and addon API, including server platform contracts |
 | `common` | Checks, data, and extension loading |
-| `platform/bukkit` | Shared Bukkit/Spigot adapter for Paper, Folia, and Spigot; embeds PacketEvents and reuses a compatible installed version |
-| `platform/paper`  | Entry point for Paper servers |
+| `platform/bukkit` | Common JAR for Paper and Spigot and shared adapter for Folia. Bundles PacketEvents and reuses a compatible installed version |
 | `platform/folia`  | Entry point for Folia servers |
 | `platform/fabric` | Adapter for Fabric |
 | `platform/minestom` | Adapter for Minestom |

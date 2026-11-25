@@ -79,14 +79,14 @@ public final class ConfigManager {
      */
     public void load() throws ConfigurateException {
 
-        final ActionsConfig actions = actionsFile.load();
-        final MainConfig main = mainFile.load();
-        final HistoryConfig history = historyFile.load();
-        final ConfigurationNode punishments = punishmentsFile.loadNode();
-        final ConfigurationNode database = databaseFile.loadNode();
+        final ActionsConfig actions = EnvironmentConfig.load(actionsFile, ActionsConfig.class, "actions");
+        final MainConfig main = EnvironmentConfig.load(mainFile, MainConfig.class, "main");
+        final HistoryConfig history = EnvironmentConfig.load(historyFile, HistoryConfig.class, "history");
+        final ConfigurationNode punishments = EnvironmentConfig.node(punishmentsFile, "punishments");
+        final ConfigurationNode database = EnvironmentConfig.node(databaseFile, "database");
         final String typeFile = "database/" + DatabaseType.parse(database.node("type").getString("sqlite")).configName();
-        final ConfigurationNode databaseType = file(ConfigurationNode.class, typeFile).build().loadNode();
-        final AimAIConfig aimAI = aimAIFile.load();
+        final ConfigurationNode databaseType = EnvironmentConfig.node(file(ConfigurationNode.class, typeFile).build(), "database-driver");
+        final AimAIConfig aimAI = EnvironmentConfig.load(aimAIFile, AimAIConfig.class, "aim-ai");
 
         this.main = main;
         this.actions = actions;

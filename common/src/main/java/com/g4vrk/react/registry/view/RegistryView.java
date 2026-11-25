@@ -25,16 +25,21 @@ public abstract class RegistryView<K, T, V extends T> implements Registry<K, T> 
     protected final Registry<K, V> delegate;
 
     protected RegistryView(final @NotNull Registry<K, V> delegate) {
+
         this.delegate = delegate;
+
     }
 
     @Override
     public @Nullable T get(final @NotNull K key) {
+
         return this.delegate.get(key);
+
     }
 
     @Override
     public @Nullable K getKey(final @NotNull T value) {
+
         for (final Map.Entry<K, V> entry : this.delegate.entrySet()) {
             if (entry.getValue() == value) {
                 return entry.getKey();
@@ -42,37 +47,48 @@ public abstract class RegistryView<K, T, V extends T> implements Registry<K, T> 
         }
 
         return null;
+
     }
 
     @Override
     public @NotNull Set<K> keySet() {
+
         return this.delegate.keySet();
+
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public @NotNull Set<Map.Entry<K, T>> entrySet() {
+
         /*
          * Registries hand out read-only entries, so widening the value type is safe.
          */
         return (Set<Map.Entry<K, T>>) (Set<?>) this.delegate.entrySet();
+
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public @NotNull Stream<T> stream() {
+
         return (Stream<T>) this.delegate.stream();
+
     }
 
     @Override
     public int size() {
+
         return this.delegate.size();
+
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public @NotNull Iterator<T> iterator() {
+
         return (Iterator<T>) this.delegate.iterator();
+
     }
 
 }

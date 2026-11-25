@@ -27,7 +27,8 @@ public final class ExtensionClassLoader extends URLClassLoader {
         registerAsParallelCapable();
     }
 
-    public ExtensionClassLoader(            final @NotNull String name,
+    public ExtensionClassLoader(
+            final @NotNull String name,
             final @NotNull URL jar,
             final @NotNull ClassLoader parent
     ) {
@@ -37,19 +38,28 @@ public final class ExtensionClassLoader extends URLClassLoader {
     }
 
     @Override
-    public @Nullable URL getResource(final @NotNull String name) {
+    public @Nullable URL getResource(
+            final @NotNull String name
+    ) {
+
         final URL own = findResource(name);
         return own != null ? own : super.getResource(name);
 
     }
 
-    public void addLibrary(final URL library) {
+    public void addLibrary(
+            final @NotNull URL library
+    ) {
+
         addURL(library);
 
     }
 
     @Override
-    public Enumeration<URL> getResources(final String name) throws IOException {
+    public Enumeration<URL> getResources(
+            final @NotNull String name
+    ) throws IOException {
+
         if (name.equals(ExtensionPlan.BOOTSTRAP_SERVICE)) {
             return findResources(name);
         }
@@ -58,6 +68,7 @@ public final class ExtensionClassLoader extends URLClassLoader {
     }
 
     public void link(final Iterable<LoadedExtension> dependencies) {
+
         final Map<String, ExtensionClassLoader> packages = new LinkedHashMap<>();
         for (final LoadedExtension dependency : dependencies) {
             for (final String name : dependency.plan().exports()) {
@@ -72,6 +83,7 @@ public final class ExtensionClassLoader extends URLClassLoader {
 
     @Override
     protected Class<?> findClass(final String name) throws ClassNotFoundException {
+
         final int separator = name.lastIndexOf('.');
         final ExtensionClassLoader provider = separator < 0 ? null : imports.get(name.substring(0, separator));
         if (provider == null) {

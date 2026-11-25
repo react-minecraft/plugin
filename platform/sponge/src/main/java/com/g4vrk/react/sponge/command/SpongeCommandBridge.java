@@ -28,9 +28,12 @@ import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.plugin.PluginContainer;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletionException;
 
 /**
@@ -101,16 +104,21 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
     }
 
     @Override
-    public void onCommandsChanged(final @NotNull String rootLabel) {
+    public void onCommandsChanged(
+            final @NotNull String rootLabel
+    ) {
 
         synchronized (manager) {
             if (!nativeRoots.containsKey(rootLabel)) {
-                final Command<PlatformSender> command = manager.commands().stream()
-                        .filter(candidate -> candidate.rootComponent().name().equalsIgnoreCase(rootLabel))
-                        .findFirst()
-                        .orElse(null);
+                Command<PlatformSender> command = null;
+                for (final Command<PlatformSender> candidate : manager.commands()) {
+                    if (candidate.rootComponent().name().equalsIgnoreCase(rootLabel)) {
+                        command = candidate;
+                        break;
+                    }
+                }
                 if (command != null) {
-                    registerNativeRoot(rootLabel, command.rootComponent().aliases().toArray(String[]::new));
+                    registerNativeRoot(rootLabel, command.rootComponent().aliases().toArray(new String[0]));
                 }
             }
         }
@@ -118,19 +126,24 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
 
     }
 
-    private boolean registerCloudCommand(final Command<PlatformSender> command) {
+    private boolean registerCloudCommand(
+            final @NotNull Command<PlatformSender> command
+    ) {
 
         final String root = command.rootComponent().name();
         synchronized (manager) {
             if (nativeRoots.containsKey(root)) {
                 return true;
             }
-            return registerNativeRoot(root, command.rootComponent().aliases().toArray(String[]::new));
+            return registerNativeRoot(root, command.rootComponent().aliases().toArray(new String[0]));
         }
 
     }
 
-    private boolean registerNativeRoot(final String root, final String[] aliases) {
+    private boolean registerNativeRoot(
+            final @NotNull String root,
+            final @NotNull String[] aliases
+    ) {
 
         final SpongeRawCommand rawCommand = new SpongeRawCommand(root);
         final CommandRegistrar<org.spongepowered.api.command.Command.Raw> registrar = Sponge.server()
@@ -180,7 +193,10 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
         }
 
         @Override
-        public boolean hasPermission(final PlatformSender sender, final String permission) {
+        public boolean hasPermission(
+                final @NotNull PlatformSender sender,
+                final @NotNull String permission
+        ) {
 
             return sender.hasPermission(permission);
 
@@ -194,7 +210,9 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
     private final class SpongeRegistrationHandler implements CommandRegistrationHandler<PlatformSender> {
 
         @Override
-        public boolean registerCommand(final @NotNull Command<PlatformSender> command) {
+        public boolean registerCommand(
+                final @NotNull Command<PlatformSender> command
+        ) {
 
             return registerCloudCommand(command);
 
@@ -205,7 +223,9 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
          * live Cloud tree so removed roots become silent and can be registered again later.
          */
         @Override
-        public void unregisterRootCommand(final @NotNull CommandComponent<PlatformSender> rootCommand) {
+        public void unregisterRootCommand(
+                final @NotNull CommandComponent<PlatformSender> rootCommand
+        ) {
 
         }
 
@@ -218,7 +238,9 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
 
         private final String root;
 
-        private SpongeRawCommand(final String root) {
+        private SpongeRawCommand(
+                final @NotNull String root
+        ) {
 
             this.root = root;
 
@@ -226,8 +248,8 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
 
         @Override
         public CommandResult process(
-                final CommandCause cause,
-                final ArgumentReader.Mutable arguments
+                final @NotNull CommandCause cause,
+                final ArgumentReader.@NotNull Mutable arguments
         ) throws CommandException {
 
             final String remainder = arguments.remaining();
@@ -247,20 +269,23 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
         }
 
         @Override
-        public java.util.List<CommandCompletion> complete(
-                final CommandCause cause,
-                final ArgumentReader.Mutable arguments
+        public List<CommandCompletion> complete(
+                final @NotNull CommandCause cause,
+                final ArgumentReader.@NotNull Mutable arguments
         ) throws CommandException {
 
             final String remainder = arguments.remaining();
             final String input = root + (remainder.isEmpty() ? " " : " " + remainder);
             try {
-                return manager.suggestionFactory().suggest(
+                final var cloudSuggestions = manager.suggestionFactory().suggest(
                         SpongePlatformSender.wrap(cause),
                         input
-                ).join().list().stream()
-                        .map(suggestion -> CommandCompletion.of(suggestion.suggestion()))
-                        .toList();
+                ).join().list();
+                final List<CommandCompletion> completions = new ArrayList<>(cloudSuggestions.size());
+                for (final var suggestion : cloudSuggestions) {
+                    completions.add(CommandCompletion.of(suggestion.suggestion()));
+                }
+                return completions;
             } catch (final CompletionException failure) {
                 final Throwable causeFailure = failure.getCause() == null ? failure : failure.getCause();
                 throw new CommandException(Component.text("Could not build command suggestions"), causeFailure);
@@ -269,29 +294,41 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
         }
 
         @Override
-        public boolean canExecute(final CommandCause cause) {
+        public boolean canExecute(
+                final @NotNull CommandCause cause
+        ) {
 
-            return manager.commands().stream().anyMatch(command ->
-                    command.rootComponent().name().equalsIgnoreCase(root));
-
-        }
-
-        @Override
-        public java.util.Optional<Component> shortDescription(final CommandCause cause) {
-
-            return java.util.Optional.of(Component.text("React command"));
-
-        }
-
-        @Override
-        public java.util.Optional<Component> extendedDescription(final CommandCause cause) {
-
-            return java.util.Optional.empty();
+            for (final Command<PlatformSender> command : manager.commands()) {
+                if (command.rootComponent().name().equalsIgnoreCase(root)) {
+                    return true;
+                }
+            }
+            return false;
 
         }
 
         @Override
-        public Component usage(final CommandCause cause) {
+        public Optional<Component> shortDescription(
+                final @NotNull CommandCause cause
+        ) {
+
+            return Optional.of(Component.text("React command"));
+
+        }
+
+        @Override
+        public Optional<Component> extendedDescription(
+                final @NotNull CommandCause cause
+        ) {
+
+            return Optional.empty();
+
+        }
+
+        @Override
+        public Component usage(
+                final @NotNull CommandCause cause
+        ) {
 
             return Component.text("/" + root);
 

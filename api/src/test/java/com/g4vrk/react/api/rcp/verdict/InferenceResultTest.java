@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies threshold invariants and NaN fallback behavior in {@link InferenceResult}.
+ */
 class InferenceResultTest {
 
     @Test

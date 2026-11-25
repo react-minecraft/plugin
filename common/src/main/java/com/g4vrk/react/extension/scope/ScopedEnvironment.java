@@ -38,7 +38,8 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
     private final ScopedPlaceholderRegistry placeholders;
     private ScopedExtensionService extensionServices;
 
-    protected ScopedEnvironment(            final @NotNull ExtensionContext context,
+    protected ScopedEnvironment(
+            final @NotNull ExtensionContext context,
             final @NotNull ExtensionDescriptor descriptor,
             final @NotNull Path directory,
             final @NotNull ClassLoader classLoader
@@ -64,11 +65,13 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
      * @return the descriptor
      */
     public @NotNull ExtensionDescriptor descriptor() {
+
         return descriptor;
 
     }
 
-    public void attachServices(            final ScopedExtensionService services
+    public void attachServices(
+            final @NotNull ScopedExtensionService services
     ) {
 
         this.extensionServices = services;
@@ -77,12 +80,14 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     @Override
     public @NotNull ExtensionService services() {
+
         return extensionServices;
 
     }
 
     @Override
-    public boolean dependencyAvailable(            final @NotNull ExtensionId id
+    public boolean dependencyAvailable(
+            final @NotNull ExtensionId id
     ) {
 
         return extensionServices.available(id);
@@ -91,72 +96,84 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     @Override
     public @NotNull String name() {
+
         return descriptor.name();
 
     }
 
     @Override
     public @NotNull Path directory() {
+
         return directory;
 
     }
 
     @Override
     public @NotNull Logger logger() {
+
         return logger;
 
     }
 
     @Override
     public @NotNull PlatformServer platform() {
+
         return platform;
 
     }
 
     @Override
     public @NotNull TaskScheduler<PlatformPlayer> scheduler() {
+
         return scheduler;
 
     }
 
     @Override
     public @NotNull ScopedCommandRegistry commands() {
+
         return commands;
 
     }
 
     @Override
     public @NotNull ScopedListenerRegistry listeners() {
+
         return listeners;
 
     }
 
     @Override
     public @NotNull ScopedPlaceholderRegistry placeholders() {
+
         return placeholders;
 
     }
 
     @Override
     public @NotNull TextFormatter text() {
+
         return text;
 
     }
 
     @Override
     public @NotNull ActionParser<Audience> actions() {
+
         return actions;
 
     }
 
     @Override
     public @NotNull ConfigFactory configs() {
+
         return this;
 
     }
 
     @Override
-    public <T> ConfigFile.@NotNull Builder<T> file(            final @NotNull String name,
+    public <T> ConfigFile.@NotNull Builder<T> file(
+            final @NotNull String name,
             final @NotNull Class<T> type
     ) {
 
@@ -169,6 +186,7 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     @Override
     public void close() {
+
         closeQuietly(commands);
         closeQuietly(listeners);
         closeQuietly(placeholders);
@@ -176,7 +194,8 @@ public abstract class ScopedEnvironment implements ExtensionEnvironment, ConfigF
 
     }
 
-    private void closeQuietly(            final @NotNull AutoCloseable resource
+    private void closeQuietly(
+            final @NotNull AutoCloseable resource
     ) {
 
         try {

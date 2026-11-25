@@ -20,7 +20,8 @@ public final class HostedAddonEnvironment extends ScopedEnvironment implements A
     private final TrackedPlayerRegistry players;
     private final PunishmentRegistry punishments;
 
-    public HostedAddonEnvironment(            final @NotNull ExtensionContext context,
+    public HostedAddonEnvironment(
+            final @NotNull ExtensionContext context,
             final @NotNull ExtensionDescriptor descriptor,
             final @NotNull Path directory,
             final @NotNull ClassLoader classLoader
@@ -35,18 +36,21 @@ public final class HostedAddonEnvironment extends ScopedEnvironment implements A
 
     @Override
     public @NotNull AddonMetadata metadata() {
+
         return metadata;
 
     }
 
     @Override
     public @NotNull TrackedPlayerRegistry players() {
+
         return players;
 
     }
 
     @Override
     public @NotNull PunishmentRegistry punishments() {
+
         return punishments;
 
     }

@@ -11,24 +11,17 @@ import com.g4vrk.react.check.info.CheckInfo;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.punish.PunishmentManager;
 import com.g4vrk.react.storage.ViolationLevel;
-import lombok.Getter;
-import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Common implementation of one player's configured check and violation state.
  */
-@Accessors(fluent = true)
 public abstract class Check implements com.g4vrk.react.api.check.Check {
 
-    @Getter
     protected final TrackedPlayerImpl player;
 
-    @Getter
     private final String name;
-    @Getter
     private final String id;
-    @Getter
     private final boolean experimental;
 
     private final ViolationLevel violationLevel;
@@ -36,6 +29,7 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
     protected Check(
             final @NotNull TrackedPlayerImpl player
     ) {
+
         final CheckInfo info = this.getClass().getAnnotation(CheckInfo.class);
 
         if (info == null) {
@@ -50,11 +44,47 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
 
         this.player = player;
         this.violationLevel = new ViolationLevel(React.INSTANCE.storageManager(), player.uniqueId(), id);
+
+    }
+
+    public final @NotNull TrackedPlayerImpl player() {
+
+        return player;
+
+    }
+
+    @Override
+    public final @NotNull String name() {
+
+        return name;
+
+    }
+
+    @Override
+    public final @NotNull String id() {
+
+        return id;
+
+    }
+
+    @Override
+    public final boolean experimental() {
+
+        return experimental;
+
     }
 
     @Override
     public final boolean active() {
+
         return player.dataReady() && !player.bypassed(id());
+
+    }
+
+    protected final boolean debugEnabled() {
+
+        return !BuiltinChannelRegistry.DEBUG.recipients().isEmpty();
+
     }
 
     /**
@@ -66,13 +96,48 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
     protected final boolean fail(
             final double amount
     ) {
+
         return this.fail(amount, "");
+
+    }
+
+    protected final boolean fail(
+            final double amount,
+            final @NotNull String details,
+            final long expectedGeneration
+    ) {
+
+        if (!Double.isFinite(amount) || amount <= 0.0D) {
+            throw new IllegalArgumentException("Violation amount must be finite and positive");
+        }
+        if (!player.isInferenceCurrent(expectedGeneration)) {
+            return false;
+        }
+
+        final CheckFlagEvent event = React.INSTANCE.events().post(new CheckFlagEvent(this, amount, details));
+
+        if (event.cancelled()) {
+            return false;
+        }
+
+        final double adjustedAmount = event.amount();
+        if (!Double.isFinite(adjustedAmount) || adjustedAmount <= 0.0D) {
+            throw new IllegalArgumentException("Adjusted violation amount must be finite and positive");
+        }
+        if (!player.isInferenceCurrent(expectedGeneration)) {
+            return false;
+        }
+
+        this.apply(adjustedAmount);
+        return true;
+
     }
 
     private boolean fail(
             final double amount,
             final @NotNull String details
     ) {
+
         if (!Double.isFinite(amount) || amount <= 0.0D) {
             throw new IllegalArgumentException("Violation amount must be finite and positive");
         }
@@ -90,23 +155,31 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
 
         this.apply(adjustedAmount);
         return true;
+
     }
 
-    private synchronized void apply(
+    private void apply(
             final double amount
     ) {
-        final double previous = violationLevel.add(amount);
+
+        final double previous;
+        synchronized (this) {
+            previous = violationLevel.add(amount);
+        }
         final PunishmentManager punishmentManager = React.INSTANCE.punishmentManager();
 
         if (punishmentManager != null) {
             punishmentManager.handleFail(this, previous, previous + amount);
         }
+
     }
 
     protected final void failAndAlert(
             final double amount
     ) {
+
         this.failAndAlert(amount, "");
+
     }
 
     /**
@@ -119,53 +192,67 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
             final double amount,
             final @NotNull String details
     ) {
+
         if (this.fail(amount, details)) {
             this.alert(details);
         }
+
     }
 
     protected final void failAndMonitor(
             final double amount,
             final @NotNull String details
     ) {
+
         if (this.fail(amount, details)) {
             this.monitor(details);
         }
+
     }
 
     protected final void alert() {
+
         this.alert("");
+
     }
 
     protected final void alert(
             final @NotNull String details
     ) {
+
         final AlertEvent event = React.INSTANCE.events().post(new AlertEvent(this.report(details)));
 
         if (!event.cancelled()) {
             BuiltinChannelRegistry.ALERTS.publish(event.report());
         }
+
     }
 
     protected final void monitor(
             final @NotNull String details
     ) {
+
         final MonitorEvent event = React.INSTANCE.events().post(new MonitorEvent(this.report(details)));
 
         if (!event.cancelled()) {
             BuiltinChannelRegistry.MONITOR.publish(event.report());
         }
+
     }
 
     @Override
     public final void debug(final @NotNull String message) {
-        if (!BuiltinChannelRegistry.DEBUG.recipients().isEmpty()) {
+
+        if (debugEnabled()) {
             BuiltinChannelRegistry.DEBUG.publish(this.report(message));
         }
+
     }
 
     public final @NotNull CheckReport report(final @NotNull String details) {
+
         return new CheckReport(player.uniqueId(), player.name(), name(), id(), violations(), details);
+
     }
 
     protected final synchronized void reward() {
@@ -189,6 +276,7 @@ public abstract class Check implements com.g4vrk.react.api.check.Check {
 
     @Override
     public final void addViolations(final double amount) {
+
         this.fail(amount);
     }
 

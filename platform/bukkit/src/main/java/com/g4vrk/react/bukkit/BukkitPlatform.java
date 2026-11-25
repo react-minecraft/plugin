@@ -122,7 +122,11 @@ public final class BukkitPlatform implements ReactPlatform {
     ) {
 
         final Player player = platformPlayer.unwrap(Player.class);
-        if (player == null || !player.isOnline() || !BukkitEntityRegion.ownsNearbyChunks(player)) {
+        if (player == null || !player.isOnline()) {
+            return null;
+        }
+        final List<Entity> nearbyEntities = BukkitEntityRegion.nearbyIfOwned(player);
+        if (nearbyEntities == null) {
             return null;
         }
         final Location position = player.getLocation();
@@ -130,17 +134,11 @@ public final class BukkitPlatform implements ReactPlatform {
         final double y = position.getY();
         final double z = position.getZ();
         Entity target = null;
-        for (final Entity nearby : BukkitEntityRegion.nearby(player)) {
-            if (nearby.getEntityId() == targetEntityId) {
-                target = nearby;
-                break;
-            }
-        }
-        final boolean targetValid = target != null && target.isValid() && !target.isDead()
-                && target.getWorld().equals(player.getWorld()) && BukkitEntityRegion.owns(target);
-        final BoundingBox box = targetValid ? target.getBoundingBox() : null;
         int targetsInRange = 0;
-        for (final Entity entity : BukkitEntityRegion.nearby(player)) {
+        for (final Entity entity : nearbyEntities) {
+            if (target == null && entity.getEntityId() == targetEntityId) {
+                target = entity;
+            }
             if (!(entity instanceof LivingEntity) || !BukkitEntityRegion.owns(entity) || entity.isDead()) {
                 continue;
             }
@@ -155,6 +153,9 @@ public final class BukkitPlatform implements ReactPlatform {
                 targetsInRange++;
             }
         }
+        final boolean targetValid = target != null && target.isValid() && !target.isDead()
+                && target.getWorld().equals(player.getWorld()) && BukkitEntityRegion.owns(target);
+        final BoundingBox box = targetValid ? target.getBoundingBox() : null;
         final ItemStack item = player.getInventory().getItemInMainHand();
         final Material material = item.getType();
         final float ping = ping(player);
@@ -215,6 +216,7 @@ public final class BukkitPlatform implements ReactPlatform {
         return new BukkitPlatformPlayer(player);
 
     }
+
     @Override
     public @Nullable PlatformPlayer player(
             final @NotNull UUID uniqueId

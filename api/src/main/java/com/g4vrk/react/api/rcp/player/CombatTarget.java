@@ -33,4 +33,21 @@ public final class CombatTarget {
 
     }
 
+    /**
+     * Checks whether the given namespace and path identify a training mannequin without string concatenation.
+     *
+     * @param namespace the resource namespace, or {@code null}
+     * @param key       the resource key/path, or {@code null}
+     * @return {@code true} when it matches {@link #MANNEQUIN_TYPE_ID}
+     */
+    @ApiStatus.AvailableSince("2.0")
+    public static boolean isMannequinType(
+            final @Nullable String namespace,
+            final @Nullable String key
+    ) {
+
+        return "minecraft".equals(namespace) && "mannequin".equals(key);
+
+    }
+
 }

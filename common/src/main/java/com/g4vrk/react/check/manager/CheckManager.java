@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/*
- * realization like in GrimAC
+/**
+ * Holds and reloads all check instances belonging to one tracked player.
  */
 public final class CheckManager {
 
@@ -36,37 +36,52 @@ public final class CheckManager {
 
     }
 
-    public <T extends Check> @Nullable T getCheck(
+    public <T extends Check> @Nullable T check(
             final @NotNull Class<T> checkClass
     ) {
+
         return this.checks.getInstance(checkClass);
+
     }
 
     public @NotNull List<Check> checks() {
+
         return this.checksValues;
+
     }
 
-    public @Nullable Check getCheck(final @NotNull String configId) {
+    public @Nullable Check check(
+            final @NotNull String configId
+    ) {
+
         for (final Check check : checksValues) {
             if (check.id().equalsIgnoreCase(configId)) {
                 return check;
             }
         }
         return null;
+
     }
 
     public void reload() {
+
         final ConfigManager configs = React.INSTANCE.configs();
         for (final Check check : checksValues) {
             if (check instanceof final ReloadObserver<?> observer) {
                 reload(observer, configs.check(check.id()));
             }
         }
+
     }
 
     @SuppressWarnings("unchecked")
-    private static <C> void reload(final @NotNull ReloadObserver<C> observer, final @NotNull Object config) {
+    private static <C> void reload(
+            final @NotNull ReloadObserver<C> observer,
+            final @NotNull Object config
+    ) {
+
         observer.onReload((C) config);
+
     }
 
 }

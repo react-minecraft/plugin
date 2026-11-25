@@ -28,7 +28,10 @@ public record ChecksumManifest(@NotNull Map<String, String> header, @NotNull Map
      * @param text the file contents
      * @return the header and the files; unreadable lines are skipped
      */
-    public static @NotNull ChecksumManifest parse(final @NotNull String text) {
+    public static @NotNull ChecksumManifest parse(
+            final @NotNull String text
+    ) {
+
         final Map<String, String> header = new HashMap<>();
         final Map<String, String> files = new LinkedHashMap<>();
         for (final String raw : text.split("\\R")) {
@@ -58,6 +61,7 @@ public record ChecksumManifest(@NotNull Map<String, String> header, @NotNull Map
      * @return the version, or {@code null}
      */
     public @Nullable String version() {
+
         return header.get("version");
 
     }
@@ -68,6 +72,7 @@ public record ChecksumManifest(@NotNull Map<String, String> header, @NotNull Map
      * @return the version, {@code 0} when the header has none
      */
     public int apiVersion() {
+
         try {
             return Integer.parseInt(header.getOrDefault("api-version", "0"));
         } catch (final NumberFormatException ex) {
@@ -82,11 +87,14 @@ public record ChecksumManifest(@NotNull Map<String, String> header, @NotNull Map
      * @param prefix the start of the jar name
      * @return the file name with its SHA-256, or {@code null}
      */
-    public @Nullable Map.Entry<String, String> jar(final @NotNull String prefix) {
+    public @Nullable Map.Entry<String, String> jar(
+            final @NotNull String prefix
+    ) {
+
         Map.Entry<String, String> only = null;
         int jars = 0;
         for (final Map.Entry<String, String> entry : files.entrySet()) {
-            if (!entry.getKey().endsWith(".jar") || entry.getKey().endsWith("-sources.jar") || entry.getKey().endsWith("-javadoc.jar")) {
+            if (!isJar(entry.getKey())) {
                 continue;
             }
             if (entry.getKey().startsWith(prefix)) {
@@ -120,10 +128,29 @@ public record ChecksumManifest(@NotNull Map<String, String> header, @NotNull Map
                 return entry;
             }
         }
-        if (!isBukkitPlatform(normalizedPlatform)) {
+        if (!isBukkitPlatform(normalizedPlatform) && hasPlatformSpecificJar(prefix)) {
             return null;
         }
         return genericJar(prefix);
+
+    }
+
+    private boolean hasPlatformSpecificJar(
+            final @NotNull String prefix
+    ) {
+
+        final String version = version();
+        final String genericPrefix = version == null || version.isBlank() ? null : prefix + "-" + version;
+        final String dashedPrefix = prefix + "-";
+        for (final String name : files.keySet()) {
+            if (!isJar(name) || !name.startsWith(dashedPrefix)) {
+                continue;
+            }
+            if (genericPrefix == null || !hasPrefix(name, genericPrefix)) {
+                return true;
+            }
+        }
+        return false;
 
     }
 

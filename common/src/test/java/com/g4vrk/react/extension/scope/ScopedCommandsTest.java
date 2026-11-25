@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies isolated command registration and shared-root cleanup in {@link ScopedCommandRegistry}.
+ */
 class ScopedCommandsTest {
 
     private final TestManager manager = new TestManager();

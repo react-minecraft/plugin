@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,7 +50,9 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
     @Override
     public void clear() {
 
-        this.entries.values().forEach(TrackedPlayerImpl::clearTransientState);
+        for (final TrackedPlayerImpl player : this.entries.values()) {
+            player.clearTransientState();
+        }
         super.clear();
 
     }
@@ -63,12 +66,18 @@ public final class PlayerRegistry extends MapRegistry<UUID, TrackedPlayerImpl> {
     public @Nullable TrackedPlayerImpl byEntityId(final int entityId) {
 
         for (final TrackedPlayerImpl player : this.entries.values()) {
-            if (player.platformPlayer.entityId() == entityId) {
+            if (player.platform().entityId() == entityId) {
                 return player;
             }
         }
 
         return null;
+
+    }
+
+    public @NotNull List<TrackedPlayerImpl> snapshot() {
+
+        return List.copyOf(this.entries.values());
 
     }
 

@@ -1,6 +1,5 @@
 package com.g4vrk.react.punish;
 
-import com.g4vrk.functionalActions.list.ExecutableActionList;
 import com.g4vrk.functionalActions.parser.ActionParser;
 import com.g4vrk.react.React;
 import com.g4vrk.react.api.ReloadObserver;
@@ -14,22 +13,25 @@ import com.g4vrk.schedula.task.scheduler.TaskScheduler;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.react.check.Check;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import com.g4vrk.react.punish.rule.PunishmentRuleCompiler;
+import com.g4vrk.react.punish.rule.PunishmentRuleCompiler.ActionStep;
+import com.g4vrk.react.punish.rule.PunishmentRuleCompiler.CompiledCatalog;
+import com.g4vrk.react.punish.rule.PunishmentRuleCompiler.Rule;
+import com.g4vrk.react.punish.rule.PunishmentRuleCompiler.RuleSet;
+import com.g4vrk.react.punish.rule.PunishmentRuleCompiler.SpecialKind;
 import net.kyori.adventure.audience.Audience;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.configurate.ConfigurationNode;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.UnaryOperator;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 /**
@@ -44,8 +46,6 @@ import java.util.stream.Stream;
  * A cancelled {@link CheckPunishEvent} skips a rule.</p>
  */
 public final class PunishmentManager implements PunishmentRegistry, ReloadObserver<ConfigurationNode> {
-
-    private static final char PERIOD_SEPARATOR = ';';
 
     private final Logger logger;
     private final PlatformServer server;
@@ -63,116 +63,40 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             final @NotNull ActionParser<Audience> parser,
             final @NotNull EventDispatcher events
     ) {
+
         this.events = events;
         this.logger = logger;
         this.server = server;
         this.scheduler = scheduler;
         this.parser = parser;
         this.reload();
+
     }
 
     public void reload() {
+
         this.onReload(React.INSTANCE.configs().punishments());
+
     }
 
     @Override
-    public void onReload(final @NotNull ConfigurationNode config) {
-        final Map<String, List<Rule>> parsed = new Object2ObjectOpenHashMap<>();
-        for (final Map.Entry<Object, ? extends ConfigurationNode> group : config.node("punishments").childrenMap().entrySet()) {
-            final String name = String.valueOf(group.getKey());
-            final List<String> checks = strings(group.getValue().node("checks"));
-            if (checks.isEmpty()) {
-                logger.warn("Punishment group '{}' has no checks, skipping", name);
-                continue;
-            }
-            final List<Rule> groupRules = new ObjectArrayList<>();
-            readRules(name, group.getValue().node("at"), false, groupRules);
-            readRules(name, group.getValue().node("every"), true, groupRules);
-            for (final String check : checks) {
-                parsed.computeIfAbsent(check.toLowerCase(Locale.ROOT), key -> new ObjectArrayList<>()).addAll(groupRules);
-            }
-        }
-        final Map<String, RuleSet> converted = new Object2ObjectOpenHashMap<>(parsed.size());
-        final Map<String, List<PunishmentRule>> api = new Object2ObjectOpenHashMap<>(parsed.size());
-        for (final Map.Entry<String, List<Rule>> entry : parsed.entrySet()) {
-            final RuleSet set = RuleSet.of(entry.getValue());
-            converted.put(entry.getKey(), set);
-            api.put(entry.getKey(), set.api());
-        }
-        this.rules = converted;
-        this.view = Collections.unmodifiableMap(api);
-    }
-
-    private void readRules(
-            final @NotNull String group,
-            final @NotNull ConfigurationNode node,
-            final boolean repeating,
-            final @NotNull List<Rule> out
+    public void onReload(
+            final @NotNull ConfigurationNode config
     ) {
-        for (final Map.Entry<Object, ? extends ConfigurationNode> entry : node.childrenMap().entrySet()) {
-            final String key = String.valueOf(entry.getKey()).trim();
-            final int separator = key.indexOf(PERIOD_SEPARATOR);
-            final int start;
-            final int period;
-            try {
-                if (separator == -1) {
-                    start = Integer.parseInt(key);
-                    period = repeating ? start : 0;
-                } else {
-                    start = Integer.parseInt(key.substring(0, separator).trim());
-                    period = Integer.parseInt(key.substring(separator + 1).trim());
-                }
-            } catch (final NumberFormatException ex) {
-                logger.warn("Invalid punishment level '{}' in group '{}'", key, group);
-                continue;
-            }
-            if (start <= 0 || (repeating && period <= 0)) {
-                logger.warn("Punishment level '{}' in group '{}' must be positive", key, group);
-                continue;
-            }
-            final List<String> lines = strings(entry.getValue());
-            out.add(new Rule(start, period, List.copyOf(lines), compileActions(lines, parser)));
-        }
-    }
 
-    private @NotNull List<String> strings(final @NotNull ConfigurationNode node) {
-        try {
-            final List<String> list = node.getList(String.class);
-            return list == null ? List.of() : list;
-        } catch (final Exception ex) {
-            logger.warn("Could not read {} in punishments.yml", node.path(), ex);
-            return List.of();
-        }
-    }
+        final CompiledCatalog catalog = PunishmentRuleCompiler.compile(config, parser, logger);
+        this.rules = catalog.rules();
+        this.view = catalog.apiView();
 
-    private static boolean isSpecial(final @NotNull String line) {
-        return switch (tag(line)) {
-            case "alert", "log", "reset-vl", "reset", "console", "cmd" -> true;
-            default -> false;
-        };
     }
 
     static @NotNull List<ActionStep> compileActions(
             final @NotNull List<String> lines,
             final @NotNull ActionParser<Audience> parser
     ) {
-        final List<ActionStep> steps = new ObjectArrayList<>();
-        final List<String> common = new ObjectArrayList<>();
-        for (final String line : lines) {
-            if (isSpecial(line)) {
-                if (!common.isEmpty()) {
-                    steps.add(new ActionStep(null, parser.parseAll(common)));
-                    common.clear();
-                }
-                steps.add(new ActionStep(line, null));
-            } else {
-                common.add(line);
-            }
-        }
-        if (!common.isEmpty()) {
-            steps.add(new ActionStep(null, parser.parseAll(common)));
-        }
-        return List.copyOf(steps);
+
+        return PunishmentRuleCompiler.compileActions(lines, parser);
+
     }
 
     static void runActions(
@@ -181,6 +105,7 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             final @NotNull UnaryOperator<String> placeholders,
             final @NotNull Consumer<String> special
     ) {
+
         for (final ActionStep step : steps) {
             if (step.special() != null) {
                 special.accept(step.special());
@@ -188,52 +113,65 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
                 step.actions().run(audience, placeholders);
             }
         }
-    }
 
-    private static @NotNull String tag(final @NotNull String line) {
-        final String trimmed = line.trim();
-        final int end = trimmed.indexOf(']');
-        return trimmed.startsWith("[") && end > 0 ? trimmed.substring(1, end).toLowerCase(Locale.ROOT) : "";
     }
 
     @Override
-    public @Nullable List<PunishmentRule> get(final @NotNull String check) {
+    public @Nullable List<PunishmentRule> get(
+            final @NotNull String check
+    ) {
+
         return this.view.get(check);
+
     }
 
     @Override
-    public @Nullable String getKey(final @NotNull List<PunishmentRule> value) {
+    public @Nullable String getKey(
+            final @NotNull List<PunishmentRule> value
+    ) {
+
         for (final Map.Entry<String, List<PunishmentRule>> entry : this.view.entrySet()) {
             if (entry.getValue() == value) {
                 return entry.getKey();
             }
         }
         return null;
+
     }
 
     @Override
     public @NotNull Set<String> keySet() {
+
         return this.view.keySet();
+
     }
 
     @Override
     public @NotNull Set<Map.Entry<String, List<PunishmentRule>>> entrySet() {
+
         return this.view.entrySet();
+
     }
 
     @Override
     public @NotNull Stream<List<PunishmentRule>> stream() {
+
         return this.view.values().stream();
+
     }
 
     @Override
     public int size() {
+
         return this.view.size();
+
     }
 
     @Override
     public @NotNull Iterator<List<PunishmentRule>> iterator() {
+
         return this.view.values().iterator();
+
     }
 
     public void handleFail(
@@ -241,6 +179,7 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
             final double oldViolations,
             final double newViolations
     ) {
+
         if (newViolations <= oldViolations) {
             return;
         }
@@ -254,9 +193,15 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
                 execute(check, rule, vl);
             }
         }
+
     }
 
-    private void execute(final @NotNull Check check, final @NotNull Rule rule, final int vl) {
+    private void execute(
+            final @NotNull Check check,
+            final @NotNull Rule rule,
+            final int vl
+    ) {
+
         final String player = check.player().name();
         final String level = String.valueOf(vl);
         final UnaryOperator<String> placeholders = text -> text
@@ -264,71 +209,41 @@ public final class PunishmentManager implements PunishmentRegistry, ReloadObserv
                 .replace("<check>", check.name())
                 .replace("<vl>", level);
         try {
-            final Audience audience = check.player().platformPlayer;
-            runActions(rule.actions(), audience, placeholders, line ->
-                    runSpecial(check, line, placeholders.apply(line.substring(line.indexOf(']') + 1).trim()), level));
+            final Audience audience = check.player().platform();
+            for (final ActionStep step : rule.actions()) {
+                if (step.kind() == SpecialKind.NONE) {
+                    step.actions().run(audience, placeholders);
+                    continue;
+                }
+                final String args = step.arguments().isEmpty() ? "" : placeholders.apply(step.arguments());
+                runSpecial(check, step.kind(), args, level);
+            }
         } catch (final Throwable th) {
             logger.error("Could not run a punishment for {} ({}, VL {})", player, check.name(), vl, th);
         }
+
     }
 
     private void runSpecial(
             final @NotNull Check check,
-            final @NotNull String line,
+            final @NotNull SpecialKind kind,
             final @NotNull String args,
             final @NotNull String level
     ) {
-        switch (tag(line)) {
-            case "alert" -> BuiltinChannelRegistry.ALERTS.publish(check.report(args.isEmpty() ? "VL " + level : args));
-            case "log" -> logger.info("[Punishment] {} reached VL {} on {}", check.player().name(), level, check.name());
-            case "reset-vl", "reset" -> check.resetViolations();
-            default -> {
+
+        switch (kind) {
+            case ALERT -> BuiltinChannelRegistry.ALERTS.publish(check.report(args.isEmpty() ? "VL " + level : args));
+            case LOG -> logger.info("[Punishment] {} reached VL {} on {}", check.player().name(), level, check.name());
+            case RESET_VL -> check.resetViolations();
+            case CONSOLE -> {
                 if (!args.isEmpty()) {
                     scheduler.schedule(() -> server.dispatchConsoleCommand(args), TickSchedule.instant());
                 }
             }
-        }
-    }
-
-    private record RuleSet(
-            Rule @NotNull [] rules,
-            @NotNull List<PunishmentRule> api
-    ) {
-
-        private static @NotNull RuleSet of(final @NotNull List<Rule> rules) {
-            final Rule[] array = rules.toArray(new Rule[0]);
-            final List<PunishmentRule> api = new ObjectArrayList<>(array.length);
-
-            for (final Rule rule : array) {
-                api.add(new PunishmentRule(rule.start(), rule.period(), rule.lines()));
+            case NONE -> {
             }
-
-            return new RuleSet(array, Collections.unmodifiableList(api));
         }
 
-    }
-
-    private record Rule(
-            int start,
-            int period,
-            @NotNull List<String> lines,
-            @NotNull List<ActionStep> actions
-    ) {
-
-        private int trigger(final double oldVl, final double newVl) {
-            if (newVl < start) {
-                return -1;
-            }
-            if (period <= 0) {
-                return oldVl < start ? start : -1;
-            }
-            final long point = start + (long) Math.floor((newVl - start) / period) * period;
-            return oldVl < point ? (int) point : -1;
-        }
-
-    }
-
-    record ActionStep(@Nullable String special, @Nullable ExecutableActionList<? super Audience> actions) {
     }
 
 }

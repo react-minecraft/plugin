@@ -24,7 +24,7 @@ import java.util.Collection;
  *         .literal("link")
  *         .handler(context -> {
  *             PlatformSender sender = context.sender();
- *             // ...
+ *             sender.sendMessage(text);
  *         }));
  * }</pre>
  *

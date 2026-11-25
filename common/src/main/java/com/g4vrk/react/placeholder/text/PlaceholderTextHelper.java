@@ -10,7 +10,9 @@ public final class PlaceholderTextHelper {
 
     private static final String SEPARATOR = ":";
 
-    private PlaceholderTextHelper() {    }
+    private PlaceholderTextHelper() {
+
+    }
 
     /**
      * Tells whether a text may hold a placeholder at all, without scanning it twice.
@@ -19,6 +21,7 @@ public final class PlaceholderTextHelper {
      * @return {@code true} when the text holds {@code %} or {@code {}
      */
     public static boolean mentions(final @NotNull String text) {
+
         return text.indexOf('%') != -1 || text.indexOf('{') != -1;
 
     }
@@ -30,6 +33,7 @@ public final class PlaceholderTextHelper {
      * @return the query, empty when the tag has no arguments
      */
     public static @NotNull String join(final @NotNull ArgumentQueue arguments) {
+
         if (!arguments.hasNext()) {
             return "";
         }

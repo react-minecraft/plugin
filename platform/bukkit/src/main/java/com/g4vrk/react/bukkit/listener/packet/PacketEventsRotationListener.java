@@ -15,7 +15,8 @@ public final class PacketEventsRotationListener extends PacketListenerAbstract {
 
     private final CoreListenerCallback callbacks;
 
-    public PacketEventsRotationListener(            final @NotNull CoreListenerCallback callbacks
+    public PacketEventsRotationListener(
+            final @NotNull CoreListenerCallback callbacks
     ) {
 
         this.callbacks = callbacks;
@@ -23,7 +24,8 @@ public final class PacketEventsRotationListener extends PacketListenerAbstract {
     }
 
     @Override
-    public void onPacketReceive(            final @NotNull PacketReceiveEvent event
+    public void onPacketReceive(
+            final @NotNull PacketReceiveEvent event
     ) {
 
         if (event.getConnectionState() != ConnectionState.PLAY

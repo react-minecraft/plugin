@@ -10,12 +10,16 @@ import java.net.URI;
  * Collects declarations for one extension. Valid only during bootstrap.
  */
 @ApiStatus.NonExtendable
+@ApiStatus.AvailableSince("2.0")
 public interface ExtensionBootstrapContext {
 
     /**
      * Declares a stable ID and a positive version of the extension's exported API.
      */
-    void identify(final @NotNull ExtensionId id, final int apiVersion);
+    void identify(
+            final @NotNull ExtensionId id,
+            final int apiVersion
+    );
 
     /**
      * Exports exactly this package to direct dependents.
@@ -25,16 +29,25 @@ public interface ExtensionBootstrapContext {
     /**
      * Requires an installed, enabled extension with the specified API version.
      */
-    void require(final @NotNull ExtensionId id, final int apiVersion);
+    void require(
+            final @NotNull ExtensionId id,
+            final int apiVersion
+    );
 
     /**
      * Links a compatible extension when it is available.
      */
-    void optional(final @NotNull ExtensionId id, final int apiVersion);
+    void optional(
+            final @NotNull ExtensionId id,
+            final int apiVersion
+    );
 
     /**
      * Adds a pinned HTTPS JAR to this extension's private classpath.
      */
-    void library(final @NotNull URI source, final @NotNull String sha256);
+    void library(
+            final @NotNull URI source,
+            final @NotNull String sha256
+    );
 
 }

@@ -18,9 +18,13 @@ public final class ExtensionDataDirectory {
     private static final Map<String, String> ADDON_DIRECTORIES = Map.of("com.g4vrk.hologramAddon.ReactHologramAddon", "hologram-addon", "com.g4vrk.menuAddon.ReactMenuAddon", "menu-addon", "com.g4vrk.punishAddon.ReactPunishAddon", "punish-addon", "com.g4vrk.reactdataset.ReactDatasetAddon", "collect-addon", "com.example.addon.ExampleAddon", "example-addon");
 
     private ExtensionDataDirectory() {
+
+        throw new UnsupportedOperationException("Utility class");
+
     }
 
-    public static @NotNull Path resolve(            final @NotNull ExtensionContext context,
+    public static @NotNull Path resolve(
+            final @NotNull ExtensionContext context,
             final @NotNull ExtensionDescriptor descriptor
     ) throws IOException {
 

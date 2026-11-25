@@ -1,11 +1,13 @@
 package com.g4vrk.react.api.extension.bootstrap;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Declares an addon's or RCP's dependencies before React loads its main class.
  * Register one public no-argument implementation through Java's service provider mechanism.
  */
+@ApiStatus.AvailableSince("2.0")
 @FunctionalInterface
 public interface ExtensionBootstrap {
 

@@ -4,6 +4,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 import com.g4vrk.react.api.channel.impl.ReportChannel;
 
+/**
+ * Built-in reporting channels provided by React core.
+ */
 @ApiStatus.AvailableSince("2.0")
 public final class BuiltinChannelRegistry {
 
@@ -12,6 +15,9 @@ public final class BuiltinChannelRegistry {
     public static final ReportChannel DEBUG = new ReportChannel();
 
     private BuiltinChannelRegistry() {
+
+        throw new UnsupportedOperationException("Utility class");
+
     }
 
 }

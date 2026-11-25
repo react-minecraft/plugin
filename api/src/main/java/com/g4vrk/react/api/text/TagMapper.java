@@ -1,5 +1,6 @@
 package com.g4vrk.react.api.text;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>A mapper answers only the tags it owns: {@link #has(String)} keeps {@code <red>} and every
  * other standard tag out of the way.</p>
  */
+@ApiStatus.AvailableSince("2.0")
 @FunctionalInterface
 public interface TagMapper {
 
@@ -24,7 +26,10 @@ public interface TagMapper {
      * @param args what followed the name, joined with {@code :}, empty when nothing did
      * @return the markup the tag stands for, or {@code null} to leave the tag as it is
      */
-    @Nullable String map(final @NotNull String name, final @NotNull String args);
+    @Nullable String map(
+            final @NotNull String name,
+            final @NotNull String args
+    );
 
     /**
      * Tells whether this mapper owns a tag.
@@ -32,8 +37,12 @@ public interface TagMapper {
      * @param name the tag name
      * @return {@code true} when {@link #map(String, String)} can answer this tag
      */
-    default boolean has(final @NotNull String name) {
+    default boolean has(
+            final @NotNull String name
+    ) {
+
         return true;
+
     }
 
 }

@@ -2,6 +2,7 @@ package com.g4vrk.react.history.entry;
 
 import com.g4vrk.react.check.Check;
 import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,11 +12,12 @@ import static java.lang.System.currentTimeMillis;
  * An inference result retained for display and persistence.
  */
 @Getter
+@Accessors(fluent = true)
 public final class InferenceHistoryEntry {
 
     private final long timestamp;
 
-    private final Check check;
+    private final @NotNull Check check;
 
     private final double probability;
 

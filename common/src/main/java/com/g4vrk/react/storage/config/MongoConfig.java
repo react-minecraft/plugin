@@ -4,6 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 
+/**
+ * MongoDB connection URI, TLS, and driver pool settings.
+ */
 public record MongoConfig(
         @NotNull String uri,
         @NotNull String host,
@@ -23,4 +26,5 @@ public record MongoConfig(
         @NotNull Duration maxConnectionLifeTime,
         @NotNull String applicationName
 ) {
+
 }

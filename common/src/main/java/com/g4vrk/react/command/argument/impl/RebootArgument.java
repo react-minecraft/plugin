@@ -25,6 +25,7 @@ import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,8 +97,14 @@ public final class RebootArgument extends LocalArgument implements ReloadObserve
                 .optional(
                         TARGET,
                         StringParser.stringParser(),
-                        SuggestionProvider.blocking((context, input) ->
-                                extensions.targets().stream().map(Suggestion::suggestion).toList())
+                        SuggestionProvider.blocking((context, input) -> {
+                            final List<String> targets = extensions.targets();
+                            final List<Suggestion> suggestions = new ArrayList<>(targets.size());
+                            for (final String candidate : targets) {
+                                suggestions.add(Suggestion.suggestion(candidate));
+                            }
+                            return suggestions;
+                        })
                 )
                 .handler(context -> {
                     final PlatformSender sender = context.sender();

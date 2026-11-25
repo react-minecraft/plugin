@@ -7,11 +7,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Persistence backend abstraction for player violation levels, inference history, and temporary bypasses.
+ */
 public interface StorageBackend extends AutoCloseable {
 
     void initialize() throws Exception;
 
-    @NotNull PlayerStorageData loadPlayer(final @NotNull UUID playerUuid, final long historyCutoff) throws Exception;
+    @NotNull PlayerStorageData loadPlayer(
+            final @NotNull UUID playerUuid,
+            final long historyCutoff
+    ) throws Exception;
 
     void writeBatch(final @NotNull List<StorageMutation> mutations) throws Exception;
 
@@ -19,4 +25,5 @@ public interface StorageBackend extends AutoCloseable {
 
     @Override
     void close() throws Exception;
+
 }

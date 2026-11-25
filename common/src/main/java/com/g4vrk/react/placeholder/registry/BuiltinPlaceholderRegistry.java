@@ -7,8 +7,6 @@ import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.util.ProbabilityFormatter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Locale;
-
 /**
  * Registers the placeholders the plugin itself offers.
  *
@@ -20,6 +18,9 @@ import java.util.Locale;
 public final class BuiltinPlaceholderRegistry {
 
     private BuiltinPlaceholderRegistry() {
+
+        throw new UnsupportedOperationException("Utility class");
+
     }
 
     /**
@@ -31,7 +32,11 @@ public final class BuiltinPlaceholderRegistry {
 
         registry.register("vl", (player, query) -> {
             if (query.isEmpty()) {
-                return number(player.checks().stream().mapToDouble(Check::violations).sum());
+                double totalViolations = 0.0D;
+                for (final Check check : player.checks()) {
+                    totalViolations += check.violations();
+                }
+                return number(totalViolations);
             }
 
             final Check check = player.check(query);
@@ -43,7 +48,7 @@ public final class BuiltinPlaceholderRegistry {
                 return null;
             }
 
-            final double average = impl.inferenceStatistic.averageProbability();
+            final double average = impl.inferenceStatistic().averageProbability();
             return query.equals("plain")
                     ? ProbabilityFormatter.format(average)
                     : ProbabilityColor.miniMessage(average);
@@ -52,17 +57,42 @@ public final class BuiltinPlaceholderRegistry {
         registry.register(
                 "history-size",
                 (player, query) -> player instanceof TrackedPlayerImpl impl
-                        ? Integer.toString(impl.inferenceHistory.size())
+                        ? Integer.toString(impl.inferenceHistory().size())
                         : null
         );
 
     }
 
-    private static @NotNull String number(final double value) {
+    private static @NotNull String number(
+            final double value
+    ) {
 
-        return value == Math.rint(value)
-                ? Long.toString((long) value)
-                : String.format(Locale.ROOT, "%.2f", value);
+        if (!Double.isFinite(value)) {
+            return Double.toString(value);
+        }
+        if (value == Math.rint(value) && Math.abs(value) <= Long.MAX_VALUE) {
+            return Long.toString((long) value);
+        }
+        final double scaledValue = value * 100.0D;
+        if (Math.abs(scaledValue) <= Long.MAX_VALUE) {
+            final long roundedHundredths = Math.round(scaledValue);
+            final long whole = roundedHundredths / 100L;
+            final long frac = Math.abs(roundedHundredths % 100L);
+            if (frac == 0L) {
+                return Long.toString(whole);
+            }
+            final StringBuilder builder = new StringBuilder(16);
+            if (roundedHundredths < 0L && whole == 0L) {
+                builder.append('-');
+            }
+            builder.append(whole).append('.');
+            if (frac < 10L) {
+                builder.append('0');
+            }
+            builder.append(frac);
+            return builder.toString();
+        }
+        return Double.toString(value);
 
     }
 

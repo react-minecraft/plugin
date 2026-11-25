@@ -6,11 +6,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 
+/**
+ * Exposes bundled resources packaged inside an extension or plugin archive.
+ */
 @ApiStatus.AvailableSince("2.0")
 public interface ResourceHolder {
 
     @Nullable InputStream getResource(final @NotNull String fileName);
 
-    void saveResource(final @NotNull String fileName, final boolean replace);
+    void saveResource(
+            final @NotNull String fileName,
+            final boolean replace
+    );
 
 }

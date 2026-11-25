@@ -19,29 +19,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -61,7 +52,6 @@ public final class ReleaseClient {
     private static final String CHECKSUMS = "checksums.txt";
     private static final String SIGNATURE = CHECKSUMS + ".sig";
     private static final String REVOKED_URL = RCPAPI.API_URL + "/api/v1/rcp/revoked";
-    private static final String PUBLIC_KEY = "MCowBQYDK2VwAyEAjBPvgQr/pgYBmpHeXr0t+G402p1vHKGx3MbANe+FntI=";
     private static final Pattern VERSION = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.+-]{0,39}");
     private static final Pattern RELEASE_VERSION = Pattern.compile("\\d+(?:\\.\\d+)*");
     private static final Pattern REPOSITORY = Pattern.compile("[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}");
@@ -78,7 +68,10 @@ public final class ReleaseClient {
             .connectTimeout(TIMEOUT)
             .build();
 
-    public ReleaseClient(final @NotNull Logger logger) {
+    public ReleaseClient(
+            final @NotNull Logger logger
+    ) {
+
         this.logger = logger;
 
     }
@@ -90,7 +83,8 @@ public final class ReleaseClient {
      * @param checksums       the parsed file
      * @param revokedFallback {@code true} when this release was chosen as a revoked-version fallback
      */
-    public record Release(            @NotNull String base,
+    public record Release(
+            @NotNull String base,
             @NotNull ChecksumManifest checksums,
             boolean revokedFallback
     ) {
@@ -130,7 +124,8 @@ public final class ReleaseClient {
      * @throws InterruptedException  when the thread is interrupted
      * @throws VerificationException when the signature or the version is bad
      */
-    public @NotNull Release release(            final @NotNull String repository,
+    public @NotNull Release release(
+            final @NotNull String repository,
             final @NotNull UpdateChannel channel,
             final @Nullable String pinned
     ) throws IOException, InterruptedException, VerificationException {
@@ -174,9 +169,11 @@ public final class ReleaseClient {
 
     /**
      * Returns {@code true} only when both {@code running} and {@code candidate} are plain numeric
-     * release versions ({@code x.y.z}) and {@code candidate} is strictly lower than {@code running}.     * Dev or commit-suffixed versions are ignored.
+     * release versions ({@code x.y.z}) and {@code candidate} is strictly lower than {@code running}.
+     * Dev or commit-suffixed versions are ignored.
      */
-    public static boolean isReleaseDowngrade(            final @NotNull String running,
+    public static boolean isReleaseDowngrade(
+            final @NotNull String running,
             final @NotNull String candidate
     ) {
 
@@ -201,7 +198,10 @@ public final class ReleaseClient {
 
     }
 
-    private static @NotNull String stripLeadingZeros(final @NotNull String digits) {
+    private static @NotNull String stripLeadingZeros(
+            final @NotNull String digits
+    ) {
+
         int index = 0;
         while (index < digits.length() && digits.charAt(index) == '0') {
             index++;
@@ -213,21 +213,21 @@ public final class ReleaseClient {
     /**
      * Checks that a signed file belongs to the place it was fetched from, so a signed file of
      * another repository or release cannot be replayed there: another repo's file, a nightly as
-     * the latest release, or an older release under a pinned tag. Files without a header line are
-     * accepted.
+     * the latest release, or an older release under a pinned tag.
      */
-    public static @NotNull Release bound(            final @NotNull Release release,
+    public static @NotNull Release bound(
+            final @NotNull Release release,
             final @NotNull String repository,
             final @NotNull String channel,
             final @Nullable String version
     ) throws VerificationException {
 
         final String signedRepository = release.checksums().header().get("repository");
-        if (signedRepository != null && !signedRepository.equalsIgnoreCase(repository)) {
+        if (signedRepository == null || !signedRepository.equalsIgnoreCase(repository)) {
             throw new VerificationException("signed repository " + signedRepository + " is not " + repository);
         }
         final String signedChannel = release.checksums().header().get("channel");
-        if (signedChannel != null && !signedChannel.equalsIgnoreCase(channel)) {
+        if (signedChannel == null || !signedChannel.equalsIgnoreCase(channel)) {
             throw new VerificationException("signed channel " + signedChannel + " is not " + channel);
         }
         final String signedVersion = release.checksums().version();
@@ -243,12 +243,14 @@ public final class ReleaseClient {
      * complete and checked.
      *
      * @param release the release
-     * @param jar     the jar name with its SHA-256, from {@link ChecksumManifest#jar(String)}     * @param target  where the jar goes
+     * @param jar     the jar name with its SHA-256, from {@link ChecksumManifest#jar(String)}
+     * @param target  where the jar goes
      * @throws IOException           when the download fails
      * @throws InterruptedException  when the thread is interrupted
      * @throws VerificationException when the hash does not match
      */
-    public void download(            final @NotNull Release release,
+    public void download(
+            final @NotNull Release release,
             final Map.@NotNull Entry<String, String> jar,
             final @NotNull Path target
     ) throws IOException, InterruptedException, VerificationException {
@@ -280,7 +282,11 @@ public final class ReleaseClient {
      * @return {@code true} when it matches
      * @throws IOException when the file cannot be read
      */
-    public static boolean matches(final @NotNull Path file, final @NotNull String sha256) throws IOException {
+    public static boolean matches(
+            final @NotNull Path file,
+            final @NotNull String sha256
+    ) throws IOException {
+
         if (Files.notExists(file)) {
             return false;
         }
@@ -293,16 +299,18 @@ public final class ReleaseClient {
 
     }
 
-    private @NotNull Release signed(            final @NotNull String base
+    private @NotNull Release signed(
+            final @NotNull String base
     ) throws IOException, InterruptedException, VerificationException {
 
         final byte[] bytes = get(base + CHECKSUMS);
-        verifySignature(bytes, get(base + SIGNATURE));
+        Ed25519SignatureVerifier.verify(bytes, get(base + SIGNATURE), CHECKSUMS);
         return new Release(base, ChecksumManifest.parse(new String(bytes, StandardCharsets.UTF_8)));
 
     }
 
     private @NotNull Map<String, String> revokedVersions() {
+
         try {
             final JsonElement revoked = JsonParser.parseString(new String(get(REVOKED_URL), StandardCharsets.UTF_8))
                     .getAsJsonObject().get("revoked");
@@ -326,13 +334,16 @@ public final class ReleaseClient {
 
     }
 
-    private byte[] get(final @NotNull String url) throws IOException, InterruptedException {
+    private byte[] get(
+            final @NotNull String url
+    ) throws IOException, InterruptedException {
+
         final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(TIMEOUT)
                 .header("User-Agent", "React-Updater")
                 .GET()
                 .build();
-        final HttpResponse<byte[]> response = send(request, HttpResponse.BodySubscribers.ofByteArray(), MAX_METADATA_BYTES, TIMEOUT);
+        final HttpResponse<byte[]> response = send(request, HttpResponse.BodySubscribers::ofByteArray, MAX_METADATA_BYTES, TIMEOUT);
         if (response.statusCode() != 200) {
             throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
@@ -340,26 +351,34 @@ public final class ReleaseClient {
 
     }
 
-    private void get(final @NotNull String url, final @NotNull Path target) throws IOException, InterruptedException {
+    private void get(
+            final @NotNull String url,
+            final @NotNull Path target
+    ) throws IOException, InterruptedException {
+
         final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(TIMEOUT)
                 .header("User-Agent", "React-Updater")
                 .GET()
                 .build();
-        final HttpResponse<Path> response = send(request, HttpResponse.BodySubscribers.ofFile(target), MAX_JAR_BYTES, DOWNLOAD_TIMEOUT);
+        final HttpResponse<Path> response = send(request, () -> HttpResponse.BodySubscribers.ofFile(target), MAX_JAR_BYTES, DOWNLOAD_TIMEOUT);
         if (response.statusCode() != 200) {
             throw new IOException("HTTP " + response.statusCode() + " for " + url);
         }
 
     }
 
-    private <T> @NotNull HttpResponse<T> send(            final @NotNull HttpRequest request,
-            final HttpResponse.@NotNull BodySubscriber<T> body,
+    private <T> @NotNull HttpResponse<T> send(
+            final @NotNull HttpRequest request,
+            final @NotNull Supplier<HttpResponse.BodySubscriber<T>> bodyFactory,
             final long limit,
             final @NotNull Duration timeout
     ) throws IOException, InterruptedException {
 
-        final CompletableFuture<HttpResponse<T>> future = http.sendAsync(request, ignored -> new LimitedBodySubscriber<>(body, limit));
+        final CompletableFuture<HttpResponse<T>> future = http.sendAsync(
+                request,
+                ignored -> new LimitedBodySubscriber<>(bodyFactory.get(), limit)
+        );
         try {
             return future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (final TimeoutException failure) {
@@ -374,80 +393,10 @@ public final class ReleaseClient {
 
     }
 
-    private static final class LimitedBodySubscriber<T> implements HttpResponse.BodySubscriber<T> {
+    private static byte[] digest(
+            final @NotNull Path file
+    ) throws IOException {
 
-        private final HttpResponse.BodySubscriber<T> delegate;
-        private final long limit;
-        private long received;
-        private boolean done;
-        private Flow.Subscription subscription;
-
-        private LimitedBodySubscriber(final HttpResponse.@NotNull BodySubscriber<T> delegate, final long limit) {
-
-            this.delegate = delegate;
-            this.limit = limit;
-
-        }
-
-        @Override
-        public @NotNull CompletionStage<T> getBody() {
-
-            return delegate.getBody();
-
-        }
-
-        @Override
-        public void onSubscribe(final Flow.@NotNull Subscription subscription) {
-
-            this.subscription = subscription;
-            delegate.onSubscribe(subscription);
-
-        }
-
-        @Override
-        public void onNext(final @NotNull List<ByteBuffer> buffers) {
-
-            if (done) {
-                return;
-            }
-            for (final ByteBuffer buffer : buffers) {
-                received += buffer.remaining();
-                if (received > limit) {
-                    done = true;
-                    subscription.cancel();
-                    delegate.onError(new IOException("HTTP response exceeds size limit"));
-                    return;
-                }
-            }
-            delegate.onNext(buffers);
-
-        }
-
-        @Override
-        public void onError(final @NotNull Throwable failure) {
-
-            if (done) {
-                return;
-            }
-            done = true;
-            delegate.onError(failure);
-
-        }
-
-        @Override
-        public void onComplete() {
-
-            if (done) {
-                return;
-            }
-            done = true;
-            delegate.onComplete();
-
-        }
-
-    }
-
-    private static byte[] digest(final @NotNull Path file) throws IOException {
         final MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-256");
@@ -463,24 +412,6 @@ public final class ReleaseClient {
             }
         }
         return digest.digest();
-
-    }
-
-    private static void verifySignature(final byte[] data, final byte[] signatureText) throws VerificationException {
-        final boolean valid;
-        try {
-            final PublicKey key = KeyFactory.getInstance("Ed25519")
-                    .generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(PUBLIC_KEY)));
-            final Signature verifier = Signature.getInstance("Ed25519");
-            verifier.initVerify(key);
-            verifier.update(data);
-            valid = verifier.verify(Base64.getDecoder().decode(new String(signatureText, StandardCharsets.US_ASCII).strip()));
-        } catch (final GeneralSecurityException | IllegalArgumentException ex) {
-            throw new VerificationException("unreadable ed25519 signature on " + CHECKSUMS);
-        }
-        if (!valid) {
-            throw new VerificationException("bad ed25519 signature on " + CHECKSUMS);
-        }
 
     }
 

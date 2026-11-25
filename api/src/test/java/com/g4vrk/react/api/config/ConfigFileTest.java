@@ -13,12 +13,21 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies YAML loading, migration, and concurrent access guarantees of {@link ConfigFile}.
+ */
 class ConfigFileTest {
 
     private static final String DEFAULTS = """
@@ -140,10 +149,10 @@ class ConfigFileTest {
 
         final Path path = directory.resolve("concurrent.yml");
         final ConfigFile<Object> config = file(path, RENAME);
-        final java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
-        final java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(4);
+        final CountDownLatch start = new CountDownLatch(1);
+        final ExecutorService pool = Executors.newFixedThreadPool(4);
         try {
-            final java.util.List<java.util.concurrent.Future<CommentedConfigurationNode>> futures = new java.util.ArrayList<>();
+            final List<Future<CommentedConfigurationNode>> futures = new ArrayList<>();
             for (int index = 0; index < 4; index++) {
                 futures.add(pool.submit(() -> {
                     start.await();
@@ -151,7 +160,7 @@ class ConfigFileTest {
                 }));
             }
             start.countDown();
-            for (final java.util.concurrent.Future<CommentedConfigurationNode> future : futures) {
+            for (final Future<CommentedConfigurationNode> future : futures) {
                 assertEquals(5, future.get().node("limit").getInt());
             }
         } finally {

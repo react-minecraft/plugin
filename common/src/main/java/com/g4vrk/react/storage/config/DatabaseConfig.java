@@ -5,6 +5,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 
+/**
+ * Immutable runtime configuration for database persistence, pooling, batching, and retry backoff.
+ */
 public record DatabaseConfig(
         boolean enabled,
         @NotNull DatabaseType type,
@@ -22,4 +25,5 @@ public record DatabaseConfig(
         @Nullable JdbcConfig jdbc,
         @Nullable MongoConfig mongo
 ) {
+
 }

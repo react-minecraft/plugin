@@ -20,6 +20,7 @@ import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.internal.CommandRegistrationHandler;
 import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.setting.ManagerSetting;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public final class MinestomCommandBridge implements PlatformCommandBridge {
 
         this.platform = platform;
         this.manager = new ReactCommandManager(new NativeCommandRegistrationHandler());
-        this.manager.settings().set(org.incendo.cloud.setting.ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);
+        this.manager.settings().set(ManagerSetting.ALLOW_UNSAFE_REGISTRATION, true);
 
     }
 
@@ -245,10 +246,15 @@ public final class MinestomCommandBridge implements PlatformCommandBridge {
                 if (MinecraftServer.getCommandManager().commandExists(label)) {
                     return false;
                 }
-                final String[] aliases = root.aliases().stream()
-                        .map(alias -> alias.toLowerCase(Locale.ROOT))
-                        .filter(alias -> !alias.equals(label))
-                        .toArray(String[]::new);
+                final Collection<String> rawAliases = root.aliases();
+                final List<String> aliasList = new ArrayList<>(rawAliases.size());
+                for (final String rawAlias : rawAliases) {
+                    final String lower = rawAlias.toLowerCase(Locale.ROOT);
+                    if (!lower.equals(label)) {
+                        aliasList.add(lower);
+                    }
+                }
+                final String[] aliases = aliasList.toArray(new String[0]);
                 for (final String alias : aliases) {
                     if (MinecraftServer.getCommandManager().commandExists(alias)) {
                         return false;

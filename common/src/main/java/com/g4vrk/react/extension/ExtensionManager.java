@@ -3,8 +3,9 @@ package com.g4vrk.react.extension;
 import com.g4vrk.react.extension.descriptor.ExtensionDescriptor;
 import com.g4vrk.react.extension.descriptor.ExtensionKind;
 import com.g4vrk.react.extension.descriptor.ExtensionPlan;
-import com.g4vrk.react.extension.descriptor.InvalidExtensionException;
 import com.g4vrk.react.extension.environment.ExtensionContext;
+import com.g4vrk.react.extension.loader.ExtensionCatalog;
+import com.g4vrk.react.extension.loader.ExtensionCatalog.Candidate;
 import com.g4vrk.react.extension.loader.LoadedExtension;
 import com.g4vrk.react.extension.update.StagedUpdateRegistry;
 
@@ -13,19 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.ServiceConfigurationError;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -61,7 +56,7 @@ public final class ExtensionManager implements AutoCloseable {
     private static final long CLOSE_TIMEOUT_SECONDS = 15;
 
     private final ExtensionContext context;
-    private final StagedUpdateRegistry updates;
+    private final ExtensionCatalog catalog;
     private final Logger logger;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> {
         final Thread thread = new Thread(runnable, "React-Extensions");
@@ -72,11 +67,14 @@ public final class ExtensionManager implements AutoCloseable {
     private final List<LoadedExtension> loaded = new CopyOnWriteArrayList<>();
     private final AtomicBoolean stopping = new AtomicBoolean();
 
-    public ExtensionManager(final @NotNull ExtensionContext context, final @NotNull StagedUpdateRegistry updates) {
+    public ExtensionManager(
+            final @NotNull ExtensionContext context,
+            final @NotNull StagedUpdateRegistry updates
+    ) {
 
         this.context = context;
-        this.updates = updates;
         this.logger = context.logger();
+        this.catalog = new ExtensionCatalog(context.dataFolder(), updates, logger);
 
     }
 
@@ -157,7 +155,7 @@ public final class ExtensionManager implements AutoCloseable {
             final List<LoadedExtension> targets = new ArrayList<>();
             final Set<ExtensionId> affected = new HashSet<>();
             for (final LoadedExtension extension : loaded) {
-                if (selector.matches(extension) || extension.services().dependencyIds().stream().anyMatch(affected::contains)) {
+                if (selector.matches(extension) || hasAffectedDependency(extension, affected)) {
                     targets.add(extension);
                     affected.add(extension.plan().id());
                 }
@@ -199,9 +197,10 @@ public final class ExtensionManager implements AutoCloseable {
             }
 
             final Set<ExtensionDescriptor> stopped = new HashSet<>();
-            targets.forEach(extension -> stopped.add(extension.descriptor()));
-            loadAll(descriptor -> reloadFilter.accepts(descriptor)
-                    || stopped.stream().anyMatch(old -> old.kind() == descriptor.kind() && old.name().equalsIgnoreCase(descriptor.name())), result);
+            for (final LoadedExtension extension : targets) {
+                stopped.add(extension.descriptor());
+            }
+            loadAll(descriptor -> reloadFilter.accepts(descriptor) || matchesStopped(descriptor, stopped), result);
 
             for (final LoadedExtension extension : targets) {
                 final String name = extension.descriptor().name();
@@ -269,10 +268,10 @@ public final class ExtensionManager implements AutoCloseable {
     public @NotNull List<String> targets() {
 
         final List<String> targets = new ArrayList<>(List.of(ALL, RCP, ADDONS));
-        loaded.forEach(extension -> {
+        for (final LoadedExtension extension : loaded) {
             targets.add(extension.descriptor().name());
             targets.add(extension.plan().id().toString());
-        });
+        }
         return targets;
 
     }
@@ -286,61 +285,27 @@ public final class ExtensionManager implements AutoCloseable {
             return;
         }
         final Map<ExtensionId, LoadedExtension> available = new LinkedHashMap<>();
-        loaded.forEach(extension -> available.put(extension.plan().id(), extension));
-        final Map<ExtensionId, Candidate> pending = new LinkedHashMap<>();
-        final Set<ExtensionId> duplicates = new HashSet<>();
-        for (final ExtensionKind kind : ExtensionKind.values()) {
-            for (final ExtensionDescriptor installed : scan(kind)) {
-                if (stopping.get()) {
-                    return;
-                }
-                if (!filter.accepts(installed) || loaded.stream().anyMatch(extension ->
-                        extension.descriptor().kind() == kind && extension.descriptor().name().equalsIgnoreCase(installed.name()))) {
-                    continue;
-                }
-                try {
-                    final Path jar = updates.apply(kind, installed.name(), installed.jar());
-                    final ExtensionDescriptor descriptor = jar.equals(installed.jar()) ? installed : ExtensionDescriptor.read(kind, jar);
-                    final ExtensionPlan plan = ExtensionPlan.read(descriptor);
-                    final Candidate candidate = new Candidate(descriptor, plan);
-                    if (available.containsKey(plan.id()) || duplicates.contains(plan.id())) {
-                        fail(candidate, "Duplicate extension ID " + plan.id(), result);
-                        continue;
-                    }
-                    final Candidate previous = pending.putIfAbsent(plan.id(), candidate);
-                    if (previous != null) {
-                        duplicates.add(plan.id());
-                        pending.remove(plan.id());
-                        fail(previous, "Duplicate extension ID " + plan.id(), result);
-                        fail(candidate, "Duplicate extension ID " + plan.id(), result);
-                    }
-                } catch (final Exception | LinkageError | ServiceConfigurationError failure) {
-                    logger.error("Could not bootstrap {} '{}'", kind.displayName(), installed.name(), failure);
-                    result.failed().add(installed.name());
-                }
-            }
+        for (final LoadedExtension extension : loaded) {
+            available.put(extension.plan().id(), extension);
         }
+        final Map<ExtensionId, Candidate> pending = catalog.discover(
+                available.keySet(),
+                loaded,
+                filter::accepts,
+                stopping::get,
+                result.failed()
+        );
 
         while (!pending.isEmpty()) {
             if (stopping.get()) {
                 return;
             }
-            Candidate ready = null;
-            for (final Candidate candidate : pending.values()) {
-                final Map<ExtensionId, ExtensionPlan.Dependency> dependencies = candidate.plan().dependencies();
-                if (dependencies.entrySet().stream().noneMatch(entry -> entry.getValue().required() && pending.containsKey(entry.getKey()))) {
-                    if (ready == null) {
-                        ready = candidate;
-                    }
-                    if (dependencies.keySet().stream().noneMatch(pending::containsKey)) {
-                        ready = candidate;
-                        break;
-                    }
-                }
-            }
+            final Candidate ready = ExtensionCatalog.nextReady(pending);
             if (ready == null) {
                 final Set<ExtensionId> blocked = pending.keySet();
-                pending.values().forEach(candidate -> fail(candidate, "Blocked by a required dependency cycle among " + blocked, result));
+                for (final Candidate candidate : pending.values()) {
+                    fail(candidate, "Blocked by a required dependency cycle among " + blocked, result);
+                }
                 return;
             }
             pending.remove(ready.plan().id());
@@ -378,7 +343,13 @@ public final class ExtensionManager implements AutoCloseable {
                 return;
             }
             extension.enable();
-            loaded.add(extension);
+            synchronized (loaded) {
+                if (stopping.get() || !context.platform().enabled()) {
+                    extension.close();
+                    return;
+                }
+                loaded.add(extension);
+            }
             available.put(candidate.plan().id(), extension);
             result.loaded().add(candidate.descriptor().name());
             logger.info("Enabled {}", extension);
@@ -406,46 +377,31 @@ public final class ExtensionManager implements AutoCloseable {
 
     }
 
-    /**
-     * An installed JAR with its bootstrap declarations.
-     */
-    private record Candidate(ExtensionDescriptor descriptor, ExtensionPlan plan) {
+    private static boolean hasAffectedDependency(
+            final @NotNull LoadedExtension extension,
+            final @NotNull Set<ExtensionId> affected
+    ) {
+
+        for (final ExtensionId dependencyId : extension.services().dependencyIds()) {
+            if (affected.contains(dependencyId)) {
+                return true;
+            }
+        }
+        return false;
+
     }
 
-    private @NotNull Collection<ExtensionDescriptor> scan(final @NotNull ExtensionKind kind) {
+    private static boolean matchesStopped(
+            final @NotNull ExtensionDescriptor descriptor,
+            final @NotNull Set<ExtensionDescriptor> stopped
+    ) {
 
-        final Path folder = kind.jars(context.dataFolder());
-        final List<ExtensionDescriptor> descriptors = new ArrayList<>();
-        final Set<String> names = new HashSet<>();
-
-        try {
-            Files.createDirectories(folder);
-        } catch (final IOException failure) {
-            logger.error("Could not create {}", folder, failure);
-            return descriptors;
-        }
-
-        try (DirectoryStream<Path> jars = Files.newDirectoryStream(folder, "*.jar")) {
-            for (final Path jar : jars) {
-                try {
-                    final ExtensionDescriptor descriptor = ExtensionDescriptor.read(kind, jar);
-                    if (names.add(descriptor.name().toLowerCase(Locale.ROOT))) {
-                        descriptors.add(descriptor);
-                    } else {
-                        logger.warn("Skipping {}: another jar is also named '{}'", jar.getFileName(), descriptor.name());
-                    }
-                } catch (final InvalidExtensionException failure) {
-                    logger.error(failure.getMessage());
-                } catch (final IOException | RuntimeException failure) {
-                    logger.error("Could not read {}", jar.getFileName(), failure);
-                }
+        for (final ExtensionDescriptor previous : stopped) {
+            if (previous.kind() == descriptor.kind() && previous.name().equalsIgnoreCase(descriptor.name())) {
+                return true;
             }
-        } catch (final IOException failure) {
-            logger.error("Could not list {}", folder, failure);
         }
-
-        descriptors.sort((first, second) -> first.name().compareToIgnoreCase(second.name()));
-        return descriptors;
+        return false;
 
     }
 
@@ -465,24 +421,36 @@ public final class ExtensionManager implements AutoCloseable {
     public void close() {
 
         stopLoading();
-        final CompletableFuture<Void> closing = CompletableFuture.runAsync(() -> {
-            final List<LoadedExtension> extensions = new ArrayList<>(loaded);
-            loaded.clear();
-            for (int index = extensions.size() - 1; index >= 0; index--) {
-                extensions.get(index).close();
-            }
-        }, executor);
+        final CompletableFuture<Void> closing = CompletableFuture.runAsync(this::closeRemainingExtensions, executor);
 
         try {
             closing.get(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException failure) {
-            logger.error("Extensions did not stop within {} seconds", CLOSE_TIMEOUT_SECONDS);
+            logger.error("Extensions did not stop within {} seconds; forcing remaining extensions to close", CLOSE_TIMEOUT_SECONDS);
+            closing.cancel(false);
         } catch (final InterruptedException failure) {
             Thread.currentThread().interrupt();
+            closing.cancel(false);
         } catch (final Exception failure) {
             logger.error("Could not stop extensions", failure);
         } finally {
             executor.shutdownNow();
+            closeRemainingExtensions();
+        }
+
+    }
+
+    private void closeRemainingExtensions() {
+
+        while (!loaded.isEmpty()) {
+            final LoadedExtension extension;
+            synchronized (loaded) {
+                if (loaded.isEmpty()) {
+                    break;
+                }
+                extension = loaded.remove(loaded.size() - 1);
+            }
+            extension.close();
         }
 
     }

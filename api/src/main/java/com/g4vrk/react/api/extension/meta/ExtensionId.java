@@ -1,5 +1,6 @@
 package com.g4vrk.react.api.extension.meta;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -7,6 +8,7 @@ import java.util.regex.Pattern;
 /**
  * Stable identifier of an installed React extension.
  */
+@ApiStatus.AvailableSince("2.0")
 public record ExtensionId(@NotNull String namespace, @NotNull String name) {
 
     private static final Pattern PART = Pattern.compile("[a-z0-9][a-z0-9_.-]{0,63}");

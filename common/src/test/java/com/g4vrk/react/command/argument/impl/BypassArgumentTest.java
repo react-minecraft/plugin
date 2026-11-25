@@ -8,6 +8,9 @@ import java.time.Instant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+/**
+ * Verifies overflow and non-positive duration rejection in {@link BypassArgument}.
+ */
 class BypassArgumentTest {
 
     @Test

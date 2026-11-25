@@ -91,12 +91,12 @@ public final class ScopedCommandRegistry implements CommandRegistrar, AutoClosea
              * Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
              * original Command objects of the plugin and other extensions, including their aliases.
              */
-            final List<Command<PlatformSender>> original = this.manager.commands().stream()
-                    .filter(command -> command.rootComponent().name().equals(label))
-                    .toList();
-            final List<Command<PlatformSender>> retained = original.stream()
-                    .filter(command -> owned.stream().noneMatch(candidate -> candidate == command))
-                    .toList();
+            final List<Command<PlatformSender>> retained = new ArrayList<>();
+            for (final Command<PlatformSender> command : this.manager.commands()) {
+                if (command.rootComponent().name().equals(label) && !containsIdentity(owned, command)) {
+                    retained.add(command);
+                }
+            }
             try {
                 this.manager.deleteRootCommand(label);
                 for (final Command<PlatformSender> command : retained) {
@@ -142,6 +142,20 @@ public final class ScopedCommandRegistry implements CommandRegistrar, AutoClosea
                 unregister(root);
             }
         }
+
+    }
+
+    private static boolean containsIdentity(
+            final @NotNull List<Command<PlatformSender>> list,
+            final @NotNull Command<PlatformSender> target
+    ) {
+
+        for (final Command<PlatformSender> candidate : list) {
+            if (candidate == target) {
+                return true;
+            }
+        }
+        return false;
 
     }
 

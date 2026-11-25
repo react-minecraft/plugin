@@ -23,7 +23,8 @@ public final class ScopedExtensionService implements ExtensionService {
     private volatile boolean enabled;
     private volatile Thread publisher;
 
-    public ScopedExtensionService(            final @NotNull ExtensionPlan plan,
+    public ScopedExtensionService(
+            final @NotNull ExtensionPlan plan,
             final @NotNull ClassLoader loader,
             final @NotNull Map<ExtensionId, LoadedExtension> dependencies
     ) {
@@ -35,17 +36,20 @@ public final class ScopedExtensionService implements ExtensionService {
     }
 
     public void begin() {
+
         publisher = Thread.currentThread();
 
     }
 
     public void publish() {
+
         publisher = null;
         enabled = true;
 
     }
 
     public void close() {
+
         enabled = false;
         publisher = null;
         services.clear();
@@ -54,18 +58,21 @@ public final class ScopedExtensionService implements ExtensionService {
     }
 
     public boolean available(final ExtensionId id) {
+
         final LoadedExtension dependency = dependencies.get(id);
         return dependency != null && dependency.services().enabled;
 
     }
 
     public Set<ExtensionId> dependencyIds() {
+
         return dependencies.keySet();
 
     }
 
     @Override
     public <T> void register(final Class<T> type, final T service) {
+
         if (publisher != Thread.currentThread()) {
             throw new IllegalStateException("Services can only be registered during onEnable");
         }
@@ -80,6 +87,7 @@ public final class ScopedExtensionService implements ExtensionService {
 
     @Override
     public <T> T find(final ExtensionId provider, final Class<T> type) {
+
         final LoadedExtension dependency = dependencies.get(provider);
         if (dependency == null || !dependency.services().enabled) {
             return null;

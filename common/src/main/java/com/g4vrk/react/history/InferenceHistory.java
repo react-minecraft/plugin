@@ -90,7 +90,7 @@ public final class InferenceHistory {
         try {
             this.entries.clear();
             this.entries.addAll(loaded);
-            this.entries.sort(Comparator.comparingLong(InferenceHistoryEntry::getTimestamp));
+            this.entries.sort(Comparator.comparingLong(InferenceHistoryEntry::timestamp));
             this.pruneUnsafe(System.currentTimeMillis() - this.retentionMillis);
             this.revision++;
         } finally {
@@ -112,7 +112,7 @@ public final class InferenceHistory {
                     this.entries.add(entry);
                 }
             }
-            this.entries.sort(Comparator.comparingLong(InferenceHistoryEntry::getTimestamp));
+            this.entries.sort(Comparator.comparingLong(InferenceHistoryEntry::timestamp));
             this.pruneUnsafe(System.currentTimeMillis() - this.retentionMillis);
             this.revision++;
         } finally {
@@ -170,7 +170,7 @@ public final class InferenceHistory {
         this.lock.readLock().lock();
         try {
             for (int i = 0; i < this.entries.size(); i++) {
-                action.accept(this.entries.get(i).getProbability());
+                action.accept(this.entries.get(i).probability());
             }
         } finally {
             this.lock.readLock().unlock();
@@ -216,9 +216,16 @@ public final class InferenceHistory {
 
     private void pruneUnsafe(final long cutoff) {
 
-        if (this.entries.removeIf(entry -> entry.getTimestamp() < cutoff)) {
-            this.revision++;
+        if (this.entries.isEmpty() || this.entries.get(0).timestamp() >= cutoff) {
+            return;
         }
+        int expiredCount = 1;
+        final int size = this.entries.size();
+        while (expiredCount < size && this.entries.get(expiredCount).timestamp() < cutoff) {
+            expiredCount++;
+        }
+        this.entries.subList(0, expiredCount).clear();
+        this.revision++;
 
     }
 
@@ -248,9 +255,9 @@ public final class InferenceHistory {
         private static @NotNull EntryIdentity of(final @NotNull InferenceHistoryEntry entry) {
 
             return new EntryIdentity(
-                    entry.getTimestamp(),
-                    entry.getCheck().id(),
-                    Double.doubleToLongBits(entry.getProbability())
+                    entry.timestamp(),
+                    entry.check().id(),
+                    Double.doubleToLongBits(entry.probability())
             );
 
         }

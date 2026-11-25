@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Base definition for React's built-in {@code /react} Cloud subcommands.
+ */
 @RequiredArgsConstructor
 public abstract class LocalArgument {
 

@@ -2,6 +2,9 @@ package com.g4vrk.react.util.math;
 
 import lombok.experimental.UtilityClass;
 
+/**
+ * Angular math helpers for rotation delta, acceleration, jerk, and GCD residual calculations.
+ */
 @UtilityClass
 public class AngleMath {
 
@@ -61,13 +64,7 @@ public class AngleMath {
             final float angle
     ) {
 
-        float normalized = angle % 360.0f;
-        if (normalized > 180.0f) {
-            normalized -= 360.0f;
-        } else if (normalized < -180.0f) {
-            normalized += 360.0f;
-        }
-        return normalized;
+        return normalizeSignedHalfTurn(angle);
 
     }
 
@@ -75,14 +72,23 @@ public class AngleMath {
             final float delta
     ) {
 
-        float normalized = delta % 360.0f;
+        return normalizeSignedHalfTurn(delta);
 
+    }
+
+    private static float normalizeSignedHalfTurn(
+            final float degrees
+    ) {
+
+        if (!Float.isFinite(degrees)) {
+            return 0.0f;
+        }
+        float normalized = degrees % 360.0f;
         if (normalized > 180.0f) {
             normalized -= 360.0f;
         } else if (normalized < -180.0f) {
             normalized += 360.0f;
         }
-
         return normalized;
 
     }

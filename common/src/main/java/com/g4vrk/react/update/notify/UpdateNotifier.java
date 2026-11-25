@@ -85,8 +85,7 @@ public final class UpdateNotifier implements Consumer<UpdateDownloadedEvent>, Re
 
     private void send(final @NotNull Audience audience, final @NotNull UpdateDownloadedEvent event) {
 
-        final ExecutableActionList<? super Audience> actions =
-                event.kind() == UpdateDownloadedEvent.Kind.PLUGIN ? plugin : extension;
+        final ExecutableActionList<? super Audience> actions = event.kind() == UpdateDownloadedEvent.Kind.PLUGIN ? plugin : extension;
         actions.run(
                 audience,
                 text -> text

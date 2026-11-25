@@ -7,6 +7,9 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+/**
+ * Verifies checksum parsing, release metadata binding, and JAR selection in {@link ChecksumManifest}.
+ */
 class ChecksumsTest {
 
     private static final String JAR_HASH = "a".repeat(64);
@@ -104,6 +107,12 @@ class ChecksumsTest {
 
         assertEquals(Map.entry("menu-addon-bukkit-1.0.jar", SOURCES_HASH.toLowerCase()), variants.jar("menu-addon", "paper"));
         assertEquals(Map.entry("menu-addon-1.0.jar", JAR_HASH), legacy.jar("menu-addon", "folia"));
+
+        final ChecksumManifest universal = ChecksumManifest.parse("# version: 1.0.0-abc1234\n" + JAR_HASH + "  react-inference-rcp-1.0.0-abc1234.jar\n");
+        assertEquals(Map.entry("react-inference-rcp-1.0.0-abc1234.jar", JAR_HASH), universal.jar("react-inference-rcp", "fabric"));
+        assertEquals(Map.entry("react-inference-rcp-1.0.0-abc1234.jar", JAR_HASH), universal.jar("react-inference-rcp", "sponge"));
+        assertEquals(Map.entry("react-inference-rcp-1.0.0-abc1234.jar", JAR_HASH), universal.jar("react-inference-rcp", "minestom"));
+        assertEquals(Map.entry("react-inference-rcp-1.0.0-abc1234.jar", JAR_HASH), universal.jar("react-inference-rcp", "paper"));
 
     }
 

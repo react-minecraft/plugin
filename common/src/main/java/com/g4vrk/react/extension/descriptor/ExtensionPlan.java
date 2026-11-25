@@ -37,12 +37,14 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
     private boolean sealed;
 
     private ExtensionPlan(final ExtensionDescriptor descriptor) {
+
         namespace = descriptor.kind().name().toLowerCase(Locale.ROOT);
         id = new ExtensionId(namespace, descriptor.name().toLowerCase(Locale.ROOT));
 
     }
 
     public static ExtensionPlan read(final ExtensionDescriptor descriptor) throws IOException {
+
         final ExtensionPlan plan = new ExtensionPlan(descriptor);
         try (URLClassLoader loader = new ExtensionClassLoader(
                 descriptor.name() + " bootstrap", descriptor.jar().toUri().toURL(), ExtensionBootstrap.class.getClassLoader()
@@ -66,26 +68,31 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
     }
 
     public ExtensionId id() {
+
         return id;
 
     }
 
     public int apiVersion() {
+
         return apiVersion;
 
     }
 
     public Map<ExtensionId, Dependency> dependencies() {
+
         return Collections.unmodifiableMap(dependencies);
 
     }
 
     public Set<String> exports() {
+
         return Set.copyOf(exports);
 
     }
 
     public void loadLibraries(final ExtensionClassLoader loader, final Path directory) throws IOException, InterruptedException {
+
         final LibraryCache cache = new LibraryCache();
         for (final Map.Entry<URI, String> library : libraries.entrySet()) {
             loader.addLibrary(cache.resolve(directory.resolve(".libraries"), library.getKey(), library.getValue()).toUri().toURL());
@@ -95,6 +102,7 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
 
     @Override
     public void identify(final @NotNull ExtensionId id, final int apiVersion) {
+
         checkOpen();
         if (declared || !namespace.equals(id.namespace()) || apiVersion < 1) {
             throw new IllegalArgumentException("Invalid or duplicate identity: " + id);
@@ -107,6 +115,7 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
 
     @Override
     public void exportPackage(final @NotNull String packageName) {
+
         checkOpen();
         if (!packageName.matches("[A-Za-z_$][\\w$]*(\\.[A-Za-z_$][\\w$]*)+")) {
             throw new IllegalArgumentException("Invalid package: " + packageName);
@@ -117,18 +126,21 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
 
     @Override
     public void require(final @NotNull ExtensionId id, final int apiVersion) {
+
         addDependency(id, apiVersion, true);
 
     }
 
     @Override
     public void optional(final @NotNull ExtensionId id, final int apiVersion) {
+
         addDependency(id, apiVersion, false);
 
     }
 
     @Override
     public void library(final @NotNull URI source, final @NotNull String sha256) {
+
         checkOpen();
         final String previous = libraries.putIfAbsent(source, sha256);
         if (previous != null && !previous.equals(sha256)) {
@@ -138,6 +150,7 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
     }
 
     private void addDependency(final ExtensionId id, final int apiVersion, final boolean required) {
+
         checkOpen();
         if (apiVersion < 1 || dependencies.putIfAbsent(id, new Dependency(apiVersion, required)) != null) {
             throw new IllegalArgumentException("Invalid or duplicate dependency: " + id);
@@ -146,6 +159,7 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
     }
 
     private void checkOpen() {
+
         if (sealed) {
             throw new IllegalStateException("Bootstrap has finished");
         }

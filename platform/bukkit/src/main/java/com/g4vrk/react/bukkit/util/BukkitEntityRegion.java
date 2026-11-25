@@ -42,7 +42,14 @@ public final class BukkitEntityRegion {
 
     public static @NotNull List<Entity> nearby(final @NotNull Player player) {
 
-        return ownsNearbyChunks(player) ? player.getNearbyEntities(RANGE, RANGE, RANGE) : List.of();
+        final List<Entity> entities = nearbyIfOwned(player);
+        return entities != null ? entities : List.of();
+
+    }
+
+    public static @Nullable List<Entity> nearbyIfOwned(final @NotNull Player player) {
+
+        return ownsNearbyChunks(player) ? player.getNearbyEntities(RANGE, RANGE, RANGE) : null;
 
     }
 

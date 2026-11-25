@@ -13,10 +13,20 @@ import java.util.UUID;
  */
 public final class BukkitBedrockDetector {
 
-    private static volatile PlayerDetector floodgateDetector;
-    private static volatile PlayerDetector geyserDetector;
+    private static final DetectorSlot FLOODGATE = new DetectorSlot(
+            "org.geysermc.floodgate.api.FloodgateApi",
+            "getInstance",
+            "isFloodgatePlayer"
+    );
+    private static final DetectorSlot GEYSER = new DetectorSlot(
+            "org.geysermc.api.Geyser",
+            "api",
+            "isBedrockPlayer"
+    );
 
     private BukkitBedrockDetector() {
+
+        throw new UnsupportedOperationException("Utility class");
 
     }
 
@@ -24,67 +34,70 @@ public final class BukkitBedrockDetector {
             final @NotNull UUID uuid
     ) {
 
-        final PlayerDetector floodgate = floodgateDetector();
+        final PlayerDetector floodgate = FLOODGATE.resolve();
         if (floodgate != null && floodgate.isBedrockPlayer(uuid)) {
             return true;
         }
 
-        final PlayerDetector geyser = geyserDetector();
+        final PlayerDetector geyser = GEYSER.resolve();
         return geyser != null && geyser.isBedrockPlayer(uuid);
 
     }
 
-    private static @Nullable PlayerDetector floodgateDetector() {
+    private static final class DetectorSlot {
 
-        PlayerDetector detector = floodgateDetector;
-        if (detector == null) {
-            synchronized (BukkitBedrockDetector.class) {
-                detector = floodgateDetector;
-                if (detector == null) {
-                    detector = findDetector(
-                            "org.geysermc.floodgate.api.FloodgateApi",
-                            "getInstance",
-                            "isFloodgatePlayer"
-                    );
-                    if (detector != null) {
-                        floodgateDetector = detector;
-                    }
-                }
-            }
+        private final String apiClassName;
+        private final String factoryMethodName;
+        private final String detectorMethodName;
+        private volatile @Nullable PlayerDetector detector;
+        private volatile int scannedPluginCount = -1;
+
+        private DetectorSlot(
+                final @NotNull String apiClassName,
+                final @NotNull String factoryMethodName,
+                final @NotNull String detectorMethodName
+        ) {
+
+            this.apiClassName = apiClassName;
+            this.factoryMethodName = factoryMethodName;
+            this.detectorMethodName = detectorMethodName;
+
         }
-        return detector;
 
-    }
+        private @Nullable PlayerDetector resolve() {
 
-    private static @Nullable PlayerDetector geyserDetector() {
-
-        PlayerDetector detector = geyserDetector;
-        if (detector == null) {
-            synchronized (BukkitBedrockDetector.class) {
-                detector = geyserDetector;
-                if (detector == null) {
-                    detector = findDetector(
-                            "org.geysermc.api.Geyser",
-                            "api",
-                            "isBedrockPlayer"
-                    );
-                    if (detector != null) {
-                        geyserDetector = detector;
-                    }
-                }
+            PlayerDetector resolved = detector;
+            if (resolved != null) {
+                return resolved;
             }
+            final Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
+            if (plugins.length == scannedPluginCount) {
+                return null;
+            }
+            synchronized (this) {
+                resolved = detector;
+                if (resolved != null || plugins.length == scannedPluginCount) {
+                    return resolved;
+                }
+                resolved = findDetector(plugins, apiClassName, factoryMethodName, detectorMethodName);
+                if (resolved != null) {
+                    detector = resolved;
+                }
+                scannedPluginCount = plugins.length;
+                return resolved;
+            }
+
         }
-        return detector;
 
     }
 
     private static @Nullable PlayerDetector findDetector(
+            final @NotNull Plugin[] plugins,
             final @NotNull String apiClassName,
             final @NotNull String factoryMethodName,
             final @NotNull String detectorMethodName
     ) {
 
-        final Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
         for (final Plugin plugin : plugins) {
             final PlayerDetector detector = findDetector(
                     plugin.getClass().getClassLoader(),

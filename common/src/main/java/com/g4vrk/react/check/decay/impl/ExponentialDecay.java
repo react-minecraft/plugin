@@ -2,6 +2,9 @@ package com.g4vrk.react.check.decay.impl;
 
 import com.g4vrk.react.check.decay.DecayStrategy;
 
+/**
+ * Decays violations multiplicatively by a constant factor.
+ */
 public final class ExponentialDecay implements DecayStrategy {
 
     private final double multiplier;

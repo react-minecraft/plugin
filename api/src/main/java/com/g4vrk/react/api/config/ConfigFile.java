@@ -180,12 +180,16 @@ public final class ConfigFile<T> {
                 Files.move(temporary, path);
             }
         } catch (final FileAlreadyExistsException ignored) {
-            // Created concurrently by another thread.
+            /*
+             * Created concurrently by another thread.
+             */
         } catch (final AccessDeniedException failure) {
             if (Files.notExists(path)) {
                 throw failure;
             }
-            // Created concurrently by another thread on Windows.
+            /*
+             * Created concurrently by another thread on Windows.
+             */
         } finally {
             Files.deleteIfExists(temporary);
         }

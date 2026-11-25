@@ -18,35 +18,44 @@ public final class BukkitConnectionListener implements Listener {
 
     private final CoreListenerCallback callbacks;
 
-    public BukkitConnectionListener(            final @NotNull CoreListenerCallback callbacks
+    public BukkitConnectionListener(
+            final @NotNull CoreListenerCallback callbacks
     ) {
 
         this.callbacks = callbacks;
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)    public void onUserLogin(            final @NotNull PlayerJoinEvent event
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onUserLogin(
+            final @NotNull PlayerJoinEvent event
     ) {
 
         callbacks.onJoin(new BukkitPlatformPlayer(event.getPlayer()));
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)    public void onUserDisconnect(            final @NotNull PlayerQuitEvent event
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onUserDisconnect(
+            final @NotNull PlayerQuitEvent event
     ) {
 
         callbacks.onQuit(new BukkitPlatformPlayer(event.getPlayer()));
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)    public void onWorldChange(            final @NotNull PlayerChangedWorldEvent event
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWorldChange(
+            final @NotNull PlayerChangedWorldEvent event
     ) {
 
         callbacks.onTransientReset(event.getPlayer().getUniqueId());
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)    public void onRespawn(            final @NotNull PlayerRespawnEvent event
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onRespawn(
+            final @NotNull PlayerRespawnEvent event
     ) {
 
         callbacks.onTransientReset(event.getPlayer().getUniqueId());

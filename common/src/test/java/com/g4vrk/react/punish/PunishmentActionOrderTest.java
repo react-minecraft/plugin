@@ -11,10 +11,14 @@ import java.util.function.UnaryOperator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Verifies configured execution order of compiled punishment actions in {@link PunishmentManager}.
+ */
 class PunishmentActionOrderTest {
 
     @Test
     void startsCommonAndSpecialActionsInConfiguredOrder() {
+
         final List<String> called = new ArrayList<>();
         final SimpleActionRegistry<Audience> registry = new SimpleActionRegistry<>();
         registry.register("capture", (audience, argument) -> called.add(argument));
@@ -26,6 +30,7 @@ class PunishmentActionOrderTest {
         PunishmentManager.runActions(steps, Audience.empty(), UnaryOperator.identity(), called::add);
 
         assertEquals(List.of("first", "[log] second", "third", "[reset-vl]"), called);
+
     }
 
 }

@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Verifies bounds checking and packed sample layout in {@link RotationSample}.
+ */
 class RotationSampleTest {
 
     @Test

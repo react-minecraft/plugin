@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * The {@code react-addon.yml} of an addon.
@@ -30,5 +31,12 @@ public record AddonMetadata(
         @Nullable Collection<String> contributors,
         @Nullable GitHubSource github
 ) {
+
+    public AddonMetadata {
+
+        authors = authors == null ? null : List.copyOf(authors);
+        contributors = contributors == null ? null : List.copyOf(contributors);
+
+    }
 
 }

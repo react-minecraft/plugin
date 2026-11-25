@@ -5,6 +5,9 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Typed view of {@code actions.yml} holding configured feedback and command action scripts.
+ */
 @ConfigSerializable
 public record ActionsConfig(
         AlertAction alerts,

@@ -6,6 +6,7 @@ import com.g4vrk.react.api.ReloadObserver;
 import com.g4vrk.react.api.channel.registry.BuiltinChannelRegistry;
 import com.g4vrk.react.api.channel.bind.PermissionChannelBinder;
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
+import com.g4vrk.schedula.task.Task;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.react.check.Check;
 import com.g4vrk.react.check.processor.rotation.RotationProcessor;
@@ -14,7 +15,6 @@ import com.g4vrk.react.config.model.MainConfig;
 import com.g4vrk.react.platform.listener.CoreListenerCallback;
 import com.g4vrk.react.platform.listener.PlatformListenerBridge;
 import com.g4vrk.react.platform.ReactPlatform;
-import com.g4vrk.react.player.CombatActivity;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.player.factory.PlayerFactory;
 import com.g4vrk.react.player.registry.PlayerRegistry;
@@ -25,8 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -43,6 +46,7 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
     private final PlatformListenerBridge platformListeners;
     private final Logger logger;
     private final RotationProcessor rotationProcessor = new RotationProcessor();
+    private final Map<UUID, Task> entityTasks = new ConcurrentHashMap<>();
 
     private PlayerRegistry playerRegistry;
     private PlayerFactory playerFactory;
@@ -52,6 +56,7 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
     private PermissionChannelBinder alertsBinder;
     private PermissionChannelBinder monitorBinder;
 
+    private volatile boolean closed;
     private volatile long combatTicks = 1L;
 
     public ListenerService(
@@ -75,6 +80,7 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
             final @NotNull Consumer<PlatformPlayer> onJoin
     ) {
 
+        this.closed = false;
         this.playerRegistry = playerRegistry;
         this.playerFactory = playerFactory;
         this.storageManager = storage;
@@ -84,10 +90,10 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
         this.monitorBinder = new PermissionChannelBinder(PermissionKey.MONITOR_ENABLE_ON_JOIN, BuiltinChannelRegistry.MONITOR, false);
         this.onReload(configs.main());
 
-        platformListeners.registerCore(this);
         for (final PlatformPlayer online : platform.onlinePlayers()) {
             onJoin(online);
         }
+        platformListeners.registerCore(this);
 
         platform.registerPlaceholders(
                 playerRegistry,
@@ -105,9 +111,8 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
             final @Nullable TrackedPlayerImpl player
     ) {
 
-        final CombatActivity activity = player != null ? player.combatActivity : null;
-        if (activity != null) {
-            activity.extend(combatTicks);
+        if (player != null) {
+            player.extendCombat(combatTicks);
         }
 
     }
@@ -134,6 +139,9 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
             final @NotNull PlatformPlayer platformPlayer
     ) {
 
+        if (closed) {
+            return;
+        }
         try {
             final UUID uniqueId = platformPlayer.uniqueId();
             final TrackedPlayerImpl entity = playerFactory.create(platformPlayer);
@@ -144,17 +152,27 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
             if (previous != null) {
                 storageManager.detachPlayer(previous);
             }
+            final Task previousTask = entityTasks.remove(uniqueId);
+            if (previousTask != null) {
+                previousTask.cancel();
+            }
             playerRegistry.register(uniqueId, entity);
             final Hydration hydration = new Hydration(entity);
             hydration.load();
-            React.INSTANCE.scheduler().scheduleEntity(platformPlayer, task -> {
-                if (playerRegistry.get(uniqueId) != entity) {
+            final Task scheduled = React.INSTANCE.scheduler().scheduleEntity(platformPlayer, task -> {
+                if (closed || playerRegistry.get(uniqueId) != entity) {
                     task.cancel();
+                    entityTasks.remove(uniqueId, task);
                     return;
                 }
-                entity.refreshRotationPermission();
+                entity.refreshBypassPermissions();
                 hydration.retryIfAvailable();
             }, TickSchedule.repeating(1, 20));
+            entityTasks.put(uniqueId, scheduled);
+            if (closed && entityTasks.remove(uniqueId, scheduled)) {
+                scheduled.cancel();
+                return;
+            }
 
             alertsBinder.accept(platformPlayer);
             monitorBinder.accept(platformPlayer);
@@ -171,6 +189,10 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
     ) {
 
         final UUID uniqueId = platformPlayer.uniqueId();
+        final Task task = entityTasks.remove(uniqueId);
+        if (task != null) {
+            task.cancel();
+        }
 
         try {
             final TrackedPlayerImpl player = playerRegistry.get(uniqueId);
@@ -240,6 +262,22 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
 
     public void close() {
 
+        this.closed = true;
+        for (final Task task : entityTasks.values()) {
+            try {
+                task.cancel();
+            } catch (final Exception ex) {
+                logger.warn("Could not cancel player hydration task", ex);
+            }
+        }
+        entityTasks.clear();
+
+        try {
+            rotationProcessor.close();
+        } catch (final Exception ex) {
+            logger.warn("Could not clear rotation processor state", ex);
+        }
+
         try {
             platformListeners.unregisterCore();
         } catch (final Exception ex) {
@@ -278,7 +316,12 @@ public final class ListenerService implements CoreListenerCallback, ReloadObserv
         ) {
 
             this.entity = entity;
-            this.levels = entity.checks().stream().map(Check::violationLevel).toList();
+            final List<Check> checks = entity.checks();
+            final List<ViolationLevel> collected = new ArrayList<>(checks.size());
+            for (final Check check : checks) {
+                collected.add(check.violationLevel());
+            }
+            this.levels = List.copyOf(collected);
 
         }
 

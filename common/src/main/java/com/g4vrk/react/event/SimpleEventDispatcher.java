@@ -14,7 +14,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -158,13 +157,42 @@ public final class SimpleEventDispatcher implements EventDispatcher {
 
     }
 
+    public boolean hasListeners(
+            final @NotNull Class<?> type
+    ) {
+
+        Handler[] matching = baked.get(type);
+        if (matching == null) {
+            matching = bake(type);
+        }
+        return matching.length > 0;
+
+    }
+
+    public synchronized void clear() {
+
+        handlers.clear();
+        listeners.clear();
+        baked.clear();
+
+    }
+
     private synchronized Handler @NotNull [] bake(final @NotNull Class<?> type) {
 
-        final Handler[] matching = handlers.stream()
-                .filter(handler -> handler.type().isAssignableFrom(type))
-                .sorted(ORDER)
-                .toArray(Handler[]::new);
+        final Handler[] existing = baked.get(type);
+        if (existing != null) {
+            return existing;
+        }
 
+        final List<Handler> list = new ArrayList<>();
+        for (final Handler handler : handlers) {
+            if (handler.type().isAssignableFrom(type)) {
+                list.add(handler);
+            }
+        }
+        list.sort(ORDER);
+
+        final Handler[] matching = list.toArray(new Handler[0]);
         baked.put(type, matching);
         return matching;
 
@@ -175,10 +203,11 @@ public final class SimpleEventDispatcher implements EventDispatcher {
         final List<Method> methods = new ArrayList<>();
 
         for (Class<?> current = type; current != null && current != Object.class; current = current.getSuperclass()) {
-            Arrays.stream(current.getDeclaredMethods())
-                    .filter(method -> method.isAnnotationPresent(Subscribe.class))
-                    .filter(method -> !method.isBridge() && !method.isSynthetic())
-                    .forEach(methods::add);
+            for (final Method method : current.getDeclaredMethods()) {
+                if (method.isAnnotationPresent(Subscribe.class) && !method.isBridge() && !method.isSynthetic()) {
+                    methods.add(method);
+                }
+            }
         }
 
         return methods;

@@ -25,12 +25,14 @@ public final class ScopedPlaceholderRegistry implements PlaceholderRegistry, Aut
     private boolean closed;
 
     public ScopedPlaceholderRegistry(final @NotNull PlaceholderRegistry delegate) {
+
         this.delegate = delegate;
 
     }
 
     @Override
     public synchronized void register(final @NotNull String key, final @NotNull PlaceholderResolver resolver) {
+
         if (closed) {
             throw new IllegalStateException("The extension placeholder registry is closed");
         }
@@ -41,78 +43,91 @@ public final class ScopedPlaceholderRegistry implements PlaceholderRegistry, Aut
 
     @Override
     public synchronized @Nullable PlaceholderResolver unregister(final @NotNull String key) {
+
         return this.owned.remove(key) ? this.delegate.unregister(key) : null;
 
     }
 
     @Override
     public @Nullable PlaceholderResolver get(final @NotNull String key) {
+
         return this.delegate.get(key);
 
     }
 
     @Override
     public @Nullable String getKey(final @NotNull PlaceholderResolver value) {
+
         return this.delegate.getKey(value);
 
     }
 
     @Override
     public @NotNull Set<String> keySet() {
+
         return this.delegate.keySet();
 
     }
 
     @Override
     public @NotNull Set<Map.Entry<String, PlaceholderResolver>> entrySet() {
+
         return this.delegate.entrySet();
 
     }
 
     @Override
     public @NotNull Stream<PlaceholderResolver> stream() {
+
         return this.delegate.stream();
 
     }
 
     @Override
     public int size() {
+
         return this.delegate.size();
 
     }
 
     @Override
     public @NotNull Iterator<PlaceholderResolver> iterator() {
+
         return this.delegate.iterator();
 
     }
 
     @Override
     public @Nullable String resolve(final @NotNull TrackedPlayer player, final @NotNull String key, final @NotNull String query) {
+
         return this.delegate.resolve(player, key, query);
 
     }
 
     @Override
     public @NotNull TagResolver tags(final @NotNull TrackedPlayer player) {
+
         return this.delegate.tags(player);
 
     }
 
     @Override
     public @NotNull TagMapper mapper(final @NotNull TrackedPlayer player) {
+
         return this.delegate.mapper(player);
 
     }
 
     @Override
     public @NotNull String apply(final @NotNull String text, final @NotNull TrackedPlayer player) {
+
         return this.delegate.apply(text, player);
 
     }
 
     @Override
     public synchronized void close() {
+
         this.closed = true;
         this.owned.forEach(this.delegate::unregister);
         this.owned.clear();

@@ -1,16 +1,18 @@
 package com.g4vrk.react.player;
 
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
  * Tracks the end time of one player's current combat window.
  */
 @Getter
+@Accessors(fluent = true)
 public final class CombatActivity {
 
     private volatile long activityUntil = 0L;
 
-    public boolean isActive() {
+    public boolean active() {
 
         return System.currentTimeMillis() < activityUntil;
 

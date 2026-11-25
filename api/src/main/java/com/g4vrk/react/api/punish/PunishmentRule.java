@@ -18,6 +18,12 @@ import java.util.List;
 @ApiStatus.AvailableSince("2.0")
 public record PunishmentRule(int start, int period, @NotNull List<String> lines) {
 
+    public PunishmentRule {
+
+        lines = List.copyOf(lines);
+
+    }
+
     /**
      * Tells whether the rule runs more than once.
      *

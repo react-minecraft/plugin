@@ -39,12 +39,9 @@ import com.g4vrk.react.update.notify.UpdateNotifier;
 import com.g4vrk.react.update.UpdateService;
 import com.g4vrk.text.LegacySerializerRegistry;
 import com.g4vrk.text.SerializerRegistry;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import net.kyori.adventure.audience.Audience;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.configurate.ConfigurateException;
@@ -62,10 +59,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>Every server platform (Paper, Folia, Fabric, Minestom, Sponge, etc.) bootstraps React by
  * supplying a {@link ReactPlatform} implementation to {@link #initialize(ReactPlatform)}.</p>
  */
-@Getter
-@Accessors(fluent = true)
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class React {
+public final class React {
 
     public static final React INSTANCE = new React();
 
@@ -77,30 +71,34 @@ public class React {
     private final TextFormatter text = new MiniTextFormatter(serializers, placeholders);
     private final SimpleEventDispatcher events = new SimpleEventDispatcher(logger);
 
-    private ReactPlatform platform;
-    private Language language;
-    private ConfigManager configs;
+    private @Nullable ReactPlatform platform;
+    private @Nullable Language language;
+    private @Nullable ConfigManager configs;
 
-    private TaskScheduler<PlatformPlayer> scheduler;
+    private @Nullable TaskScheduler<PlatformPlayer> scheduler;
     private ActionParser<Audience> actionParser;
-    private StorageManager storageManager;
-    private PlayerFactory playerFactory;
-    private PlayerRegistry playerRegistry;
-    private RCPHost rcpHost;
+    private @Nullable StorageManager storageManager;
+    private @Nullable PlayerFactory playerFactory;
+    private @Nullable PlayerRegistry playerRegistry;
+    private @Nullable RCPHost rcpHost;
 
-    private ReportActionRegistry alertActions;
-    private ReportActionRegistry monitorActions;
-    private DebugActionRegistry debugActions;
-    private PunishmentManager punishmentManager;
-    private InferenceHistoryPrinter inferenceHistoryPrinter;
+    private @Nullable ReportActionRegistry alertActions;
+    private @Nullable ReportActionRegistry monitorActions;
+    private @Nullable DebugActionRegistry debugActions;
+    private @Nullable PunishmentManager punishmentManager;
+    private @Nullable InferenceHistoryPrinter inferenceHistoryPrinter;
 
-    private UpdateNotifier updateNotifier;
-    private UpdateService updates;
-    private ExtensionManager extensions;
+    private @Nullable UpdateNotifier updateNotifier;
+    private @Nullable UpdateService updates;
+    private @Nullable ExtensionManager extensions;
 
-    private CommandService commands;
-    private ListenerService listeners;
+    private @Nullable CommandService commands;
+    private @Nullable ListenerService listeners;
     private volatile boolean terminated;
+
+    private React() {
+
+    }
 
     public void initialize(
             final @NotNull ReactPlatform platform
@@ -119,8 +117,9 @@ public class React {
         this.terminated = false;
         final Path dataPath = platform.dataDirectory();
         final File dataFolder = dataPath.toFile();
-        //noinspection ResultOfMethodCallIgnored
-        dataFolder.mkdirs();
+        if (!dataFolder.isDirectory() && !dataFolder.mkdirs() && !dataFolder.isDirectory()) {
+            throw new IllegalStateException("Failed to create data directory: " + dataFolder.getAbsolutePath());
+        }
 
         this.language = Language.resolve();
         final String languageName = language.name().toLowerCase(Locale.ROOT);
@@ -225,7 +224,19 @@ public class React {
         listeners.register(configs, playerRegistry, playerFactory, storageManager, rcpHost, updateNotifier::join);
 
         logger.info("Starting addons and RCP providers...");
-        extensions.start(updates::onStart).thenRun(() -> updates.start(extensions));
+        final ExtensionManager activeExtensions = extensions;
+        final UpdateService activeUpdates = updates;
+        activeExtensions.start(activeUpdates::onStart).whenComplete((ignored, error) -> {
+            if (error != null) {
+                logger.error("Failed to start addons and RCP providers", error);
+                return;
+            }
+            synchronized (this) {
+                if (!terminated && updates == activeUpdates && extensions == activeExtensions) {
+                    activeUpdates.start(activeExtensions);
+                }
+            }
+        });
 
         logger.info(" ");
         logger.info("React successfully enabled!");
@@ -241,14 +252,26 @@ public class React {
 
     public @NotNull CompletableFuture<Void> reloadAsync() {
 
-        return CompletableFuture.runAsync(this::reload);
+        return CompletableFuture.supplyAsync(this::reloadState)
+                .thenCompose(future -> future)
+                .thenRun(() -> {
+                    if (!terminated) {
+                        events.post(new ReloadEvent());
+                    }
+                });
 
     }
 
-    public synchronized void reload() {
+    public void reload() {
+
+        reloadAsync().join();
+
+    }
+
+    private synchronized @NotNull CompletableFuture<Void> reloadState() {
 
         if (terminated || configs == null) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
         this.loadConfigs();
 
@@ -263,11 +286,10 @@ public class React {
         updateNotifier.onReload(configs.actions());
 
         for (final TrackedPlayerImpl player : playerRegistry) {
-            player.checkManager.reload();
+            player.reloadChecks();
         }
 
-        extensions.reload();
-        events.post(new ReloadEvent());
+        return extensions.reload();
 
     }
 
@@ -292,15 +314,15 @@ public class React {
         for (final ReportChannel channel : List.of(BuiltinChannelRegistry.ALERTS, BuiltinChannelRegistry.MONITOR, BuiltinChannelRegistry.DEBUG)) {
             channel.clear();
             channel.delivery((recipient, report) -> {
-
             });
         }
+
+        events.clear();
 
         try {
             if (storageManager != null) {
                 logger.info("Flushing and closing database storage...");
-                storageManager.close(playerRegistry == null ? Set.of() : playerRegistry.stream().toList());
-                storageManager = null;
+                storageManager.close(playerRegistry == null ? Set.of() : playerRegistry.snapshot());
             }
         } catch (final Exception ex) {
             logger.error("Could not close database storage", ex);
@@ -315,9 +337,175 @@ public class React {
             logger.error("Could not clear player registry", ex);
         }
 
+        this.platform = null;
+        this.language = null;
         this.configs = null;
+        this.scheduler = null;
+        this.actionParser = null;
+        this.storageManager = null;
+        this.playerFactory = null;
+        this.playerRegistry = null;
         this.rcpHost = null;
+        this.alertActions = null;
+        this.monitorActions = null;
+        this.debugActions = null;
         this.punishmentManager = null;
+        this.inferenceHistoryPrinter = null;
+        this.updateNotifier = null;
+        this.updates = null;
+        this.extensions = null;
+        this.commands = null;
+        this.listeners = null;
+
+    }
+
+    public @NotNull Logger logger() {
+
+        return logger;
+
+    }
+
+    public @NotNull SerializerRegistry serializers() {
+
+        return serializers;
+
+    }
+
+    public @NotNull SimplePlaceholderRegistry placeholders() {
+
+        return placeholders;
+
+    }
+
+    public @NotNull TextFormatter text() {
+
+        return text;
+
+    }
+
+    public @NotNull SimpleEventDispatcher events() {
+
+        return events;
+
+    }
+
+    public @Nullable ReactPlatform platform() {
+
+        return platform;
+
+    }
+
+    public @Nullable Language language() {
+
+        return language;
+
+    }
+
+    public @Nullable ConfigManager configs() {
+
+        return configs;
+
+    }
+
+    public @Nullable TaskScheduler<PlatformPlayer> scheduler() {
+
+        return scheduler;
+
+    }
+
+    public ActionParser<Audience> actionParser() {
+
+        return actionParser;
+
+    }
+
+    public @Nullable StorageManager storageManager() {
+
+        return storageManager;
+
+    }
+
+    public @Nullable PlayerFactory playerFactory() {
+
+        return playerFactory;
+
+    }
+
+    public @Nullable PlayerRegistry playerRegistry() {
+
+        return playerRegistry;
+
+    }
+
+    public @Nullable RCPHost rcpHost() {
+
+        return rcpHost;
+
+    }
+
+    public @Nullable ReportActionRegistry alertActions() {
+
+        return alertActions;
+
+    }
+
+    public @Nullable ReportActionRegistry monitorActions() {
+
+        return monitorActions;
+
+    }
+
+    public @Nullable DebugActionRegistry debugActions() {
+
+        return debugActions;
+
+    }
+
+    public @Nullable PunishmentManager punishmentManager() {
+
+        return punishmentManager;
+
+    }
+
+    public @Nullable InferenceHistoryPrinter inferenceHistoryPrinter() {
+
+        return inferenceHistoryPrinter;
+
+    }
+
+    public @Nullable UpdateNotifier updateNotifier() {
+
+        return updateNotifier;
+
+    }
+
+    public @Nullable UpdateService updates() {
+
+        return updates;
+
+    }
+
+    public @Nullable ExtensionManager extensions() {
+
+        return extensions;
+
+    }
+
+    public @Nullable CommandService commands() {
+
+        return commands;
+
+    }
+
+    public @Nullable ListenerService listeners() {
+
+        return listeners;
+
+    }
+
+    public boolean terminated() {
+
+        return terminated;
 
     }
 

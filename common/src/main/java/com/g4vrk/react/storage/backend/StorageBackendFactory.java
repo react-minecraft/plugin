@@ -10,9 +10,14 @@ import java.util.Objects;
 import java.util.Locale;
 import java.io.IOException;
 
+/**
+ * Creates the configured {@link StorageBackend} and lazily loads its external driver libraries if needed.
+ */
 public final class StorageBackendFactory {
 
-    public @NotNull StorageBackend create(final @NotNull DatabaseConfig settings) {
+    public @NotNull StorageBackend create(
+            final @NotNull DatabaseConfig settings
+    ) {
 
         if (StorageBackendFactory.class.getClassLoader() instanceof RuntimeLibraryLoader libraries) {
             try {
@@ -30,4 +35,5 @@ public final class StorageBackendFactory {
         };
 
     }
+
 }

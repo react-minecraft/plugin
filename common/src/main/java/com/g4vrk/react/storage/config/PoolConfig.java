@@ -4,6 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
 
+/**
+ * Connection pool sizing and timeout parameters shared by JDBC storage dialects.
+ */
 public record PoolConfig(
         int maximumPoolSize,
         int minimumIdle,
@@ -12,4 +15,5 @@ public record PoolConfig(
         @NotNull Duration idleTimeout,
         @NotNull Duration maxLifetime
 ) {
+
 }

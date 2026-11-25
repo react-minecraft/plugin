@@ -6,17 +6,24 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * Lightweight JDBC helper running read queries and committing or rolling back transactions safely.
+ */
 public final class JdbcExecutor {
 
     private final DataSource dataSource;
 
-    public JdbcExecutor(final @NotNull DataSource dataSource) {
+    public JdbcExecutor(
+            final @NotNull DataSource dataSource
+    ) {
 
         this.dataSource = dataSource;
 
     }
 
-    public <T> T query(final @NotNull ConnectionFunction<T> query) throws SQLException {
+    public <T> T query(
+            final @NotNull ConnectionFunction<T> query
+    ) throws SQLException {
 
         try (final Connection connection = dataSource.getConnection()) {
             return query.apply(connection);
@@ -24,7 +31,9 @@ public final class JdbcExecutor {
 
     }
 
-    public <T> T transaction(final @NotNull ConnectionFunction<T> transaction) throws SQLException {
+    public <T> T transaction(
+            final @NotNull ConnectionFunction<T> transaction
+    ) throws SQLException {
 
         try (final Connection connection = dataSource.getConnection()) {
             final boolean previousAutoCommit = connection.getAutoCommit();
@@ -47,8 +56,14 @@ public final class JdbcExecutor {
 
     }
 
+    /**
+     * JDBC work executed against an open SQL {@link Connection}.
+     */
     @FunctionalInterface
     public interface ConnectionFunction<T> {
+
         T apply(final @NotNull Connection connection) throws SQLException;
+
     }
+
 }

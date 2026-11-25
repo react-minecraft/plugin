@@ -1,5 +1,8 @@
 package com.g4vrk.react.storage.constant;
 
+/**
+ * Shared storage table names, column/document field identifiers, and retention constants.
+ */
 public final class StorageConstant {
 
     public static final String DATABASE_CONFIG = "database.yml";

@@ -9,6 +9,9 @@ import static com.g4vrk.react.storage.constant.StorageConstant.BYPASS_TABLE;
 import static com.g4vrk.react.storage.constant.StorageConstant.INFERENCE_TABLE;
 import static com.g4vrk.react.storage.constant.StorageConstant.VIOLATIONS_TABLE;
 
+/**
+ * SQL dialect definitions for SQLite, H2, and MySQL schemas and idempotent upserts.
+ */
 public enum JdbcDialect {
     SQLITE(
             List.of(
@@ -30,7 +33,7 @@ public enum JdbcDialect {
                     "CREATE INDEX IF NOT EXISTS react_inference_scores_time_idx ON " + INFERENCE_TABLE + " (recorded_at)",
                     "CREATE TABLE IF NOT EXISTS " + BYPASS_TABLE + " (player_uuid VARCHAR(36) NOT NULL, check_name VARCHAR(64) NOT NULL, expires_at BIGINT NOT NULL, PRIMARY KEY (player_uuid, check_name))"
             ),
-            "MERGE INTO " + VIOLATIONS_TABLE + " (player_uuid, check_name, violations, updated_at) KEY (player_uuid, check_name) VALUES (?, ?, ?, ?)",
+            "MERGE INTO " + VIOLATIONS_TABLE + " target USING (VALUES (CAST(? AS VARCHAR(36)), CAST(? AS VARCHAR(64)), CAST(? AS DOUBLE PRECISION), CAST(? AS BIGINT))) source(player_uuid, check_name, violations, updated_at) ON (target.player_uuid = source.player_uuid AND target.check_name = source.check_name) WHEN MATCHED AND source.updated_at >= target.updated_at THEN UPDATE SET target.violations = source.violations, target.updated_at = source.updated_at WHEN NOT MATCHED THEN INSERT (player_uuid, check_name, violations, updated_at) VALUES (source.player_uuid, source.check_name, source.violations, source.updated_at)",
             "MERGE INTO " + INFERENCE_TABLE + " (id, player_uuid, check_name, recorded_at, probability, model_id, run_id, decision_threshold, enforcement_enabled, violations_before, violations_after) KEY (id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             "MERGE INTO " + BYPASS_TABLE + " (player_uuid, check_name, expires_at) KEY (player_uuid, check_name) VALUES (?, ?, ?)"
     ),

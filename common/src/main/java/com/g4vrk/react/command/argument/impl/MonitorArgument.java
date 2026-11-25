@@ -9,6 +9,9 @@ import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import net.kyori.adventure.audience.Audience;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@code /react monitor [players]} toggles verbose inference monitor output for staff.
+ */
 public final class MonitorArgument extends ReportToggleArgument {
 
     public MonitorArgument(

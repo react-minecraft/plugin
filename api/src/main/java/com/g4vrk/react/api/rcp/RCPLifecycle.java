@@ -2,6 +2,9 @@ package com.g4vrk.react.api.rcp;
 
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * Lifecycle hooks implemented by React Check Providers (RCPs).
+ */
 @ApiStatus.AvailableSince("2.0")
 public interface RCPLifecycle {
 
@@ -14,6 +17,7 @@ public interface RCPLifecycle {
      * Providers reread their files here.
      */
     default void onReload() throws Exception {
+
     }
 
 }

@@ -123,6 +123,14 @@ public final class MiniTextFormatter implements TextFormatter {
 
     }
 
+    public static @NotNull String escape(
+            final @NotNull String text
+    ) {
+
+        return text.replace("\\", "\\\\").replace("<", "\\<");
+
+    }
+
     private static com.g4vrk.text.TagMapper mapper(
             final @NotNull PlaceholderRegistry registry,
             final @NotNull TrackedPlayer player

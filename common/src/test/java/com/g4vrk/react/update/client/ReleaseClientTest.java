@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies metadata validation and repository binding in {@link ReleaseClient}.
+ */
 class ReleaseClientTest {
 
     private static final String HASH = "a".repeat(64);
@@ -56,15 +59,27 @@ class ReleaseClientTest {
     }
 
     @Test
-    void boundAcceptsLegacyChecksumsWithoutRepositoryOrChannelHeaders() throws ReleaseClient.VerificationException {
+    void boundRejectsMissingRepositoryOrChannelHeaders() {
 
-        final ChecksumManifest checksums = ChecksumManifest.parse("""
+        final ChecksumManifest missingRepository = ChecksumManifest.parse("""
+                # channel: release
                 # version: 2.0.0
                 %s  react-paper-2.0.0.jar
                 """.formatted(HASH));
-        final ReleaseClient.Release release = new ReleaseClient.Release("https://example.invalid/", checksums);
+        final ChecksumManifest missingChannel = ChecksumManifest.parse("""
+                # repository: react-minecraft/plugin
+                # version: 2.0.0
+                %s  react-paper-2.0.0.jar
+                """.formatted(HASH));
 
-        assertSame(release, ReleaseClient.bound(release, "react-minecraft/plugin", "release", "2.0.0"));
+        assertThrows(
+                ReleaseClient.VerificationException.class,
+                () -> ReleaseClient.bound(new ReleaseClient.Release("https://example.invalid/", missingRepository), "react-minecraft/plugin", "release", "2.0.0")
+        );
+        assertThrows(
+                ReleaseClient.VerificationException.class,
+                () -> ReleaseClient.bound(new ReleaseClient.Release("https://example.invalid/", missingChannel), "react-minecraft/plugin", "release", "2.0.0")
+        );
 
     }
 

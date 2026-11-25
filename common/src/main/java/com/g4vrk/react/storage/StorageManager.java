@@ -4,24 +4,19 @@ import com.g4vrk.react.check.Check;
 import com.g4vrk.react.player.TrackedPlayerImpl;
 import com.g4vrk.react.storage.backend.StorageBackend;
 import com.g4vrk.react.storage.backend.StorageBackendFactory;
+import com.g4vrk.react.storage.buffer.BatchMaterializer;
+import com.g4vrk.react.storage.buffer.PendingWriteBuffer;
 import com.g4vrk.react.storage.config.DatabaseConfig;
 import com.g4vrk.react.storage.model.PlayerStorageData;
 import com.g4vrk.react.storage.model.StorageMutation;
 import com.g4vrk.react.storage.model.StoredInference;
-import com.g4vrk.react.storage.model.StoredViolation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.time.Duration;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -51,8 +46,7 @@ public final class StorageManager {
 
     private final ThreadPoolExecutor executor;
     private final ScheduledThreadPoolExecutor scheduler;
-    private final Deque<StorageMutation> pendingWrites = new ArrayDeque<>();
-    private final Object pendingWriteLock = new Object();
+    private final PendingWriteBuffer buffer;
     private final AtomicBoolean available = new AtomicBoolean();
     private final AtomicBoolean started = new AtomicBoolean();
     private final AtomicBoolean closing = new AtomicBoolean();
@@ -81,9 +75,11 @@ public final class StorageManager {
             final @NotNull DatabaseConfig settings,
             final @NotNull Function<DatabaseConfig, StorageBackend> backendFactory
     ) {
+
         this.logger = logger;
         this.settings = settings;
         this.backendFactory = backendFactory;
+        this.buffer = new PendingWriteBuffer(settings.pendingWriteCapacity());
         this.reconnectDelayMillis = new AtomicLong(settings.retryInitialDelay().toMillis());
         this.executor = new ThreadPoolExecutor(
                 settings.executorThreads(),
@@ -96,6 +92,7 @@ public final class StorageManager {
         );
         this.scheduler = new ScheduledThreadPoolExecutor(1, threadFactory("React-Database-Scheduler"));
         this.scheduler.setRemoveOnCancelPolicy(true);
+
     }
 
     public @NotNull CompletableFuture<Void> start() {
@@ -171,8 +168,8 @@ public final class StorageManager {
         flushLock.readLock().lock();
         try {
             final PlayerStorageData stored = withBackend(storage -> storage.loadPlayer(playerUuid, historyCutoff()));
-            synchronized (pendingWriteLock) {
-                final PlayerStorageData loaded = applyPendingWrites(playerUuid, stored);
+            synchronized (buffer.lock()) {
+                final PlayerStorageData loaded = buffer.overlay(playerUuid, stored);
                 for (final ViolationLevel level : levels) {
                     level.load(loaded.violations().get(level.check()));
                 }
@@ -184,53 +181,9 @@ public final class StorageManager {
 
     }
 
-    private @NotNull PlayerStorageData applyPendingWrites(
-            final @NotNull UUID playerUuid,
-            final @NotNull PlayerStorageData stored
-    ) {
-
-        Map<String, StoredViolation> violations = null;
-        Map<String, Long> bypasses = null;
-        for (final StorageMutation mutation : pendingWrites) {
-            if (!mutation.playerUuid().equals(playerUuid)) {
-                continue;
-            }
-            if (mutation instanceof final StorageMutation.Violation violation) {
-                if (violations == null) {
-                    violations = new HashMap<>(stored.violations());
-                }
-                putViolation(violations, violation);
-            } else if (mutation instanceof final StorageMutation.PendingViolation pending) {
-                if (violations == null) {
-                    violations = new HashMap<>(stored.violations());
-                }
-                final StorageMutation.Violation violation = pending.materialize(violations.get(pending.check()));
-                putViolation(violations, violation);
-            } else if (mutation instanceof final StorageMutation.BypassMutation bypass) {
-                if (bypasses == null) {
-                    bypasses = new HashMap<>(stored.bypasses());
-                }
-                if (bypass.lifted()) {
-                    bypasses.remove(bypass.check());
-                } else {
-                    bypasses.put(bypass.check(), bypass.until());
-                }
-            }
-        }
-        if (violations == null && bypasses == null) {
-            return stored;
-        }
-        return new PlayerStorageData(
-                violations == null ? stored.violations() : violations,
-                stored.inferenceHistory(),
-                bypasses == null ? stored.bypasses() : bypasses
-        );
-
-    }
-
     @NotNull Object pendingWriteLock() {
 
-        return pendingWriteLock;
+        return buffer.lock();
 
     }
 
@@ -355,23 +308,21 @@ public final class StorageManager {
 
     }
 
-    void enqueue(final @NotNull StorageMutation mutation, final boolean allowClosing) {
+    void enqueue(
+            final @NotNull StorageMutation mutation,
+            final boolean allowClosing
+    ) {
 
         if (!settings.enabled()) {
             return;
         }
 
         final boolean discarded;
-        synchronized (pendingWriteLock) {
+        synchronized (buffer.lock()) {
             if (closing.get() && !allowClosing) {
                 return;
             }
-
-            discarded = pendingWrites.size() == settings.pendingWriteCapacity();
-            if (discarded) {
-                pendingWrites.removeFirst();
-            }
-            pendingWrites.addLast(mutation);
+            discarded = buffer.enqueue(mutation);
         }
         if (discarded) {
             logFailure("Database write buffer is full; the oldest unsaved operation was discarded", null);
@@ -379,17 +330,9 @@ public final class StorageManager {
 
     }
 
-    private boolean hasPendingWrites() {
-
-        synchronized (pendingWriteLock) {
-            return !pendingWrites.isEmpty();
-        }
-
-    }
-
     private void requestFlush() {
 
-        if (!settings.enabled() || closing.get() || !available.get() || !hasPendingWrites()) {
+        if (!settings.enabled() || closing.get() || !available.get() || !buffer.hasPending()) {
             return;
         }
         if (!flushRunning.compareAndSet(false, true)) {
@@ -415,14 +358,17 @@ public final class StorageManager {
 
         flushLock.writeLock().lock();
         try {
-            final List<StorageMutation> drained = drainBatch();
+            final List<StorageMutation> drained = buffer.drainBatch(settings.batchSize());
             if (drained.isEmpty()) {
                 return false;
             }
 
             List<StorageMutation> batch = drained;
             try {
-                batch = materializeBatch(drained);
+                batch = BatchMaterializer.materialize(
+                        drained,
+                        playerUuid -> withBackend(storage -> storage.loadPlayer(playerUuid, Long.MAX_VALUE))
+                );
                 final List<StorageMutation> writes = batch;
                 withBackend(storage -> {
                     storage.writeBatch(writes);
@@ -440,82 +386,9 @@ public final class StorageManager {
 
     }
 
-    private @NotNull List<StorageMutation> materializeBatch(final @NotNull List<StorageMutation> batch) throws Exception {
-
-        Map<UUID, Map<String, BatchViolation>> levels = null;
-        for (final StorageMutation mutation : batch) {
-            if (mutation instanceof final StorageMutation.PendingViolation pending) {
-                if (levels == null) {
-                    levels = new HashMap<>();
-                }
-                if (!levels.containsKey(pending.playerUuid())) {
-                    final PlayerStorageData stored = withBackend(storage -> storage.loadPlayer(pending.playerUuid(), Long.MAX_VALUE));
-                    final Map<String, BatchViolation> base = new HashMap<>();
-                    stored.violations().forEach((check, value) -> base.put(check, new BatchViolation(value, -1)));
-                    levels.put(pending.playerUuid(), base);
-                }
-            }
-        }
-        if (levels == null) {
-            return batch;
-        }
-
-        /*
-         * Keep the latest materialized write per check at its original position in the batch.
-         */
-        final List<StorageMutation> materialized = new ArrayList<>(batch);
-        for (int index = 0; index < batch.size(); index++) {
-            final StorageMutation mutation = batch.get(index);
-            final Map<String, BatchViolation> current = levels.get(mutation.playerUuid());
-            if (current == null) {
-                continue;
-            }
-            final StorageMutation.Violation violation;
-            if (mutation instanceof final StorageMutation.PendingViolation pending) {
-                final BatchViolation previous = current.get(pending.check());
-                violation = pending.materialize(previous == null ? null : previous.value());
-            } else if (mutation instanceof final StorageMutation.Violation absolute) {
-                violation = absolute;
-            } else {
-                continue;
-            }
-            final BatchViolation previous = current.get(violation.check());
-            if (previous == null || violation.updatedAt() >= previous.value().updatedAt()) {
-                if (previous != null && previous.index() >= 0) {
-                    materialized.set(previous.index(), null);
-                }
-                current.put(violation.check(), new BatchViolation(new StoredViolation(violation.violations(), violation.updatedAt()), index));
-                materialized.set(index, violation);
-            } else {
-                materialized.set(index, null);
-            }
-        }
-        materialized.removeIf(Objects::isNull);
-        return materialized;
-
-    }
-
-    /**
-     * A recovered check level and the position of its pending absolute write, if any.
-     */
-    private record BatchViolation(@NotNull StoredViolation value, int index) {
-    }
-
-    private static void putViolation(
-            final @NotNull Map<String, StoredViolation> levels,
-            final @NotNull StorageMutation.Violation violation
-    ) {
-
-        final StoredViolation previous = levels.get(violation.check());
-        if (previous == null || violation.updatedAt() >= previous.updatedAt()) {
-            levels.put(violation.check(), new StoredViolation(violation.violations(), violation.updatedAt()));
-        }
-
-    }
-
     private void flushAll() {
 
-        while (available.get() && hasPendingWrites()) {
+        while (available.get() && buffer.hasPending()) {
             if (!flushOneBatch()) {
                 break;
             }
@@ -523,34 +396,11 @@ public final class StorageManager {
 
     }
 
-    private @NotNull List<StorageMutation> drainBatch() {
+    private void requeue(
+            final @NotNull List<StorageMutation> batch
+    ) {
 
-        final List<StorageMutation> batch = new ArrayList<>(settings.batchSize());
-        synchronized (pendingWriteLock) {
-            while (batch.size() < settings.batchSize()) {
-                final StorageMutation mutation = pendingWrites.pollFirst();
-                if (mutation == null) {
-                    break;
-                }
-                batch.add(mutation);
-            }
-        }
-        return batch;
-
-    }
-
-    private void requeue(final @NotNull List<StorageMutation> batch) {
-
-        final boolean discarded;
-        synchronized (pendingWriteLock) {
-            final int availableSlots = settings.pendingWriteCapacity() - pendingWrites.size();
-            final int firstRetained = Math.max(0, batch.size() - availableSlots);
-            for (int index = batch.size() - 1; index >= firstRetained; index--) {
-                pendingWrites.addFirst(batch.get(index));
-            }
-            discarded = firstRetained > 0;
-        }
-        if (discarded) {
+        if (buffer.requeue(batch)) {
             logFailure("Database write buffer is full after a failed batch; the oldest unsaved operations were discarded", null);
         }
 

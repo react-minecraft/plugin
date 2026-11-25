@@ -15,6 +15,9 @@ import java.util.jar.JarOutputStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * Verifies child-first resource isolation and parent delegation boundaries in {@link ExtensionClassLoader}.
+ */
 class ExtensionClassLoaderTest {
 
     @Test

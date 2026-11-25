@@ -9,6 +9,9 @@ import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import net.kyori.adventure.audience.Audience;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@code /react alerts [players]} toggles violation alert delivery for staff.
+ */
 public final class AlertsArgument extends ReportToggleArgument {
 
     public AlertsArgument(

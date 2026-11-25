@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Verifies placeholder registration, scoped prefixes, and evaluation contracts in {@link SimplePlaceholderRegistry}.
+ */
 class SimplePlaceholderRegistryTest {
 
     private final SimplePlaceholderRegistry registry = new SimplePlaceholderRegistry(NOPLogger.NOP_LOGGER);

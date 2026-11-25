@@ -60,10 +60,10 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
 
         final HistoryConfig.Format format = this.format;
         final int perPage = Math.max(1, format.printEntries());
-        final InferenceHistoryEntry[] history = player.inferenceHistory.entries();
+        final InferenceHistoryEntry[] history = player.inferenceHistory().entries();
         final int pages = Math.max(1, (int) Math.ceil((double) history.length / perPage));
         final int page = Math.max(1, Math.min(requested, pages));
-        final double average = player.inferenceStatistic.averageProbability();
+        final double average = player.inferenceStatistic().averageProbability();
 
         final TagMapper common = new TagMapper() {
 
@@ -127,17 +127,17 @@ public final class InferenceHistoryPrinter implements ReloadObserver<HistoryConf
                             public String map(final @NotNull String name, final @NotNull String args) {
 
                                 return switch (name) {
-                                    case "probability" -> ProbabilityColor.miniMessage(entry.getProbability());
-                                    case "probability-plain" -> ProbabilityFormatter.format(entry.getProbability());
-                                    case "check" -> escape(entry.getCheck().name());
-                                    case "model" -> entry.getModelId() == null ? "unknown" : escape(entry.getModelId());
-                                    case "version" -> entry.getRunId() == null ? "unknown" : escape(entry.getRunId());
-                                    case "threshold" -> entry.getThreshold() == null
-                                            ? "unknown" : ProbabilityFormatter.format(entry.getThreshold());
-                                    case "mode" -> entry.getEnforcement() == null
-                                            ? "unknown" : entry.getEnforcement() ? "enforce" : "observe";
-                                    case "vl-before" -> formatViolations(entry.getViolationsBefore());
-                                    case "vl-after" -> formatViolations(entry.getViolationsAfter());
+                                    case "probability" -> ProbabilityColor.miniMessage(entry.probability());
+                                    case "probability-plain" -> ProbabilityFormatter.format(entry.probability());
+                                    case "check" -> escape(entry.check().name());
+                                    case "model" -> entry.modelId() == null ? "unknown" : escape(entry.modelId());
+                                    case "version" -> entry.runId() == null ? "unknown" : escape(entry.runId());
+                                    case "threshold" -> entry.threshold() == null
+                                            ? "unknown" : ProbabilityFormatter.format(entry.threshold());
+                                    case "mode" -> entry.enforcement() == null
+                                            ? "unknown" : entry.enforcement() ? "enforce" : "observe";
+                                    case "vl-before" -> formatViolations(entry.violationsBefore());
+                                    case "vl-after" -> formatViolations(entry.violationsAfter());
                                     default -> common.map(name, args);
                                 };
 

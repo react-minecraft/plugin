@@ -4,13 +4,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
+/**
+ * Supported storage backend types selectable via {@code database.yml}.
+ */
 public enum DatabaseType {
+
     H2,
     MYSQL,
     MONGODB,
     SQLITE;
 
-    public static @NotNull DatabaseType parse(final String input) {
+    public static @NotNull DatabaseType parse(
+            final String input
+    ) {
 
         if (input == null) {
             return SQLITE;
@@ -29,4 +35,5 @@ public enum DatabaseType {
         return name().toLowerCase(Locale.ROOT) + ".yml";
 
     }
+
 }

@@ -11,6 +11,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Verifies ordered step execution in {@link ConfigMigrationChain}.
+ */
 class ConfigMigrationsTest {
 
     @Test

@@ -25,6 +25,8 @@ import java.util.logging.Level;
  */
 final class BukkitCommandTreeRefresh implements Consumer<String> {
 
+    private static final @Nullable Method UPDATE_PLAYER_COMMANDS = findMethod(Player.class, "updateCommands");
+
     private final Plugin plugin;
     private final CommandManager<PlatformSender> manager;
     private final TaskScheduler<PlatformPlayer> scheduler;
@@ -94,10 +96,9 @@ final class BukkitCommandTreeRefresh implements Consumer<String> {
             try {
                 final Server server = plugin.getServer();
                 sync.invoke(server);
-                for (final Player player : server.getOnlinePlayers()) {
-                    final Method updateCommands = findMethod(player.getClass(), "updateCommands");
-                    if (updateCommands != null) {
-                        updateCommands.invoke(player);
+                if (UPDATE_PLAYER_COMMANDS != null) {
+                    for (final Player player : server.getOnlinePlayers()) {
+                        UPDATE_PLAYER_COMMANDS.invoke(player);
                     }
                 }
             } catch (final ReflectiveOperationException failure) {

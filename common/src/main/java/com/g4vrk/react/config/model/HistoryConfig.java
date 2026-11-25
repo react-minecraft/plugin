@@ -4,6 +4,9 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.util.List;
 
+/**
+ * Typed view of {@code history.yml} controlling {@code /react history} formatting and pagination.
+ */
 @ConfigSerializable
 public record HistoryConfig(History history) {
 

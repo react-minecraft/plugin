@@ -35,8 +35,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * {@code /react bypass}: temporary bypasses, stored in the database.
@@ -44,6 +42,12 @@ import java.util.stream.IntStream;
 public final class BypassArgument extends LocalArgument implements ReloadObserver<ActionsConfig> {
 
     private static final String FOREVER = "forever";
+    private static final List<Suggestion> DURATION_SUGGESTIONS = List.of(
+            Suggestion.suggestion(FOREVER),
+            Suggestion.suggestion("10m"),
+            Suggestion.suggestion("1h"),
+            Suggestion.suggestion("1d")
+    );
     private static final CloudKey<Collection<PlatformPlayer>> PLAYERS = CloudKey.of("players", new TypeToken<Collection<PlatformPlayer>>() {});
     private static final CloudKey<Either<Duration, String>> DURATION = CloudKey.of("duration", new TypeToken<Either<Duration, String>>() {});
     private static final CloudKey<String> CHECK = CloudKey.of("check", String.class);
@@ -107,8 +111,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                 .optional(
                         DURATION,
                         ArgumentParser.firstOf(DurationParser.durationParser(), StringParser.stringParser()),
-                        SuggestionProvider.blocking((context, input) -> List.of(FOREVER, "10m", "1h", "1d")
-                                .stream().map(Suggestion::suggestion).toList())
+                        SuggestionProvider.blocking((context, input) -> DURATION_SUGGESTIONS)
                 )
                 .optional(CHECK, StringParser.stringParser(), checkSuggestions())
                 .handler(context -> {
@@ -120,7 +123,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
                         duration = time.primary().orElse(null);
                         final String text = time.fallback().orElse(null);
                         if (text != null && !text.equalsIgnoreCase(FOREVER)) {
-                            if (check != null || !checkIds().contains(text.toLowerCase(Locale.ROOT))) {
+                            if (check != null || !isKnownCheck(text)) {
                                 invalidDuration.run(context.sender());
                                 return;
                             }
@@ -253,9 +256,18 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             final @NotNull PlatformSender sender
     ) {
 
-        final List<TrackedPlayerImpl> holders = playerRegistry.stream()
-                .filter(player -> !player.bypasses().isEmpty())
-                .toList();
+        final List<TrackedPlayerImpl> holders = new ArrayList<>();
+        final List<Map<String, Instant>> holderBypasses = new ArrayList<>();
+        for (final TrackedPlayerImpl player : playerRegistry) {
+            if (!player.hasActiveBypass()) {
+                continue;
+            }
+            final Map<String, Instant> active = player.bypasses();
+            if (!active.isEmpty()) {
+                holders.add(player);
+                holderBypasses.add(active);
+            }
+        }
         if (holders.isEmpty()) {
             listEmpty.run(sender);
             return;
@@ -263,8 +275,9 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
         final String count = String.valueOf(holders.size());
         listHeader.run(sender, text -> text.replace("<count>", count));
         final Instant now = Instant.now();
-        for (final TrackedPlayerImpl player : holders) {
-            for (final Map.Entry<String, Instant> entry : player.bypasses().entrySet()) {
+        for (int index = 0; index < holders.size(); index++) {
+            final TrackedPlayerImpl player = holders.get(index);
+            for (final Map.Entry<String, Instant> entry : holderBypasses.get(index).entrySet()) {
                 final String checkName = entry.getKey().equals(StorageConstant.ALL_CHECKS) ? allChecks : entry.getKey();
                 final String left = entry.getValue() == null ? forever : format(Duration.between(now, entry.getValue()));
                 listEntry.run(
@@ -287,9 +300,11 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
 
     }
 
-    private static @NotNull List<String> checkIds() {
+    private static boolean isKnownCheck(
+            final @NotNull String check
+    ) {
 
-        return List.copyOf(React.INSTANCE.configs().checks().keySet());
+        return React.INSTANCE.configs().checks().containsKey(check.toLowerCase(Locale.ROOT));
 
     }
 
@@ -298,7 +313,7 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             final @Nullable String check
     ) {
 
-        if (check == null || checkIds().contains(check.toLowerCase(Locale.ROOT))) {
+        if (check == null || isKnownCheck(check)) {
             return true;
         }
         invalidCheck.run(sender);
@@ -308,8 +323,14 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
 
     private static @NotNull SuggestionProvider<PlatformSender> checkSuggestions() {
 
-        return SuggestionProvider.blocking((context, input) ->
-                checkIds().stream().map(Suggestion::suggestion).toList());
+        return SuggestionProvider.blocking((context, input) -> {
+            final Collection<String> ids = React.INSTANCE.configs().checks().keySet();
+            final List<Suggestion> suggestions = new ArrayList<>(ids.size());
+            for (final String id : ids) {
+                suggestions.add(Suggestion.suggestion(id));
+            }
+            return suggestions;
+        });
 
     }
 
@@ -317,14 +338,20 @@ public final class BypassArgument extends LocalArgument implements ReloadObserve
             final @NotNull Duration duration
     ) {
 
-        final long seconds = Math.max(0, duration.getSeconds());
-        final long[] parts = {seconds / 86_400, seconds / 3_600 % 24, seconds / 60 % 60, seconds % 60};
-        final String[] units = {"d", "h", "m", "s"};
-        final String text = IntStream.range(0, parts.length)
-                .filter(index -> parts[index] > 0)
-                .mapToObj(index -> parts[index] + units[index])
-                .collect(Collectors.joining(" "));
-        return text.isEmpty() ? "0s" : text;
+        final long seconds = Math.max(0L, duration.getSeconds());
+        final long[] parts = {seconds / 86_400L, seconds / 3_600L % 24L, seconds / 60L % 60L, seconds % 60L};
+        final char[] units = {'d', 'h', 'm', 's'};
+        final StringBuilder builder = new StringBuilder(16);
+        for (int index = 0; index < parts.length; index++) {
+            if (parts[index] <= 0L) {
+                continue;
+            }
+            if (!builder.isEmpty()) {
+                builder.append(' ');
+            }
+            builder.append(parts[index]).append(units[index]);
+        }
+        return builder.isEmpty() ? "0s" : builder.toString();
 
     }
 

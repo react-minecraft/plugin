@@ -16,6 +16,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies that shutting down during update checks cancels pending extension loading cleanly.
+ */
 class ExtensionManagerShutdownTest {
 
     @Test

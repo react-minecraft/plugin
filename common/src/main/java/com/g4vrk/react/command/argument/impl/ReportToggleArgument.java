@@ -21,11 +21,13 @@ import org.incendo.cloud.suggestion.SuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * {@code /react <literal> [players]} for a {@link ReportChannel}.
@@ -87,8 +89,14 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
             builder = builder.optional(
                     CHECK,
                     StringParser.stringParser(),
-                    SuggestionProvider.blocking((context, input) ->
-                            React.INSTANCE.configs().checks().keySet().stream().map(Suggestion::suggestion).toList())
+                    SuggestionProvider.blocking((context, input) -> {
+                        final Set<String> checkIds = React.INSTANCE.configs().checks().keySet();
+                        final List<Suggestion> suggestions = new ArrayList<>(checkIds.size());
+                        for (final String checkId : checkIds) {
+                            suggestions.add(Suggestion.suggestion(checkId));
+                        }
+                        return suggestions;
+                    })
             );
         }
         return builder.handler(context -> {
@@ -117,13 +125,28 @@ public abstract class ReportToggleArgument extends LocalArgument implements Relo
             final @Nullable String check
     ) {
 
-        final Set<UUID> uuids = players == null ? null : players.stream().map(PlatformPlayer::uniqueId).collect(Collectors.toSet());
+        final Set<UUID> uuids;
+        final String names;
+        if (players == null) {
+            uuids = null;
+            names = "*";
+        } else {
+            uuids = new HashSet<>(Math.max(4, players.size() * 2));
+            final StringBuilder namesBuilder = new StringBuilder();
+            for (final PlatformPlayer target : players) {
+                uuids.add(target.uniqueId());
+                if (!namesBuilder.isEmpty()) {
+                    namesBuilder.append(", ");
+                }
+                namesBuilder.append(target.name());
+            }
+            names = namesBuilder.toString();
+        }
         if (!this.channel.toggle(sender, uuids, check)) {
             this.disabledActions.run(sender);
             return;
         }
 
-        final String names = players == null ? "*" : players.stream().map(PlatformPlayer::name).collect(Collectors.joining(", "));
         final String checkName = check == null ? "*" : check;
         this.enabledPlayersActions.run(
                 sender,

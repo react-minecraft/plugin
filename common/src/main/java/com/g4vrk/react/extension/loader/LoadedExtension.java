@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * One addon or RCP jar that is loaded: its class loader, environment and main object.
@@ -40,10 +41,12 @@ public final class LoadedExtension {
     private final ScopedExtensionService services;
     private final ScopedEnvironment environment;
     private final Object instance;
+    private final AtomicBoolean closed = new AtomicBoolean();
 
-    private boolean enabled;
+    private volatile boolean enabled;
 
-    private LoadedExtension(            final @NotNull ExtensionContext context,
+    private LoadedExtension(
+            final @NotNull ExtensionContext context,
             final @NotNull ExtensionDescriptor descriptor,
             final @NotNull ExtensionClassLoader classLoader,
             final @NotNull ExtensionPlan plan,
@@ -64,7 +67,8 @@ public final class LoadedExtension {
 
     /**
      * Opens a jar, builds its environment and creates its main class. An addon also gets
-     * {@link JavaAddon#onLoad()}.     *
+     * {@link JavaAddon#onLoad()}.
+     *
      * @param context    the plugin services
      * @param descriptor the metadata of the jar
      * @param plan the validated bootstrap declarations
@@ -72,7 +76,8 @@ public final class LoadedExtension {
      * @return the loaded, not yet enabled extension
      * @throws Exception when the jar cannot be loaded; nothing is left open then
      */
-    public static @NotNull LoadedExtension load(            final @NotNull ExtensionContext context,
+    public static @NotNull LoadedExtension load(
+            final @NotNull ExtensionContext context,
             final @NotNull ExtensionDescriptor descriptor,
             final @NotNull ExtensionPlan plan,
             final @NotNull Map<ExtensionId, LoadedExtension> dependencies
@@ -127,21 +132,25 @@ public final class LoadedExtension {
     }
 
     public ExtensionPlan plan() {
+
         return plan;
 
     }
 
-    public ExtensionClassLoader loader() {
+    public @NotNull ExtensionClassLoader loader() {
+
         return classLoader;
 
     }
 
-    public ScopedExtensionService services() {
+    public @NotNull ScopedExtensionService services() {
+
         return services;
 
     }
 
-    private static @NotNull RCPLifecycle createRCP(            final @NotNull Class<?> mainClass,
+    private static @NotNull RCPLifecycle createRCP(
+            final @NotNull Class<?> mainClass,
             final @NotNull RCPEnvironment environment
     ) throws Exception {
 
@@ -155,7 +164,10 @@ public final class LoadedExtension {
 
     }
 
-    private static @NotNull JavaAddon createAddon(final @NotNull Class<?> mainClass) throws Exception {
+    private static @NotNull JavaAddon createAddon(
+            final @NotNull Class<?> mainClass
+    ) throws Exception {
+
         if (!JavaAddon.class.isAssignableFrom(mainClass)) {
             throw new InvalidExtensionException(mainClass.getName() + " does not extend JavaAddon");
         }
@@ -164,6 +176,7 @@ public final class LoadedExtension {
     }
 
     private static void release(final @NotNull RCPHost host, final @NotNull ScopedEnvironment environment) {
+
         if (environment instanceof HostedRCPEnvironment rcp) {
             host.detach(rcp);
         }
@@ -177,6 +190,7 @@ public final class LoadedExtension {
      * @return the descriptor
      */
     public @NotNull ExtensionDescriptor descriptor() {
+
         return descriptor;
 
     }
@@ -187,6 +201,7 @@ public final class LoadedExtension {
      * @return the environment
      */
     public @NotNull ScopedEnvironment environment() {
+
         return environment;
 
     }
@@ -197,11 +212,13 @@ public final class LoadedExtension {
      * @return the state
      */
     public boolean enabled() {
+
         return enabled;
 
     }
 
     public void enable() throws Exception {
+
         if (enabled) {
             return;
         }
@@ -219,6 +236,7 @@ public final class LoadedExtension {
     }
 
     public void reload() throws Exception {
+
         if (enabled && instance instanceof RCPLifecycle lifecycle) {
             withContextLoader(classLoader, lifecycle::onReload);
         }
@@ -226,6 +244,7 @@ public final class LoadedExtension {
     }
 
     public @NotNull CompletableFuture<Void> prepareDisable() {
+
         if (!enabled || !(instance instanceof JavaAddon addon)) {
             return CompletableFuture.completedFuture(null);
         }
@@ -241,6 +260,7 @@ public final class LoadedExtension {
     }
 
     public void cancelDisablePreparation() throws Exception {
+
         if (enabled && instance instanceof JavaAddon addon) {
             withContextLoader(classLoader, addon::cancelDisablePreparation);
         }
@@ -252,6 +272,10 @@ public final class LoadedExtension {
      * Failures are logged, the cleanup always runs.
      */
     public void close() {
+
+        if (!closed.compareAndSet(false, true)) {
+            return;
+        }
         try {
             if (enabled) {
                 enabled = false;
@@ -277,6 +301,7 @@ public final class LoadedExtension {
     }
 
     private static void withContextLoader(final @NotNull ClassLoader loader, final @NotNull Action action) throws Exception {
+
         final Thread thread = Thread.currentThread();
         final ClassLoader previous = thread.getContextClassLoader();
         thread.setContextClassLoader(loader);
@@ -297,6 +322,7 @@ public final class LoadedExtension {
 
     @Override
     public String toString() {
+
         return descriptor.kind().displayName() + " " + descriptor.name() + " v" + descriptor.version();
 
     }

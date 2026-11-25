@@ -2,6 +2,9 @@ package com.g4vrk.react.check.decay.impl;
 
 import com.g4vrk.react.check.decay.DecayStrategy;
 
+/**
+ * Subtracts a fixed violation amount per decay step, clamped at zero.
+ */
 public final class LinearDecay implements DecayStrategy {
 
     private final double amount;

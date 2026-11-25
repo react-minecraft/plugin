@@ -15,6 +15,9 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Verifies resource extraction and replacement rules for {@link JavaAddon}.
+ */
 class JavaAddonResourceTest {
 
     @TempDir

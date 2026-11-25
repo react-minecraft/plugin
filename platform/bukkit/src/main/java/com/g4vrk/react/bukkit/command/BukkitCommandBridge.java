@@ -79,8 +79,7 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
             final boolean required
     ) {
 
-        final ParserDescriptor<PlatformSender, SinglePlayerSelector> nativeParser =
-                SinglePlayerSelectorParser.singlePlayerSelectorParser();
+        final ParserDescriptor<PlatformSender, SinglePlayerSelector> nativeParser = SinglePlayerSelectorParser.singlePlayerSelectorParser();
         final ParserDescriptor<PlatformSender, PlatformPlayer> mapped = nativeParser.mapSuccess(
                 PlatformPlayer.class,
                 (context, selector) -> CompletableFuture.completedFuture(new BukkitPlatformPlayer(selector.single()))
@@ -98,8 +97,7 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
             final boolean required
     ) {
 
-        final ParserDescriptor<PlatformSender, MultiplePlayerSelector> nativeParser =
-                MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false);
+        final ParserDescriptor<PlatformSender, MultiplePlayerSelector> nativeParser = MultiplePlayerSelectorParser.multiplePlayerSelectorParser(false);
         final ParserDescriptor<PlatformSender, Collection<PlatformPlayer>> mapped = nativeParser.mapSuccess(
                 new TypeToken<Collection<PlatformPlayer>>() {},
                 (context, selector) -> {

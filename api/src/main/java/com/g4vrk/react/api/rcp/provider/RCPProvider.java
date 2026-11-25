@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * Convenience base class for RCP implementations holding a reference to their {@link RCPEnvironment}.
+ */
 @ApiStatus.AvailableSince("2.0")
 public abstract class RCPProvider implements RCPLifecycle {
 
@@ -15,27 +18,36 @@ public abstract class RCPProvider implements RCPLifecycle {
     public RCPProvider(
             final @NotNull RCPEnvironment environment
     ) {
+
         this.singletonEnvironment = Objects.requireNonNull(
                 environment,
                 "environment can't be null"
         );
+
     }
 
     protected @NotNull RCPEnvironment singletonEnvironment() {
+
         return singletonEnvironment;
+
     }
 
     @Override
     public void onEnable() throws Exception {
+
         /*
-         * pass by default
+         * Default no-op hook for providers without startup logic.
          */
+
     }
 
     @Override
     public void onDisable() throws Exception {
+
         /*
-         * pass by default
+         * Default no-op hook for providers without shutdown logic.
          */
+
     }
+
 }

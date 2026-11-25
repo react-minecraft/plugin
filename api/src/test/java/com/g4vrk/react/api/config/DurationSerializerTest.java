@@ -10,6 +10,9 @@ import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Verifies overflow handling and serialization failures in {@link DurationSerializer}.
+ */
 class DurationSerializerTest {
 
     @Test

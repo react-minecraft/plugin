@@ -54,6 +54,7 @@ public final class PlaceholderScanner {
     private long remainingWork;
 
     private PlaceholderScanner(final @NotNull String source, final @NotNull Lookup lookup) {
+
         this.buffer = new Buffer(source);
         this.lookup = lookup;
         this.remainingWork = (long) source.length() * (MAX_DEPTH + 1);
@@ -68,6 +69,7 @@ public final class PlaceholderScanner {
      * @return the text with the known placeholders replaced
      */
     public static @NotNull String apply(final @NotNull String source, final @NotNull Lookup lookup) {
+
         if (source.isEmpty()) {
             return source;
         }
@@ -81,6 +83,7 @@ public final class PlaceholderScanner {
     }
 
     private void scan() {
+
         int index = 0;
         int depth = 0;
 
@@ -108,6 +111,7 @@ public final class PlaceholderScanner {
     }
 
     private boolean resolveAt(final int offset, final int depth) {
+
         final int start = offset;
         int index = offset + 1;
 

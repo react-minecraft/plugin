@@ -17,21 +17,25 @@ public final class BukkitCombatListener implements Listener {
 
     private final CoreListenerCallback callbacks;
 
-    public BukkitCombatListener(            final @NotNull CoreListenerCallback callbacks
+    public BukkitCombatListener(
+            final @NotNull CoreListenerCallback callbacks
     ) {
 
         this.callbacks = callbacks;
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)    public void onHit(            final @NotNull EntityDamageByEntityEvent event
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onHit(
+            final @NotNull EntityDamageByEntityEvent event
     ) {
 
         final Entity victim = event.getEntity();
         if (!(event.getDamager() instanceof final Player damager)) {
             return;
         }
-        if (victim instanceof Player || CombatTarget.isMannequinType(victim.getType().getKey().toString())) {
+        if (victim instanceof Player
+                || CombatTarget.isMannequinType(victim.getType().getKey().getNamespace(), victim.getType().getKey().getKey())) {
             callbacks.onCombatHit(damager.getUniqueId(), victim.getEntityId());
         }
 

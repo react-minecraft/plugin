@@ -41,17 +41,18 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     private final UUID uniqueId;
     private final String name;
 
-    public final PlatformPlayer platformPlayer;
+    private final PlatformPlayer platformPlayer;
 
-    public final CombatActivity combatActivity;
-    public final RotationData rotationData = new RotationData(MAX_ROTATION_WINDOW);
+    private final CombatActivity combatActivity;
+    private final RotationData rotationData = new RotationData(MAX_ROTATION_WINDOW);
 
-    public final CheckManager checkManager;
+    private final CheckManager checkManager;
 
-    public final InferenceHistory inferenceHistory;
-    public final InferenceStatistic inferenceStatistic;
+    private final InferenceHistory inferenceHistory;
+    private final InferenceStatistic inferenceStatistic;
 
     private final Map<String, Long> bypasses = new ConcurrentHashMap<>();
+    private final Map<String, Boolean> permissionBypasses = new ConcurrentHashMap<>();
     private final Object bypassLock = new Object();
     private final Object inferenceLock = new Object();
     private volatile long inferenceGeneration;
@@ -59,6 +60,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     private volatile @Nullable HistorySnapshot historySnapshot;
     private volatile boolean bypassesLoaded;
     private volatile boolean dataReady;
+    private volatile boolean permissionsRefreshed;
     private volatile boolean rotationPermissionBypass = true;
 
     public TrackedPlayerImpl(
@@ -76,15 +78,15 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
                 entry -> React.INSTANCE.storageManager().saveInference(
                         uniqueId,
                         new StoredInference(
-                                entry.getTimestamp(),
-                                entry.getCheck().id(),
-                                entry.getProbability(),
-                                entry.getModelId(),
-                                entry.getRunId(),
-                                entry.getThreshold(),
-                                entry.getEnforcement(),
-                                entry.getViolationsBefore(),
-                                entry.getViolationsAfter()
+                                entry.timestamp(),
+                                entry.check().id(),
+                                entry.probability(),
+                                entry.modelId(),
+                                entry.runId(),
+                                entry.threshold(),
+                                entry.enforcement(),
+                                entry.violationsBefore(),
+                                entry.violationsAfter()
                         )
                 )
         );
@@ -115,10 +117,46 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     }
 
+    public @NotNull RotationData rotationData() {
+
+        return rotationData;
+
+    }
+
+    public @NotNull InferenceHistory inferenceHistory() {
+
+        return inferenceHistory;
+
+    }
+
+    public @NotNull InferenceStatistic inferenceStatistic() {
+
+        return inferenceStatistic;
+
+    }
+
+    public void reloadChecks() {
+
+        checkManager.reload();
+
+    }
+
+    public <T extends Check> @Nullable T check(final @NotNull Class<T> checkClass) {
+
+        return checkManager.check(checkClass);
+
+    }
+
+    public void extendCombat(final long durationTicks) {
+
+        combatActivity.extend(durationTicks);
+
+    }
+
     @Override
     public boolean inCombat() {
 
-        return combatActivity.isActive();
+        return combatActivity.active();
 
     }
 
@@ -132,7 +170,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     @Override
     public boolean checked() {
 
-        final AimAI aim = checkManager.getCheck(AimAI.class);
+        final AimAI aim = checkManager.check(AimAI.class);
         return aim != null && aim.active();
 
     }
@@ -147,7 +185,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     @Override
     public @Nullable Check check(final @NotNull String id) {
 
-        return checkManager.getCheck(id);
+        return checkManager.check(id);
 
     }
 
@@ -190,16 +228,30 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
     }
 
-    public void applyInference(final long generation, final @NotNull InferenceResult result) {
+    public boolean isInferenceCurrent(
+            final long generation
+    ) {
 
+        synchronized (inferenceLock) {
+            return inferenceResets == 0 && inferenceGeneration == generation;
+        }
+
+    }
+
+    public void applyInference(
+            final long generation,
+            final @NotNull InferenceResult result
+    ) {
+
+        final AimAI check;
         synchronized (inferenceLock) {
             if (inferenceResets != 0 || inferenceGeneration != generation) {
                 return;
             }
-            final AimAI check = checkManager.getCheck(AimAI.class);
-            if (check != null) {
-                check.onResult(result);
-            }
+            check = checkManager.check(AimAI.class);
+        }
+        if (check != null) {
+            check.onResult(generation, result);
         }
 
     }
@@ -217,21 +269,46 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
     }
 
     @Override
-    public boolean bypassed(final @NotNull String check) {
+    public boolean bypassed(
+            final @NotNull String check
+    ) {
 
         final String id = check.toLowerCase(Locale.ROOT);
-        return bypassActive(StorageConstant.ALL_CHECKS)
-                || bypassActive(id)
-                || PermissionKey.hasBypassForCheck(platformPlayer, id);
+        if (bypassActive(StorageConstant.ALL_CHECKS) || bypassActive(id)) {
+            return true;
+        }
+        if (!permissionsRefreshed) {
+            return true;
+        }
+        final Boolean cached = permissionBypasses.get(id);
+        if (cached != null) {
+            return cached;
+        }
+        permissionBypasses.putIfAbsent(id, Boolean.FALSE);
+        return false;
 
     }
 
     /**
-     * Refreshes the aim permission on the player's owning server thread.
+     * Refreshes check bypass permissions on the player's owning server thread.
      */
-    public void refreshRotationPermission() {
+    public void refreshBypassPermissions() {
 
-        rotationPermissionBypass = PermissionKey.hasBypassForCheck(platformPlayer, "aim-ai");
+        final boolean aimBypass = PermissionKey.hasBypassForCheck(platformPlayer, "aim-ai");
+        this.rotationPermissionBypass = aimBypass;
+        for (final Check check : checkManager.checks()) {
+            final String id = check.id().toLowerCase(Locale.ROOT);
+            this.permissionBypasses.put(
+                    id,
+                    "aim-ai".equals(id) ? aimBypass : PermissionKey.hasBypassForCheck(platformPlayer, id)
+            );
+        }
+        for (final String id : permissionBypasses.keySet()) {
+            if (checkManager.check(id) == null) {
+                permissionBypasses.put(id, PermissionKey.hasBypassForCheck(platformPlayer, id));
+            }
+        }
+        this.permissionsRefreshed = true;
 
     }
 
@@ -259,13 +336,28 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
         final HistoryEntry[] out = new HistoryEntry[entries.length];
         for (int i = 0; i < entries.length; i++) {
             final InferenceHistoryEntry entry = entries[i];
-            out[i] = new HistoryEntry(entry.getTimestamp(), entry.getCheck().id(), entry.getProbability(),
-                    entry.getModelId(), entry.getRunId(), entry.getThreshold(), entry.getEnforcement(),
-                    entry.getViolationsBefore(), entry.getViolationsAfter());
+            out[i] = new HistoryEntry(entry.timestamp(), entry.check().id(), entry.probability(),
+                    entry.modelId(), entry.runId(), entry.threshold(), entry.enforcement(),
+                    entry.violationsBefore(), entry.violationsAfter());
         }
         final List<HistoryEntry> list = List.of(out);
         this.historySnapshot = new HistorySnapshot(revision, list);
         return list;
+
+    }
+
+    public boolean hasActiveBypass() {
+
+        if (bypasses.isEmpty()) {
+            return false;
+        }
+        final long now = System.currentTimeMillis();
+        for (final Long until : bypasses.values()) {
+            if (until != null && until > now) {
+                return true;
+            }
+        }
+        return false;
 
     }
 
@@ -375,7 +467,7 @@ public final class TrackedPlayerImpl implements TrackedPlayer {
 
         final List<InferenceHistoryEntry> loadedHistory = new ArrayList<>(data.inferenceHistory().size());
         for (final StoredInference stored : data.inferenceHistory()) {
-            final Check check = checkManager.getCheck(stored.check());
+            final Check check = checkManager.check(stored.check());
             if (check != null) {
                 loadedHistory.add(new InferenceHistoryEntry(
                         stored.timestamp(),

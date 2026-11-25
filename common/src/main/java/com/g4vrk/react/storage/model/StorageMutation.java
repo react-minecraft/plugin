@@ -70,7 +70,9 @@ public interface StorageMutation {
     ) implements StorageMutation {
 
         public boolean lifted() {
+
             return until < 0;
+
         }
 
     }

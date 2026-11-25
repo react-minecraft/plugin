@@ -15,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies MiniMessage formatting and placeholder substitution in {@link MiniTextFormatter}.
+ */
 class MiniTextFormatterTest {
 
     private final MiniTextFormatter formatter = new MiniTextFormatter(

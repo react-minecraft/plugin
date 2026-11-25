@@ -8,6 +8,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+/**
+ * Base {@link Channel} that tracks subscribed Adventure audiences safely across threads.
+ *
+ * @param <I> the payload type published to recipients
+ */
 @ApiStatus.Internal
 public abstract class AudienceChannel<I> implements Channel<I> {
 

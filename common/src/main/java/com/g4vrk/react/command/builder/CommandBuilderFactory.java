@@ -3,12 +3,17 @@ package com.g4vrk.react.command.builder;
 import com.g4vrk.react.api.platform.sender.PlatformSender;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.description.Description;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Creates Incendo Cloud command builders bound to React's root command and permission.
+ */
 @RequiredArgsConstructor
+@Accessors(fluent = true)
 public final class CommandBuilderFactory {
 
     @Getter

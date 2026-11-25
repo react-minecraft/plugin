@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Immutable snapshot of one player's persisted violations, inference history, and temporary bypasses.
+ */
 public record PlayerStorageData(
         @NotNull Map<String, StoredViolation> violations,
         @NotNull List<StoredInference> inferenceHistory,
@@ -14,9 +17,11 @@ public record PlayerStorageData(
     public static final PlayerStorageData EMPTY = new PlayerStorageData(Map.of(), List.of(), Map.of());
 
     public PlayerStorageData {
+
         violations = Map.copyOf(violations);
         inferenceHistory = List.copyOf(inferenceHistory);
         bypasses = Map.copyOf(bypasses);
+
     }
 
 }

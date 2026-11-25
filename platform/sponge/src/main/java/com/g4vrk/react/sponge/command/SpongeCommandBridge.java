@@ -8,10 +8,12 @@ import com.g4vrk.react.sponge.sender.SpongePlatformSender;
 import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.TaskScheduler;
 import net.kyori.adventure.text.Component;
+import org.incendo.cloud.CloudCapability;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.component.CommandComponent;
 import org.incendo.cloud.execution.ExecutionCoordinator;
+import org.incendo.cloud.internal.CommandRegistrationHandler;
 import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.setting.ManagerSetting;
 import org.jetbrains.annotations.NotNull;
@@ -172,7 +174,8 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
 
         private SpongeCloudManager() {
 
-            super(ExecutionCoordinator.simpleCoordinator(), SpongeCommandBridge.this::registerCloudCommand);
+            super(ExecutionCoordinator.simpleCoordinator(), new SpongeRegistrationHandler());
+            registerCapability(CloudCapability.StandardCapabilities.ROOT_COMMAND_DELETION);
 
         }
 
@@ -180,6 +183,29 @@ public final class SpongeCommandBridge implements PlatformCommandBridge {
         public boolean hasPermission(final PlatformSender sender, final String permission) {
 
             return sender.hasPermission(permission);
+
+        }
+
+    }
+
+    /**
+     * Bridges Cloud's root registration callbacks to Sponge's static raw command roots.
+     */
+    private final class SpongeRegistrationHandler implements CommandRegistrationHandler<PlatformSender> {
+
+        @Override
+        public boolean registerCommand(final @NotNull Command<PlatformSender> command) {
+
+            return registerCloudCommand(command);
+
+        }
+
+        /*
+         * Sponge API 12 cannot unregister raw commands; SpongeRawCommand#canExecute checks the
+         * live Cloud tree so removed roots become silent and can be registered again later.
+         */
+        @Override
+        public void unregisterRootCommand(final @NotNull CommandComponent<PlatformSender> rootCommand) {
 
         }
 

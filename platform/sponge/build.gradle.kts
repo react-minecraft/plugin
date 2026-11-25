@@ -32,6 +32,8 @@ dependencies {
     add("packetEventsBundle", libs.packetevents.sponge)
     add(packetEventsAdventureApi.name, libs.packetevents.adventure.api)
 
+    testImplementation(libs.cloud.core)
+    testImplementation(libs.schedula.sponge)
     testImplementation(libs.sponge.api)
     testImplementation(libs.packetevents.sponge)
     testImplementation(libs.slf4j.api)

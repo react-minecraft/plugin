@@ -169,7 +169,7 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
      *
      * @param codeSource    location of the hosting plugin/mod JAR
      * @param parent        parent class loader provided by the server platform
-     * @param dataDirectory React's data directory (libraries are cached in {@code .libraries})
+     * @param dataDirectory React's data directory (libraries are cached in {@code libraries})
      * @param warningLogger sink for non-fatal close warnings
      * @param entryPoint    fully qualified runtime bootstrap class name
      * @param initParamType parameter type of {@code initialize(...)}
@@ -192,7 +192,7 @@ public final class RuntimeLibraryLoader extends URLClassLoader {
         final RuntimeLibraryLoader loader = new RuntimeLibraryLoader(
                 codeSource,
                 parent,
-                dataDirectory.resolve(".libraries"),
+                dataDirectory,
                 platformLoader,
                 platformPackages,
                 isolatedPackages

@@ -95,7 +95,7 @@ public final class ExtensionPlan implements ExtensionBootstrapContext {
 
         final LibraryCache cache = new LibraryCache();
         for (final Map.Entry<URI, String> library : libraries.entrySet()) {
-            loader.addLibrary(cache.resolve(directory.resolve(".libraries"), library.getKey(), library.getValue()).toUri().toURL());
+            loader.addLibrary(cache.resolve(directory, library.getKey(), library.getValue()).toUri().toURL());
         }
 
     }

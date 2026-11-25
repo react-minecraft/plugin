@@ -6,10 +6,16 @@ import com.github.retrooper.packetevents.event.PacketListenerCommon;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.event.EventListenerRegistration;
+import org.spongepowered.api.event.EventManager;
 import org.spongepowered.plugin.PluginContainer;
 
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Tracks Sponge event and PacketEvents listeners owned by one extension.
@@ -18,7 +24,9 @@ final class SpongeExtensionListenerScope implements PlatformListenerScope {
 
     private final PluginContainer container;
     private final Logger logger;
-    private final Set<Object> spongeListeners = new HashSet<>();
+    private final Supplier<EventManager> eventManager;
+    private final SpongeListenerRegistrar.RegistrationFactory registrationFactory;
+    private final Map<Object, List<Object>> spongeListeners = new IdentityHashMap<>();
     private final Set<PacketListenerCommon> packetListeners = new HashSet<>();
 
     SpongeExtensionListenerScope(
@@ -26,8 +34,21 @@ final class SpongeExtensionListenerScope implements PlatformListenerScope {
             final @NotNull Logger logger
     ) {
 
+        this(container, logger, Sponge::eventManager, EventListenerRegistration::builder);
+
+    }
+
+    SpongeExtensionListenerScope(
+            final @NotNull PluginContainer container,
+            final @NotNull Logger logger,
+            final @NotNull Supplier<EventManager> eventManager,
+            final @NotNull SpongeListenerRegistrar.RegistrationFactory registrationFactory
+    ) {
+
         this.container = container;
         this.logger = logger;
+        this.eventManager = eventManager;
+        this.registrationFactory = registrationFactory;
 
     }
 
@@ -40,8 +61,16 @@ final class SpongeExtensionListenerScope implements PlatformListenerScope {
             }
             return;
         }
-        if (spongeListeners.add(listener)) {
-            SpongeListenerRegistrar.register(container, listener);
+        if (!spongeListeners.containsKey(listener)) {
+            final List<Object> handles = SpongeListenerRegistrar.registerExtension(
+                    eventManager.get(),
+                    container,
+                    listener,
+                    registrationFactory
+            );
+            if (!handles.isEmpty()) {
+                spongeListeners.put(listener, handles);
+            }
         }
 
     }
@@ -55,8 +84,12 @@ final class SpongeExtensionListenerScope implements PlatformListenerScope {
             }
             return;
         }
-        if (spongeListeners.remove(listener)) {
-            Sponge.eventManager().unregisterListeners(listener);
+        final List<Object> handles = spongeListeners.remove(listener);
+        if (handles != null) {
+            final EventManager manager = eventManager.get();
+            for (final Object handle : handles) {
+                manager.unregisterListeners(handle);
+            }
         }
 
     }
@@ -64,14 +97,19 @@ final class SpongeExtensionListenerScope implements PlatformListenerScope {
     @Override
     public synchronized void close() {
 
-        for (final Object listener : spongeListeners) {
-            try {
-                Sponge.eventManager().unregisterListeners(listener);
-            } catch (final RuntimeException failure) {
-                logger.warn("Could not unregister an extension Sponge listener", failure);
+        if (!spongeListeners.isEmpty()) {
+            final EventManager manager = eventManager.get();
+            for (final List<Object> handles : spongeListeners.values()) {
+                for (final Object handle : handles) {
+                    try {
+                        manager.unregisterListeners(handle);
+                    } catch (final RuntimeException failure) {
+                        logger.warn("Could not unregister an extension Sponge listener", failure);
+                    }
+                }
             }
+            spongeListeners.clear();
         }
-        spongeListeners.clear();
         for (final PacketListenerCommon listener : packetListeners) {
             try {
                 PacketEvents.getAPI().getEventManager().unregisterListener(listener);

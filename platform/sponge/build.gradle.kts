@@ -18,6 +18,10 @@ val packetEventsBundle by configurations.creating {
     isTransitive = true
 }
 
+val packetEventsAdventureApi by configurations.creating {
+    isTransitive = false
+}
+
 dependencies {
     api(project(":common"))
 
@@ -27,6 +31,11 @@ dependencies {
     compileOnly(libs.sponge.api)
     compileOnly(libs.packetevents.sponge)
     add("packetEventsBundle", libs.packetevents.sponge)
+    add(packetEventsAdventureApi.name, libs.packetevents.adventure.api)
+
+    testImplementation(libs.sponge.api)
+    testImplementation(libs.packetevents.sponge)
+    testImplementation(libs.slf4j.api)
 }
 
 java {
@@ -50,5 +59,13 @@ tasks {
 
     named<Jar>("jar") {
         enabled = false
+    }
+
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        from({ packetEventsAdventureApi.files.map { zipTree(it) } }) {
+            include("net/kyori/adventure/text/ObjectComponent*.class")
+            include("net/kyori/adventure/text/object/*.class")
+            into("META-INF/react-platform")
+        }
     }
 }

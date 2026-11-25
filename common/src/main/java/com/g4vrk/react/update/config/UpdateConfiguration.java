@@ -94,6 +94,19 @@ public final class UpdateConfiguration {
     }
 
     /**
+     * Loads the inference provider's update settings, including existing settings under its former name.
+     *
+     * @return the provider's update settings
+     */
+    public @NotNull ComponentUpdateConfig reactRcpUpdate() {
+
+        final Path directory = folder.resolve("rcp");
+        final boolean legacy = Files.notExists(directory.resolve("react-inference-rcp.yml")) && Files.isRegularFile(directory.resolve("React.yml"));
+        return component(ExtensionKind.RCP, legacy ? "React" : "react-inference-rcp");
+
+    }
+
+    /**
      * Loads the update settings for the plugin or one extension component.
      *
      * @param kind the extension kind, or {@code null} for the plugin itself

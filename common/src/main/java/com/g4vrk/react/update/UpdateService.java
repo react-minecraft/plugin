@@ -293,7 +293,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             }
         }
 
-        final ComponentUpdateConfig component = configuration.component(ExtensionKind.RCP, "React");
+        final ComponentUpdateConfig component = configuration.reactRcpUpdate();
         install(
                 "React RCP",
                 ReleaseClient.REACT_RCP,
@@ -462,9 +462,7 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             final @NotNull TargetComponent component
     ) {
 
-        final ComponentUpdateConfig componentSettings = component.extension() == null
-                ? configuration.component(null, component.name())
-                : configuration.component(component.extension(), component.name());
+        final ComponentUpdateConfig componentSettings = component.extension() == ExtensionKind.RCP && ReleaseClient.REACT_RCP.equalsIgnoreCase(component.repository()) ? configuration.reactRcpUpdate() : configuration.component(component.extension(), component.name());
         final UpdateChannel channel = componentSettings.effectiveChannel();
         if (!componentSettings.enabled()) {
             statuses.put(key(component.repository()), new UpdateState(null, channel, null, "disabled"));

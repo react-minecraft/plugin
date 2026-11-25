@@ -1,6 +1,7 @@
 package com.g4vrk.react.extension.loader;
 
 import com.g4vrk.react.extension.descriptor.ExtensionDescriptor;
+import com.g4vrk.react.extension.descriptor.ExtensionKind;
 import com.g4vrk.react.extension.environment.ExtensionContext;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,14 @@ public final class ExtensionDataDirectory {
     ) throws IOException {
 
         final Path root = descriptor.kind().data(context.dataFolder());
+        final boolean inferenceRcp = descriptor.kind() == ExtensionKind.RCP && descriptor.mainClass().equals("com.g4vrk.react.inference.ReactInferenceRCP");
         final String name = switch (descriptor.kind()) {
             case ADDON -> ADDON_DIRECTORIES.getOrDefault(descriptor.mainClass(), descriptor.name());
-            case RCP -> descriptor.mainClass().equals("com.g4vrk.react.inference.ReactInferenceRCP") ? "react-inference-rcp" : descriptor.name();
+            case RCP -> inferenceRcp ? "react-inference-rcp" : descriptor.name();
         };
         final Path directory = root.resolve(name);
-        final Path legacy = root.resolve(descriptor.name());
+        final String legacyName = inferenceRcp && name.equals(descriptor.name()) ? "React" : descriptor.name();
+        final Path legacy = root.resolve(legacyName);
         if (!directory.equals(legacy) && Files.isDirectory(legacy)) {
             if (Files.notExists(directory)) {
                 Files.move(legacy, directory);

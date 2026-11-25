@@ -2,13 +2,16 @@ package com.g4vrk.react.bukkit.command;
 
 import com.g4vrk.react.api.platform.player.PlatformPlayer;
 import com.g4vrk.react.api.platform.sender.PlatformSender;
+import com.g4vrk.schedula.task.TickSchedule;
 import com.g4vrk.schedula.task.scheduler.TaskScheduler;
 import com.g4vrk.react.bukkit.sender.BukkitPlatformPlayer;
 import com.g4vrk.react.bukkit.sender.BukkitPlatformSender;
 import com.g4vrk.react.platform.command.PlatformCommandBridge;
 import io.leangen.geantyref.TypeToken;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.CommandManager;
 import org.incendo.cloud.SenderMapper;
@@ -31,6 +34,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Bukkit/Paper Cloud command manager adapter supporting native Brigadier selectors and
@@ -38,6 +44,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class BukkitCommandBridge implements PlatformCommandBridge {
 
+    private final Plugin plugin;
+    private final TaskScheduler<PlatformPlayer> scheduler;
     private final LegacyPaperCommandManager<PlatformSender> manager;
     private final BukkitCommandTreeRefresh treeRefresh;
 
@@ -46,6 +54,8 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
             final @NotNull TaskScheduler<PlatformPlayer> scheduler
     ) {
 
+        this.plugin = plugin;
+        this.scheduler = scheduler;
         this.manager = new LegacyPaperCommandManager<>(
                 plugin,
                 ExecutionCoordinator.<PlatformSender>builder()
@@ -136,6 +146,49 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
     ) {
 
         this.treeRefresh.accept(rootLabel);
+
+    }
+
+    @Override
+    public void runTreeMutation(
+            final @NotNull Runnable mutation
+    ) {
+
+        if (!this.plugin.isEnabled() || Bukkit.isPrimaryThread()) {
+            mutation.run();
+            return;
+        }
+        final CompletableFuture<Void> completed = new CompletableFuture<>();
+        try {
+            this.scheduler.schedule(() -> {
+                try {
+                    mutation.run();
+                    completed.complete(null);
+                } catch (final Throwable failure) {
+                    completed.completeExceptionally(failure);
+                }
+            }, TickSchedule.instant());
+        } catch (final IllegalPluginAccessException stopped) {
+            if (!this.plugin.isEnabled()) {
+                mutation.run();
+                return;
+            }
+            throw stopped;
+        }
+        try {
+            completed.get(10L, TimeUnit.SECONDS);
+        } catch (final InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while mutating command tree", interrupted);
+        } catch (final ExecutionException failure) {
+            if (failure.getCause() instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            throw new IllegalStateException("Command tree mutation failed", failure.getCause());
+        } catch (final TimeoutException timeout) {
+            this.plugin.getLogger().warning("Timed out waiting for server thread command tree mutation; running directly");
+            mutation.run();
+        }
 
     }
 

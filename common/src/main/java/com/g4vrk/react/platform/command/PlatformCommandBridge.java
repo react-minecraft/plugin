@@ -57,4 +57,17 @@ public interface PlatformCommandBridge {
 
     }
 
+    /**
+     * Executes a Cloud command tree mutation on the thread required by the platform dispatcher.
+     *
+     * @param mutation the mutation to execute
+     */
+    default void runTreeMutation(
+            final @NotNull Runnable mutation
+    ) {
+
+        mutation.run();
+
+    }
+
 }

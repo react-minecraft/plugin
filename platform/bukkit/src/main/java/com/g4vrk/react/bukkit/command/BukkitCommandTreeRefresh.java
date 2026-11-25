@@ -10,12 +10,15 @@ import org.bukkit.plugin.IllegalPluginAccessException;
 import org.bukkit.plugin.Plugin;
 import org.incendo.cloud.Command;
 import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.component.CommandComponent;
 import org.incendo.cloud.internal.CommandRegistrationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -33,6 +36,7 @@ final class BukkitCommandTreeRefresh implements Consumer<String> {
     private final @Nullable Method syncCommands;
     private final boolean mirroredDispatcher;
     private final Set<String> changedRoots = new HashSet<>();
+    private final Map<String, CommandComponent<PlatformSender>> knownRoots = new HashMap<>();
     private boolean queued;
 
     BukkitCommandTreeRefresh(
@@ -60,6 +64,13 @@ final class BukkitCommandTreeRefresh implements Consumer<String> {
             }
             if (mirroredDispatcher) {
                 changedRoots.add(label);
+                for (final Command<PlatformSender> command : manager.commands()) {
+                    final String rootName = command.rootComponent().name();
+                    if (rootName.equals(label)) {
+                        knownRoots.put(rootName, command.rootComponent());
+                        break;
+                    }
+                }
             }
             if (queued) {
                 return;
@@ -111,16 +122,23 @@ final class BukkitCommandTreeRefresh implements Consumer<String> {
     private void refreshMirroredDispatcher() {
 
         final CommandRegistrationHandler<PlatformSender> registration = manager.commandRegistrationHandler();
+        final Set<String> targets = Set.copyOf(changedRoots);
+        changedRoots.clear();
+        for (final String label : targets) {
+            final CommandComponent<PlatformSender> root = knownRoots.remove(label);
+            if (root != null) {
+                registration.unregisterRootCommand(root);
+            }
+        }
         for (final Command<PlatformSender> command : manager.commands()) {
             final String label = command.rootComponent().name();
-            if (changedRoots.remove(label)) {
-                registration.unregisterRootCommand(command.rootComponent());
+            if (targets.contains(label)) {
+                knownRoots.putIfAbsent(label, command.rootComponent());
                 if (!registration.registerCommand(command)) {
                     plugin.getLogger().warning("Could not refresh the Brigadier tree for /" + label);
                 }
             }
         }
-        changedRoots.clear();
 
     }
 

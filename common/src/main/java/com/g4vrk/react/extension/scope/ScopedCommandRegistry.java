@@ -66,14 +66,16 @@ public final class ScopedCommandRegistry implements CommandRegistrar, AutoClosea
         if (!label.equals(command.rootComponent().name())) {
             throw new IllegalArgumentException("Command label must match its Cloud root");
         }
-        synchronized (this.manager) {
-            if (this.closed) {
-                throw new IllegalStateException("Command scope is closed: " + this.owner);
+        this.platformCommands.runTreeMutation(() -> {
+            synchronized (this.manager) {
+                if (this.closed) {
+                    throw new IllegalStateException("Command scope is closed: " + this.owner);
+                }
+                this.manager.command(command);
+                this.commands.computeIfAbsent(label, ignored -> new ArrayList<>()).add(command);
+                this.platformCommands.onCommandsChanged(label);
             }
-            this.manager.command(command);
-            this.commands.computeIfAbsent(label, ignored -> new ArrayList<>()).add(command);
-            this.platformCommands.onCommandsChanged(label);
-        }
+        });
 
     }
 
@@ -82,34 +84,38 @@ public final class ScopedCommandRegistry implements CommandRegistrar, AutoClosea
             final @NotNull String label
     ) {
 
-        synchronized (this.manager) {
-            final List<Command<PlatformSender>> owned = this.commands.get(label);
-            if (owned == null) {
-                return false;
-            }
-            /*
-             * Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
-             * original Command objects of the plugin and other extensions, including their aliases.
-             */
-            final List<Command<PlatformSender>> retained = new ArrayList<>();
-            for (final Command<PlatformSender> command : this.manager.commands()) {
-                if (command.rootComponent().name().equals(label) && !containsIdentity(owned, command)) {
-                    retained.add(command);
+        final boolean[] removed = new boolean[1];
+        this.platformCommands.runTreeMutation(() -> {
+            synchronized (this.manager) {
+                final List<Command<PlatformSender>> owned = this.commands.get(label);
+                if (owned == null) {
+                    return;
+                }
+                /*
+                 * Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
+                 * original Command objects of the plugin and other extensions, including their aliases.
+                 */
+                final List<Command<PlatformSender>> retained = new ArrayList<>();
+                for (final Command<PlatformSender> command : this.manager.commands()) {
+                    if (command.rootComponent().name().equals(label) && !containsIdentity(owned, command)) {
+                        retained.add(command);
+                    }
+                }
+                try {
+                    this.manager.deleteRootCommand(label);
+                    for (final Command<PlatformSender> command : retained) {
+                        this.manager.command(command);
+                    }
+                    this.commands.remove(label);
+                    this.platformCommands.onCommandsChanged(label);
+                    removed[0] = true;
+                } catch (final RuntimeException failure) {
+                    this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);
+                    throw failure;
                 }
             }
-            try {
-                this.manager.deleteRootCommand(label);
-                for (final Command<PlatformSender> command : retained) {
-                    this.manager.command(command);
-                }
-                this.commands.remove(label);
-                this.platformCommands.onCommandsChanged(label);
-                return true;
-            } catch (final RuntimeException failure) {
-                this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);
-                throw failure;
-            }
-        }
+        });
+        return removed[0];
 
     }
 

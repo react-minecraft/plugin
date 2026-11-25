@@ -41,7 +41,7 @@ configurate = "4.2.0"
 cloud-paper = "2.0.1"
 examination = "1.3.0"
 
-textserializer = "1.2.0"
+textserializer = "1.2.1"
 actions = "2.2.1"
 
 schedula = "2.0.1"

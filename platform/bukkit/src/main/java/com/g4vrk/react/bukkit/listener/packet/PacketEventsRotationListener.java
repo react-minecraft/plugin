@@ -38,7 +38,7 @@ public final class PacketEventsRotationListener extends PacketListenerAbstract {
             return;
         }
 
-        if (!movePacket.hasRotationChanged()) {
+        if (!movePacket.hasRotationChanged() || event.getUser() == null || event.getUser().getUUID() == null) {
             return;
         }
 

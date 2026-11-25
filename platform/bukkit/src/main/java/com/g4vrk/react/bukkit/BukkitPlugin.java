@@ -1,20 +1,25 @@
 package com.g4vrk.react.bukkit;
 
 import com.g4vrk.react.extension.library.RuntimeLibraryLoader;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.logging.Level;
 
 /**
  * Connects the Bukkit plugin lifecycle to React's isolated runtime class loader.
  */
 public abstract class BukkitPlugin extends JavaPlugin {
 
+    private static final int BSTATS_PLUGIN_ID = 35616;
+
     private final String runtimeClass;
     private @Nullable Runnable[] lifecycle;
+    private @Nullable Metrics metrics;
 
     protected BukkitPlugin(
             final @NotNull String runtimeClass
@@ -78,6 +83,11 @@ public abstract class BukkitPlugin extends JavaPlugin {
             throw new IllegalStateException("React did not finish loading");
         }
         loaded[0].run();
+        try {
+            this.metrics = new Metrics(this, BSTATS_PLUGIN_ID);
+        } catch (final RuntimeException | LinkageError failure) {
+            getLogger().log(Level.WARNING, "Could not start bStats metrics", failure);
+        }
 
     }
 
@@ -85,9 +95,17 @@ public abstract class BukkitPlugin extends JavaPlugin {
     public final void onDisable() {
 
         final Runnable[] loaded = lifecycle;
+        final Metrics activeMetrics = metrics;
         lifecycle = null;
-        if (loaded != null) {
-            loaded[1].run();
+        metrics = null;
+        try {
+            if (activeMetrics != null) {
+                activeMetrics.shutdown();
+            }
+        } finally {
+            if (loaded != null) {
+                loaded[1].run();
+            }
         }
 
     }

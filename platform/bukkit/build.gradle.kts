@@ -31,6 +31,7 @@ val packetEventsBundle by configurations.creating {
 dependencies {
 
     api(project(":common"))
+    implementation(libs.bstats.bukkit)
 
     compileOnly(libs.spigot.api)
     compileOnly(libs.adventure.api)

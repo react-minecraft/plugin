@@ -29,6 +29,7 @@ spotless = "8.0.0"
 placeholderapi = "2.11.6"
 packetevents = "2.14.0"
 packetevents-sponge = "2.13.0"
+bstats = "3.2.1"
 
 flatbuffers = "25.2.10"
 
@@ -53,6 +54,8 @@ junit-platform = "6.1.3"
 
 
 [libraries]
+
+bstats-bukkit = { module = "org.bstats:bstats-bukkit", version.ref = "bstats" }
 
 adventure-api = { module = "net.kyori:adventure-api", version = "4.10.0" }
 adventure-minimessage = { module = "net.kyori:adventure-text-minimessage", version = "4.10.0" }

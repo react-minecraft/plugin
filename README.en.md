@@ -49,6 +49,7 @@
 * Server software: `Paper / Spigot / Folia`. Paper support starts at `1.16.5`.
 * Java: at least 17 for the Bukkit JAR and 21 for the Folia JAR. Your server may require a newer version.
 * React bundles [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0) and uses a compatible installed plugin when available. PlaceholderAPI is optional.
+* Bukkit and Folia builds report standard metrics to [bStats](https://bstats.org/plugin/bukkit/React%20AntiCheat/35616). Set `enabled: false` in `plugins/bStats/config.yml` to opt out.
 
 1. Download `react-bukkit-*.jar` for Paper or Spigot, or `react-folia-*.jar` for Folia.
 2. Place the JAR in `plugins/`. To migrate an existing `react-paper-*.jar` installation, replace the old JAR manually and keep `plugins/React/`.

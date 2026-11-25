@@ -48,6 +48,7 @@
 - Ядро сервера: `Paper / Spigot / Folia`. Paper поддерживается с `1.16.5`.
 - Java: от 17 для JAR Bukkit и от 21 для JAR Folia. Само ядро может требовать более новую версию.
 - React включает [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0). Если на сервере уже установлен совместимый PacketEvents, React использует его. PlaceholderAPI нужен только для его плейсхолдеров.
+- Сборки Bukkit и Folia отправляют стандартную статистику в [bStats](https://bstats.org/plugin/bukkit/React%20AntiCheat/35616). Чтобы отключить её, задайте `enabled: false` в `plugins/bStats/config.yml`.
 
 1. Скачайте `react-bukkit-*.jar` для Paper или Spigot, `react-folia-*.jar` для Folia.
 2. Положите JAR в `plugins/`. При переходе со сборки `react-paper-*.jar` замените старый JAR вручную и сохраните папку `plugins/React/`.

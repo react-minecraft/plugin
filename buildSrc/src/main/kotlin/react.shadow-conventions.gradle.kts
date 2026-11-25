@@ -28,6 +28,10 @@ tasks.named<ShadowJar>("shadowJar") {
 
     mergeServiceFiles()
 
+    if (project.path == ":platform:bukkit" || project.path == ":platform:folia") {
+        relocate("org.bstats", "com.g4vrk.react.bukkit.metrics")
+    }
+
     val packetEvents = project.configurations.findByName("packetEventsBundle") ?: return@named
     from({ packetEvents.files.map { zipTree(it) } }) {
         into("META-INF/react-platform")

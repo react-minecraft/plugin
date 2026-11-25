@@ -87,35 +87,41 @@ public final class ScopedCommandRegistry implements CommandRegistrar, AutoClosea
         final boolean[] removed = new boolean[1];
         this.platformCommands.runTreeMutation(() -> {
             synchronized (this.manager) {
-                final List<Command<PlatformSender>> owned = this.commands.get(label);
-                if (owned == null) {
-                    return;
-                }
-                /*
-                 * Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
-                 * original Command objects of the plugin and other extensions, including their aliases.
-                 */
-                final List<Command<PlatformSender>> retained = new ArrayList<>();
-                for (final Command<PlatformSender> command : this.manager.commands()) {
-                    if (command.rootComponent().name().equals(label) && !containsIdentity(owned, command)) {
-                        retained.add(command);
-                    }
-                }
-                try {
-                    this.manager.deleteRootCommand(label);
-                    for (final Command<PlatformSender> command : retained) {
-                        this.manager.command(command);
-                    }
-                    this.commands.remove(label);
-                    this.platformCommands.onCommandsChanged(label);
-                    removed[0] = true;
-                } catch (final RuntimeException failure) {
-                    this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);
-                    throw failure;
-                }
+                removed[0] = unregisterRoot(label);
             }
         });
         return removed[0];
+
+    }
+
+    private boolean unregisterRoot(final @NotNull String label) {
+
+        final List<Command<PlatformSender>> owned = this.commands.get(label);
+        if (owned == null) {
+            return false;
+        }
+        /*
+         * Cloud exposes removal of roots, not individual leaves. Rebuild the root with the
+         * original Command objects of the plugin and other extensions, including their aliases.
+         */
+        final List<Command<PlatformSender>> retained = new ArrayList<>();
+        for (final Command<PlatformSender> command : this.manager.commands()) {
+            if (command.rootComponent().name().equals(label) && !containsIdentity(owned, command)) {
+                retained.add(command);
+            }
+        }
+        try {
+            this.manager.deleteRootCommand(label);
+            for (final Command<PlatformSender> command : retained) {
+                this.manager.command(command);
+            }
+            this.commands.remove(label);
+            this.platformCommands.onCommandsChanged(label);
+            return true;
+        } catch (final RuntimeException failure) {
+            this.logger.error("Could not remove commands under /{} of extension '{}'", label, this.owner, failure);
+            throw failure;
+        }
 
     }
 
@@ -142,12 +148,14 @@ public final class ScopedCommandRegistry implements CommandRegistrar, AutoClosea
     @Override
     public void close() {
 
-        synchronized (this.manager) {
-            this.closed = true;
-            for (final String root : List.copyOf(this.commands.keySet())) {
-                unregister(root);
+        this.platformCommands.runTreeMutation(() -> {
+            synchronized (this.manager) {
+                this.closed = true;
+                for (final String root : List.copyOf(this.commands.keySet())) {
+                    unregisterRoot(root);
+                }
             }
-        }
+        });
 
     }
 

@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -158,16 +159,9 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
             mutation.run();
             return;
         }
-        final CompletableFuture<Void> completed = new CompletableFuture<>();
+        final FutureTask<Void> task = new FutureTask<>(mutation, null);
         try {
-            this.scheduler.schedule(() -> {
-                try {
-                    mutation.run();
-                    completed.complete(null);
-                } catch (final Throwable failure) {
-                    completed.completeExceptionally(failure);
-                }
-            }, TickSchedule.instant());
+            this.scheduler.schedule(task, TickSchedule.instant());
         } catch (final IllegalPluginAccessException stopped) {
             if (!this.plugin.isEnabled()) {
                 mutation.run();
@@ -176,8 +170,9 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
             throw stopped;
         }
         try {
-            completed.get(10L, TimeUnit.SECONDS);
+            task.get(10L, TimeUnit.SECONDS);
         } catch (final InterruptedException interrupted) {
+            task.cancel(false);
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while mutating command tree", interrupted);
         } catch (final ExecutionException failure) {
@@ -186,8 +181,8 @@ public final class BukkitCommandBridge implements PlatformCommandBridge {
             }
             throw new IllegalStateException("Command tree mutation failed", failure.getCause());
         } catch (final TimeoutException timeout) {
-            this.plugin.getLogger().warning("Timed out waiting for server thread command tree mutation; running directly");
-            mutation.run();
+            task.cancel(false);
+            throw new IllegalStateException("Timed out waiting for server thread command tree mutation", timeout);
         }
 
     }

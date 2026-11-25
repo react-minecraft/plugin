@@ -103,6 +103,14 @@ class ScopedCommandsTest {
         }
 
         @Override
+        public void runTreeMutation(final @NotNull Runnable mutation) {
+
+            assertFalse(Thread.holdsLock(this.manager), "Dispatching while holding the Cloud manager lock");
+            mutation.run();
+
+        }
+
+        @Override
         public CommandComponent.@NotNull Builder<PlatformSender, PlatformPlayer> singlePlayerArgument(
                 final @NotNull CloudKey<PlatformPlayer> key,
                 final boolean required

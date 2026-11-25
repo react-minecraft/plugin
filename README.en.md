@@ -46,16 +46,16 @@
 
 ## Requirements & Installation
 
-* Server software: `Paper / Spigot / Folia`. Paper support starts at `1.16.5`.
-* Java: at least 17 for the Bukkit JAR and 21 for the Folia JAR. Your server may require a newer version.
+* Platforms (React 2.0.0, API 2): `Paper / Spigot` (`1.16.5+`), `Folia` (`1.19.4+`), `Fabric` (`26.2`), `Minestom` (`26.2`), `Sponge` (`API 17`).
+* Java: at least 17 for `react-bukkit-*.jar` (Paper/Spigot), and 21+ for `react-folia-*.jar`, `react-sponge-*.jar`, `react-fabric-*.jar`, `react-minestom-*.jar`. Your server may require a newer version.
 * React bundles [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0) and uses a compatible installed plugin when available. PlaceholderAPI is optional.
 * Bukkit and Folia builds report standard metrics to [bStats](https://bstats.org/plugin/bukkit/React%20AntiCheat/35616). Set `enabled: false` in `plugins/bStats/config.yml` to opt out.
 
-1. Download `react-bukkit-*.jar` for Paper or Spigot, or `react-folia-*.jar` for Folia.
-2. Place the JAR in `plugins/`. To migrate an existing `react-paper-*.jar` installation, replace the old JAR manually and keep `plugins/React/`.
+1. Download the JAR for your platform: `react-bukkit-*.jar` (Paper/Spigot), `react-folia-*.jar` (Folia), `react-fabric-*.jar` (Fabric), `react-minestom-*.jar` (Minestom), or `react-sponge-*.jar` (Sponge).
+2. Place the JAR in your server plugins/mods directory (`plugins/` for Bukkit/Paper/Folia/Sponge, `mods/` for Fabric, or launch via `MinestomRuntime.start` on Minestom). To migrate an existing `react-paper-*.jar` installation, replace the old JAR manually and keep `plugins/React/`.
 3. Start the server. React downloads its RCP into `plugins/React/.rcp/providers/` when a signed stable build for API 2 is available. To try a prerelease, [install the nightly RCP manually](https://github.com/react-minecraft/rcp#что-это).
 
-For React 2.0.0 nightly, use RCP and addon builds compiled against the new platform API. Replace earlier releases of hologram 1.2.0, menu 1.1.0, and punish 1.0.2 with compatible builds.
+For React 2.0.0 nightly, use RCP and addon builds compiled against API 2. Replace earlier API 1 releases with compatible builds (`hologram-addon` 1.2.1+, `menu-addon` 1.1.1+, `punish-addon` 1.0.3+).
 4. Link the server at https://www.react-ac.space/ with `/react link` or `/react link <code>`.
 
 > [!IMPORTANT]

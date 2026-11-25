@@ -45,16 +45,16 @@
 
 ## Требования & Установка
 
-- Ядро сервера: `Paper / Spigot / Folia`. Paper поддерживается с `1.16.5`.
-- Java: от 17 для JAR Bukkit и от 21 для JAR Folia. Само ядро может требовать более новую версию.
+- Платформы (React 2.0.0, API 2): `Paper / Spigot` (с `1.16.5`), `Folia` (`1.19.4+`), `Fabric` (`26.2`), `Minestom` (`26.2`), `Sponge` (`API 17`).
+- Java: от 17 для `react-bukkit-*.jar` (Paper/Spigot), от 21 для `react-folia-*.jar`, `react-sponge-*.jar`, `react-fabric-*.jar`, `react-minestom-*.jar`. Само ядро может требовать более новую версию.
 - React включает [PacketEvents](https://github.com/retrooper/packetevents) (GPL-3.0). Если на сервере уже установлен совместимый PacketEvents, React использует его. PlaceholderAPI нужен только для его плейсхолдеров.
 - Сборки Bukkit и Folia отправляют стандартную статистику в [bStats](https://bstats.org/plugin/bukkit/React%20AntiCheat/35616). Чтобы отключить её, задайте `enabled: false` в `plugins/bStats/config.yml`.
 
-1. Скачайте `react-bukkit-*.jar` для Paper или Spigot, `react-folia-*.jar` для Folia.
-2. Положите JAR в `plugins/`. При переходе со сборки `react-paper-*.jar` замените старый JAR вручную и сохраните папку `plugins/React/`.
+1. Скачайте JAR под свою платформу: `react-bukkit-*.jar` (Paper/Spigot), `react-folia-*.jar` (Folia), `react-fabric-*.jar` (Fabric), `react-minestom-*.jar` (Minestom) или `react-sponge-*.jar` (Sponge).
+2. Положите JAR в папку плагинов/модов (`plugins/` для Bukkit/Paper/Folia, `mods/` для Fabric, `plugins/` для Sponge; для Minestom используйте `MinestomRuntime.start`). При переходе со старой сборки `react-paper-*.jar` замените старый JAR вручную и сохраните папку `plugins/React/`.
 3. Запустите сервер. Плагин сам скачает React RCP в `plugins/React/.rcp/providers/`, когда есть подписанный стабильный релиз под API 2. Для проверки nightly [поставьте RCP вручную](https://github.com/react-minecraft/rcp#что-это).
 
-Для nightly React 2.0.0 используйте RCP и аддоны, собранные под новый API платформы. Выпущенные ранее hologram 1.2.0, menu 1.1.0 и punish 1.0.2 нужно заменить совместимыми сборками.
+Для nightly React 2.0.0 используйте RCP и аддоны, собранные под API 2. Выпущенные ранее версии аддонов под API 1 нужно заменить совместимыми сборками (`hologram-addon` 1.2.1+, `menu-addon` 1.1.1+, `punish-addon` 1.0.3+).
 4. Привяжите сервер к аккаунту на https://www.react-ac.space/: `/react link` или `/react link <код>`
 
 > [!IMPORTANT]

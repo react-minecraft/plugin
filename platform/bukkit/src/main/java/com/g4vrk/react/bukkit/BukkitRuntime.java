@@ -37,7 +37,7 @@ public final class BukkitRuntime {
                 selected.load();
             }
             final React react = React.INSTANCE;
-            react.initialize(new BukkitPlatform(plugin, scheduler, platform, platform));
+            react.initialize(new BukkitPlatform(plugin, scheduler, platform, "react-" + platform));
             return new Runnable[]{() -> {
                 if (embedded) {
                     selected.init();

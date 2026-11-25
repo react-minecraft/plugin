@@ -10,7 +10,7 @@ import java.nio.file.Path;
  *
  * @param pluginJar       path to the running plugin JAR, or {@code null} when unavailable
  * @param updateDirectory directory where staged plugin updates are placed
- * @param artifactPrefix  release asset prefix (for example {@code react-paper} or {@code react-folia})
+ * @param artifactPrefix  release asset prefix (for example {@code react-bukkit} or {@code react-folia})
  * @param currentVersion  the running version string
  */
 public record PlatformUpdateSource(

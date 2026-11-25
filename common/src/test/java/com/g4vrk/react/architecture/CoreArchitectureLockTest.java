@@ -205,7 +205,6 @@ final class CoreArchitectureLockTest {
                 repo.resolve("api/src/main/java"),
                 repo.resolve("common/src/main/java"),
                 repo.resolve("platform/bukkit/src/main/java"),
-                repo.resolve("platform/paper/src/main/java"),
                 repo.resolve("platform/folia/src/main/java"),
                 repo.resolve("platform/fabric/src/main/java"),
                 repo.resolve("platform/minestom/src/main/java"),

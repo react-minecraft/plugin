@@ -15,7 +15,7 @@ concurrency:
 
 env:
   TITLE: "React"
-  JARS: "platform/bukkit/build/libs/react-bukkit-*.jar platform/paper/build/libs/react-paper-*.jar platform/folia/build/libs/react-folia-*.jar platform/fabric/build/libs/react-fabric-*.jar platform/minestom/build/libs/react-minestom-*.jar platform/sponge/build/libs/react-sponge-*.jar"
+  JARS: "platform/bukkit/build/libs/react-bukkit-*.jar platform/folia/build/libs/react-folia-*.jar platform/fabric/build/libs/react-fabric-*.jar platform/minestom/build/libs/react-minestom-*.jar platform/sponge/build/libs/react-sponge-*.jar"
   PUBLISH: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch }}
   REACT_RELEASE: ${{ github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && contains(github.event.head_commit.message, '[release]') }}
   GIT_BRANCH: ${{ github.head_ref || github.ref_name }}

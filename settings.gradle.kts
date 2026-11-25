@@ -16,7 +16,6 @@ include(
     "api",
     "common",
     "platform:bukkit",
-    "platform:paper",
     "platform:folia",
     "platform:fabric",
     "platform:minestom",

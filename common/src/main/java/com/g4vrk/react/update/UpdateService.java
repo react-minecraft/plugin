@@ -475,7 +475,6 @@ public final class UpdateService implements StagedUpdateRegistry, AutoCloseable 
             final Instant now = Instant.now();
             final String candidateVersion = release.checksums().version();
             if (componentSettings.pinned() == null
-                    && channel == UpdateChannel.RELEASE
                     && !release.revokedFallback()
                     && candidateVersion != null
                     && ReleaseClient.isReleaseDowngrade(component.version(), candidateVersion)) {

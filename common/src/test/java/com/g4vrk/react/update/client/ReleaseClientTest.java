@@ -93,7 +93,9 @@ class ReleaseClientTest {
         assertFalse(ReleaseClient.isReleaseDowngrade("2.0.0", "2.0.0"));
         assertFalse(ReleaseClient.isReleaseDowngrade("2.0", "2.0.0"));
         assertFalse(ReleaseClient.isReleaseDowngrade("2.2.0", "2.10.0"));
-        assertFalse(ReleaseClient.isReleaseDowngrade("2.0.0-6d81e55", "1.9.0"));
+        assertTrue(ReleaseClient.isReleaseDowngrade("2.0.0-6d81e55", "1.9.0"));
+        assertTrue(ReleaseClient.isReleaseDowngrade("1.0.3", "1.0.2-396c525"));
+        assertTrue(ReleaseClient.isReleaseDowngrade("1.0.3-59a6ddf", "1.0.2-396c525"));
         assertFalse(ReleaseClient.isReleaseDowngrade("9.9.9-local", "1.0.0"));
         assertFalse(ReleaseClient.isReleaseDowngrade("2.0.0", "2.0.0-abc1234"));
 

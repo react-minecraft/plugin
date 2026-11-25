@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -53,7 +54,7 @@ public final class ReleaseClient {
     private static final String SIGNATURE = CHECKSUMS + ".sig";
     private static final String REVOKED_URL = RCPAPI.API_URL + "/api/v1/rcp/revoked";
     private static final Pattern VERSION = Pattern.compile("[0-9A-Za-z][0-9A-Za-z.+-]{0,39}");
-    private static final Pattern RELEASE_VERSION = Pattern.compile("\\d+(?:\\.\\d+)*");
+    private static final Pattern BUILD_VERSION = Pattern.compile("(\\d+(?:\\.\\d+)*)(?:-[0-9a-f]{7,40})?");
     private static final Pattern REPOSITORY = Pattern.compile("[A-Za-z0-9_.-]{1,100}/[A-Za-z0-9_.-]{1,100}");
     private static final Duration TIMEOUT = Duration.ofSeconds(15);
     private static final Duration DOWNLOAD_TIMEOUT = Duration.ofMinutes(2);
@@ -168,20 +169,21 @@ public final class ReleaseClient {
     }
 
     /**
-     * Returns {@code true} only when both {@code running} and {@code candidate} are plain numeric
-     * release versions ({@code x.y.z}) and {@code candidate} is strictly lower than {@code running}.
-     * Dev or commit-suffixed versions are ignored.
+     * Compares the numeric versions of releases and Git-commit-suffixed nightlies.
+     * Other development versions are ignored.
      */
     public static boolean isReleaseDowngrade(
             final @NotNull String running,
             final @NotNull String candidate
     ) {
 
-        if (!RELEASE_VERSION.matcher(running).matches() || !RELEASE_VERSION.matcher(candidate).matches()) {
+        final Matcher runningVersion = BUILD_VERSION.matcher(running);
+        final Matcher candidateVersion = BUILD_VERSION.matcher(candidate);
+        if (!runningVersion.matches() || !candidateVersion.matches()) {
             return false;
         }
-        final String[] currentParts = running.split("\\.");
-        final String[] nextParts = candidate.split("\\.");
+        final String[] currentParts = runningVersion.group(1).split("\\.");
+        final String[] nextParts = candidateVersion.group(1).split("\\.");
         final int length = Math.max(currentParts.length, nextParts.length);
         for (int index = 0; index < length; index++) {
             final String current = index < currentParts.length ? stripLeadingZeros(currentParts[index]) : "";

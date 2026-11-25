@@ -27,7 +27,8 @@ lombok = "1.18.48"
 spotless = "8.0.0"
 
 placeholderapi = "2.11.6"
-packetevents = "2.13.0"
+packetevents = "2.14.0"
+packetevents-sponge = "2.13.0"
 
 flatbuffers = "25.2.10"
 
@@ -78,7 +79,7 @@ packetevents-adventure-api = { module = "net.kyori:adventure-api", version.ref =
 packetevents-adventure-json = { module = "net.kyori:adventure-text-serializer-json", version.ref = "packetevents-adventure" }
 packetevents-adventure-commons = { module = "net.kyori:adventure-text-serializer-commons", version.ref = "packetevents-adventure" }
 packetevents-adventure-option = { module = "net.kyori:option", version = "1.1.0" }
-packetevents-sponge = { module = "com.github.retrooper:packetevents-sponge", version.ref = "packetevents" }
+packetevents-sponge = { module = "com.github.retrooper:packetevents-sponge", version.ref = "packetevents-sponge" }
 
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 

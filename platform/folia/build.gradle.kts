@@ -34,6 +34,7 @@ sourceSets {
     main {
         resources {
             srcDir(project(":common").file("src/main/resources"))
+            srcDir(project(":platform:bukkit").file("src/main/resources"))
         }
     }
 }

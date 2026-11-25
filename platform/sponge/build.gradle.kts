@@ -1,4 +1,3 @@
-import util.expandPluginDescriptor
 import util.expandSpongeMetadata
 
 plugins {
@@ -53,7 +52,6 @@ sourceSets {
 
 tasks {
     named<ProcessResources>("processResources") {
-        expandPluginDescriptor(rootProject.version.toString(), "com.g4vrk.react.sponge.SpongePlugin")
         expandSpongeMetadata(rootProject.version.toString())
     }
 
